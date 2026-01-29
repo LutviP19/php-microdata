@@ -1,0 +1,17 @@
+.env
+.env.backup
+*.pid
+*.cache
+*.zip
+.DS_Store
+NOTES.txt
+SNIP.txt
+last_run.txt
+cron_log.txt
+/node_modules
+/vendor
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed

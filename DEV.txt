@@ -1,0 +1,53 @@
+
+Add Library:
+------------
+composer require phpstreamserver/scheduler
+
+Build Directory structure :
+---------------------------
+mkdir ./cron && 
+mkdir -p ./ffi/source && 
+mkdir ./ffi/lib && 
+mkdir ./public
+
+
+Test Go source:
+Make Sure no errors occurred
+----------------------------
+go run ./ffi/source/concurrency.go
+go run ./ffi/source/fibonacci.go
+
+
+Build shared Library:
+---------------------
+go build -buildmode=c-shared -o ./ffi/lib/concurrency.so ./ffi/source/concurrency.go
+go build -buildmode=c-shared -o ./ffi/lib/fibonacci.so ./ffi/source/fibonacci.go
+
+
+Test - Log:
+-----------
+php ./cron/test.php >> ./cron_log.txt
+
+
+RUN - Worker (terminal 1):
+-------------------------
+php worker.php start
+
+
+Fixing 
+PHP Warning:  cli_set_process_title(): cli_set_process_title had an error: Not initialized correctly
+--------------------------------------
+vendor/phpstreamserver/core/src/Internal/MasterProcess.php - line 163
+Replace : \cli_set_process_title TO @cli_set_process_title
+
+
+RUN - Web (terminal 2):
+----------------------
+php -S localhost:8000  -t public/
+
+
+Update composer :
+-----------------
+composer dump-autoload -o
+
+

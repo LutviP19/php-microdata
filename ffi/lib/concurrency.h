@@ -1,0 +1,1 @@
+extern void ResizeImages(char** input, int count, char*** failedOut, int* failedCount);
