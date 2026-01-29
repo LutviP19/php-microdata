@@ -33,6 +33,6 @@ require_once BASEPATH .'/vendor/autoload.php';
 //     http_response_code(500);
 //     // echo "<h1>An internal error occurred. Please try again later.</h1>";
 //     // // In a production environment, avoid echoing the raw message
-//     include BASEPATH . "/views/500.php";
+//     include BASEPATH . "/views/error/500.php";
 //     die();
 // });

@@ -30,7 +30,7 @@ if(isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true')
     if (file_exists($viewPath)) {
         include $viewPath;
     } else {
-        include BASEPATH . "/views/404.php";
+        include BASEPATH . "/views/error/404.php";
     }
 } else {
     include "index.php";
