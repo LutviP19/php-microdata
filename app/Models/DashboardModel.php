@@ -27,6 +27,7 @@ class DashboardModel extends Model
         // // dd($result, true);
 
         // dd($request, true);
+        // dd(config('app.url'), true);
         $modelA = [
             'title' => $request['title'] ?? 'Testing model',
         ];

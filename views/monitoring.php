@@ -30,7 +30,6 @@
         <div id="log-container" hx-get="get_logs.php" hx-trigger="every 5s" hx-swap="innerHTML"
             hx-on::after-settle="this.scrollTo({top: this.scrollHeight, behavior: 'smooth'})"
             class="h-96 overflow-y-auto p-4 font-mono text-xs md:text-sm text-green-400 leading-none space-y-0.5 bg-black/90 rounded-xl border border-gray-800 shadow-inner">
-            <!-- <span class="animate-pulse">Menghubungkan ke stream server...</span> -->
             <div class="flex items-center space-x-2">
                 <span class="animate-pulse inline-block w-2 h-2 bg-green-500 rounded-full"></span>
                 <span>Menghubungkan ke stream server...</span>

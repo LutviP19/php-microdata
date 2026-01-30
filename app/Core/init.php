@@ -16,18 +16,23 @@ date_default_timezone_set('Asia/Jakarta');
  */
 require_once BASEPATH .'/vendor/autoload.php';
 
-use App\Core\Support\App;
-
-//register configuration to the app.
-App::register('config', require BASEPATH . '/config/app.php');
-
-
-
-// Use Throwable for PHP 7+ to catch Errors as well
+// Gunakan Throwable untuk menangkap Error.
 set_exception_handler(function (Throwable $exception) {
-    // Log the error internally (e.g., to a file)
-    // $filePath = $exception->getFile();
-    write_log("Uncaught exception: " . $exception->getMessage(), 'App.Core', 'error', 'app-error.log');
+    // 1. Ambil detail error
+    $message = $exception->getMessage();
+    $file = $exception->getFile();
+    $line = $exception->getLine();
+    $trace = $exception->getTraceAsString(); // Ini untuk mengambil stack trace
+
+    // 2. Format pesan agar mudah dibaca di file log
+    $logEntry = "Message: $message\n";
+    $logEntry .= "Location: $file on line $line\n";
+    // $logEntry .= "Stack Trace:\n$trace\n";
+    $logEntry .= str_repeat('-', 50); // Garis pemisah antar log
+
+    // Tulis ke log (menggunakan helper write_log)
+    // write_log("Uncaught exception: " . $exception->getMessage(), 'App.Core', 'error', 'app-error.log');
+    write_log($logEntry, 'App.Core', 'error', 'app-error.log');
 
     // Handler JSON Output
     if (is_json_request()) { 
@@ -43,3 +48,14 @@ set_exception_handler(function (Throwable $exception) {
     include BASEPATH . "/views/error/500.php";
     die();
 });
+
+// Muat file .env
+load_env();
+
+use App\Core\Support\App;
+
+// Mendaftarkan konfigurasi ke aplikasi.
+App::register('config', require BASEPATH . '/config/app.php');
+
+
+

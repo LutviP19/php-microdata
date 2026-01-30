@@ -35,7 +35,7 @@ function dd($data = [], $json = false)
  */
 function database_path($db_name)
 {
-    return BASE_PATH . 'storage/database/' . $db_name;
+    return BASEPATH . 'storage/database/' . $db_name;
 }
 
 /**
@@ -47,7 +47,105 @@ function database_path($db_name)
  */
 function logs_path($log_name)
 {
-    return BASE_PATH . 'storage/logs/' . $log_name;
+    return BASEPATH . 'storage/logs/' . $log_name;
+}
+
+/**
+ * Memuat variabel dari file .env ke dalam lingkungan PHP
+ */
+if (!function_exists('load_env')) {
+    function load_env($path = null) {
+        if ($path === null) {
+            $path = BASEPATH . '/.env';
+        }
+
+        if (!file_exists($path)) {
+            return false;
+        }
+
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            // Abaikan baris yang dimulai dengan komentar #
+            if (strpos(trim($line), '#') === 0) continue;
+
+            // Pecah berdasarkan tanda sama dengan (=)
+            list($name, $value) = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value);
+
+            // Bersihkan kutipan jika ada (misal: "SECRET_KEY" atau 'SECRET_KEY')
+            $value = trim($value, '"\'');
+
+            $value = trim($value, " \t\n\r\0\x0B\"'");
+
+            // --- LOGIKA SUBSTITUSI VARIABEL ---
+            // Mencari pola ${VAR_NAME}
+            preg_match_all('/\${([^}]+)}/', $value, $matches);
+            
+            if (!empty($matches[1])) {
+                foreach ($matches[1] as $embeddedVar) {
+                    // Ambil nilai dari $_ENV atau getenv yang sudah diproses sebelumnya
+                    $replacement = $_ENV[$embeddedVar] ?? getenv($embeddedVar) ?? '';
+                    $value = str_replace('${' . $embeddedVar . '}', $replacement, $value);
+                }
+            }
+            // ----------------------------------
+
+            // Masukkan ke dalam environment PHP
+            if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
+                putenv(sprintf('%s=%s', $name, $value));
+                $_ENV[$name] = $value;
+                $_SERVER[$name] = $value;
+            }
+        }
+        return true;
+    }
+}
+
+/**
+ * Mengonversi variabel environment pilihan ke format JSON untuk Frontend.
+ */
+if (!function_exists('env_to_json')) {
+    function env_to_json(array $keys) {
+        $output = [];
+        foreach ($keys as $key) {
+            $output[$key] = env($key);
+        }
+        return json_encode($output);
+    }
+}
+
+/**
+ * get config
+ *
+ * @param  [string] $key
+ *
+ * @return string
+ */
+function config($key)
+{
+    return \App\Core\Support\Config::get($key);
+}
+
+/**
+ * Mengambil nilai dari environment dengan dukungan nilai default
+ */
+if (!function_exists('env')) {
+    function env($key, $default = null) {
+        $value = getenv($key);
+        if ($value === false) {
+            return $default;
+        }
+        
+        // Konversi tipe data string ke boolean jika perlu
+        switch (strtolower($value)) {
+            case 'true': return true;
+            case 'false': return false;
+            case 'null': return null;
+        }
+
+        return $value;
+    }
 }
 
 /**
