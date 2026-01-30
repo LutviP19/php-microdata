@@ -35,7 +35,7 @@ function dd($data = [], $json = false)
  */
 function database_path($db_name)
 {
-    return BASEPATH . 'storage/database/' . $db_name;
+    return BASEPATH . '/storage/database/' . $db_name;
 }
 
 /**
@@ -47,7 +47,7 @@ function database_path($db_name)
  */
 function logs_path($log_name)
 {
-    return BASEPATH . 'storage/logs/' . $log_name;
+    return BASEPATH . '/storage/logs/' . $log_name;
 }
 
 /**
