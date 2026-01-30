@@ -23,22 +23,23 @@ App::register('config', require BASEPATH . '/config/app.php');
 
 
 
-// // Use Throwable for PHP 7+ to catch Errors as well
-// set_exception_handler(function (Throwable $exception) {
-//     // // Log the error internally (e.g., to a file)
-//     // error_log("Uncaught exception: " . $exception->getMessage());
+// Use Throwable for PHP 7+ to catch Errors as well
+set_exception_handler(function (Throwable $exception) {
+    // Log the error internally (e.g., to a file)
+    // $filePath = $exception->getFile();
+    write_log("Uncaught exception: " . $exception->getMessage(), 'App.Core', 'error', 'app-error.log');
 
-//     // Handler JSON Output
-//     if (is_json_request()) { 
-//         $status = 500;
-//         $message = 'An internal error occurred. Please try again later.';
-//         json_response([], $status, $message);
-//     }
+    // Handler JSON Output
+    if (is_json_request()) { 
+        $status = 500;
+        $message = 'An internal error occurred. Please try again later.';
+        json_response([], $status, $message);
+    }
     
-//     // Present a user-friendly view/response
-//     http_response_code(500);
-//     // echo "<h1>An internal error occurred. Please try again later.</h1>";
-//     // // In a production environment, avoid echoing the raw message
-//     include BASEPATH . "/views/error/500.php";
-//     die();
-// });
+    // Present a user-friendly view/response
+    http_response_code(500);
+    // echo "<h1>An internal error occurred. Please try again later.</h1>";
+    // // In a production environment, avoid echoing the raw message
+    include BASEPATH . "/views/error/500.php";
+    die();
+});

@@ -36,7 +36,7 @@ $validMethods = (method_exists($modelClass,'index') &&
                     method_exists($modelClass,'destroy')
                 );
 if(false === $validMethods) {
-    throw new Exception("modelClass not valid, must have methods 'index', 'store', 'edit', 'update' and destroy'.");
+    throw new Exception("modelClass $className not valid, must have methods 'index', 'store', 'edit', 'update' and 'destroy'.");
 }
 
 $requestMethod = $_SERVER['REQUEST_METHOD'];
