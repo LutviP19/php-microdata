@@ -14,6 +14,11 @@ require_once 'init.php';
 // Otomatis konversi JSON ke array
 handle_json_request();
 
+// Bersihkan seluruh input $_REQUEST
+$_REQUEST = sanitize($_REQUEST);
+$_POST = sanitize($_POST);
+$_GET = sanitize($_GET);
+
 // Check var $modelName
 if(!isset($modelName)) {
     throw new Exception("var modelName not set.");
@@ -47,17 +52,18 @@ switch ($requestMethod) {
         break;
     case 'POST':
         // Process POST data
-        $request = &$_REQUEST;
+        $request = &$_POST;
         $dataModel = $modelClass->store($request);
         break;
     case 'PUT':
-        // Handle PUT request
-        $request = &$_REQUEST;
+    case 'PATCH':
+        // Handle PUT & PATCH request
+        $request = &$_POST;
         $dataModel = $modelClass->update($request);
         break;
     case 'DELETE':
         // Handle DELETE request
-        $request = &$_REQUEST;
+        $request = &$_POST;
         $dataModel = $modelClass->destroy($request);
         break;
     default:
@@ -78,7 +84,7 @@ $errors = $dataModel['errors'] ?? [];
 // Output Handler
 if (is_json_request()) {
     json_response($data, $status, $message, $errors);
-    dd('JSON');
+    // dd('JSON');
 } else {
     extract($data);
 }

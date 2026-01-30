@@ -6,10 +6,27 @@
 namespace App\Models;
 
 
-class DashboardModel 
+use App\Core\Database\Model;
+
+class DashboardModel extends Model
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Set default table
+        $this->table = 'roles';
+    }
+
     public function index(?array $request = [])
     {
+
+        // $selectCols = $cols ?? '*';
+        // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
+        // $result = Model::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
+        // // dd($result, true);
+
+        // dd($request, true);
         $modelA = [
             'title' => $request['title'] ?? 'Testing model',
         ];
@@ -45,7 +62,7 @@ class DashboardModel
     public function edit(?array $request = [])
     {
         $data = [
-            'data' => $modelA ?? [],
+            'data' => $request ?? [],
             'errors' => $errors ?? [],
             'status' => $status ?? 201,
             'message' => $message ?? 'testing edit',
@@ -57,7 +74,7 @@ class DashboardModel
     public function update(?array $request = [])
     {
         $data = [
-            'data' => $modelA ?? [],
+            'data' => $request ?? [],
             'errors' => $errors ?? [],
             'status' => $status ?? 201,
             'message' => $message ?? 'testing update',
@@ -69,7 +86,7 @@ class DashboardModel
     public function destroy(?array $request = [])
     {
         $data = [
-            'data' => $modelA ?? [],
+            'data' => $request ?? [],
             'errors' => $errors ?? [],
             'status' => $status ?? 201,
             'message' => $message ?? 'testing destroy',

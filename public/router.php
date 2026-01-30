@@ -3,7 +3,7 @@
  *  @author LutviP19 <lutvip19@gmail.com>
  */
 // router.php
-// simple routing views with HTMX and JSON RestAPI
+// simple routing to display views with HTMX or returned a JSON for RestAPI
 
 if (!defined('BASEPATH')) {
     define('BASEPATH', __DIR__ . "/..");

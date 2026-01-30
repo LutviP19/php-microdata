@@ -10,7 +10,7 @@
         }
      }">
     
-    <h3><?= htmlspecialchars($title) ?></h3>
+    <!-- <h3><?= htmlspecialchars($title) ?></h3> -->
     <div class="text-center mb-6 md:mb-10">
         <h1 class="text-4xl md:text-6xl font-bold tracking-tight bg-transparent select-none whitespace-nowrap">
             <span class="text-white">“</span>

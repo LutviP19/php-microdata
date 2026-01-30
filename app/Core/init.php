@@ -16,6 +16,12 @@ date_default_timezone_set('Asia/Jakarta');
  */
 require_once BASEPATH .'/vendor/autoload.php';
 
+use App\Core\Support\App;
+
+//register configuration to the app.
+App::register('config', require BASEPATH . '/config/app.php');
+
+
 
 // // Use Throwable for PHP 7+ to catch Errors as well
 // set_exception_handler(function (Throwable $exception) {

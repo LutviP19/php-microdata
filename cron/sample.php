@@ -6,9 +6,18 @@
 
 // file: sample.php
 
+if (!defined('BASEPATH')) {
+    define('BASEPATH', __DIR__ . "/..");
+}
+
+/**
+ * Require Core init File.
+ */
+require_once BASEPATH .'/app/Core/init.php';
+
 $interval = 60; // Jalankan setiap 60 detik (1 menit)
-$logFile = 'cron_log.txt';
-$lastRunFile = 'last_run.txt';
+$logFile = logs_path('cron_log.txt');
+$lastRunFile = logs_path('last_run.txt');
 
 $lastRun = file_exists($lastRunFile) ? (int)file_get_contents($lastRunFile) : 0;
 $currentTime = time();

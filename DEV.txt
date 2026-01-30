@@ -50,4 +50,20 @@ Update composer :
 -----------------
 composer dump-autoload -o
 
+// Log-Debug :
+--------------
+write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');
 
+// Test-Curl JSON :
+-------------------
+curl --request GET \
+  --url 'http://localhost:8000/router.php?page=dashboard' \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"title" : "JSON data <script>document.print</script>",
+	"tag_html" : {
+		"div" : "<div onclick='\''submitError()'\''>Submit</div>"
+	},
+	"float": 1.090,
+	"integer": 20
+}'

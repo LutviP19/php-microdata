@@ -8,8 +8,8 @@ if (!defined('BASEPATH')) {
     define('BASEPATH', __DIR__ );
 }
 
-// we using PHPStreamServer library as worker to running periodic scheduler
-require __DIR__ . '/vendor/autoload.php';
+// Require Core init File.
+require_once BASEPATH . '/app/Core/init.php';
 
 use PHPStreamServer\Core\Server;
 use PHPStreamServer\Core\Worker\WorkerProcess;

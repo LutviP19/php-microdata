@@ -6,10 +6,36 @@
 namespace App\Models;
 
 
-class MyModel 
+use App\Core\Database\Model;
+// use PDO; // Uncomment to build new PDO object
+
+
+class MyModel extends Model
 {
+    public function __construct()
+    {
+        $pdo = null;
+        // // Use a different db connection.
+        // $driver = 'mysql'; $host = '127.0.0.1'; $port = 3306; $dbname = 'backend_php';
+        // $pdo = new PDO(
+        //             "{$driver}:host={$host};port={$port};dbname={$dbname}",
+        //             $username ?? 'root',
+        //             $password ?? '',
+        //             $options ?? []
+        //         );
+        parent::__construct($pdo);
+
+        // Set default table
+        $this->table = '';
+    }
+
     public function index(?array $request = [])
     {
+        // $selectCols = $cols ?? '*';
+        // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
+        // $result = Model::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
+        // // dd($result, true);
+
         $modelA = [
             'title' => $request['title'] ?? 'Testing model',
         ];
@@ -45,7 +71,7 @@ class MyModel
     public function edit(?array $request = [])
     {
         $data = [
-            'data' => $modelA ?? [],
+            'data' => $request ?? [],
             'errors' => $errors ?? [],
             'status' => $status ?? 201,
             'message' => $message ?? 'testing edit',
@@ -57,7 +83,7 @@ class MyModel
     public function update(?array $request = [])
     {
         $data = [
-            'data' => $modelA ?? [],
+            'data' => $request ?? [],
             'errors' => $errors ?? [],
             'status' => $status ?? 201,
             'message' => $message ?? 'testing update',
@@ -69,7 +95,7 @@ class MyModel
     public function destroy(?array $request = [])
     {
         $data = [
-            'data' => $modelA ?? [],
+            'data' => $request ?? [],
             'errors' => $errors ?? [],
             'status' => $status ?? 201,
             'message' => $message ?? 'testing destroy',
@@ -79,7 +105,3 @@ class MyModel
     }
 }
 
-/**
- * Set variable $modelClass.
- */
-$modelClass = new MyModel();
