@@ -10,8 +10,6 @@ if (!defined('BASEPATH_FFI')) {
 
 
 // Fobonacci
-echo "[" . date('Y-m-d H:i:s') . "] Run Fibonacci..." . PHP_EOL;
-
 $ffi1 = FFI::cdef(
     "int Fibonacci(int n);", // using inline header
     BASEPATH_FFI . '/lib/fibonacci.so',
@@ -31,6 +29,7 @@ $result = $ffi1->Fibonacci(35);
 $end = microtime(true);
 $time = $end - $start;
 
+echo "[" . date('Y-m-d H:i:s') . "] Run Fibonacci..." . PHP_EOL;
 echo "PHP-FFI Go Fibonacci result: {$result}. It took {$time} seconds to compute.", PHP_EOL;
 
 

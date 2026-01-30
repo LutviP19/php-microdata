@@ -61,7 +61,8 @@ $server->addWorker(
             $source_path = BASEPATH . '/cron/test.php';
             
             // append the output directly to the log file (opsi 1)
-            $logFile = BASEPATH . '/cron_log.txt';
+            // $logFile = BASEPATH . '/cron_log.txt';
+            $logFile = logs_path('cron_log.txt');
             system("php $source_path >> $logFile", $return_code);
 
             // // or display the output directly to the console||browser (opsi 2)

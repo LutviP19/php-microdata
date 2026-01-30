@@ -136,7 +136,7 @@ if (file_exists($modelPath)) {
         </aside>
 
         <main class="flex-1 p-6 overflow-y-auto bg-gray-900">
-            <div id="main-content" class="flex-1 overflow-y-auto p-8">
+            <div id="main-content" class="flex-1 overflow-y-auto">
                 <?php include BASEPATH . "/views/dashboard.php"; // Load default saat pertama buka ?>
             </div>
         </main>

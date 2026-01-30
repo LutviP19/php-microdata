@@ -1,4 +1,4 @@
-<div class="flex flex-col items-center justify-start md:justify-center min-h-[80vh] px-4 pt-10 md:pt-0" 
+<div class="flex flex-col items-center justify-start md:justify-center min-h-[80vh] md:px-4 pt-10 md:pt-0" 
      x-data="{ 
         searching: false, 
         query: '',
@@ -103,5 +103,5 @@
         </div>
     </div>
 
-    <div id="search-results" class="w-full max-w-4xl mt-8 md:mt-12 space-y-4"></div>
+    <div id="search-results" class="w-full overflow-y-auto max-w-4xl mt-8 md:mt-12 space-y-4"></div>
 </div>
