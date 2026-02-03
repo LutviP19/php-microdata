@@ -42,7 +42,7 @@ set_exception_handler(function (Throwable $exception) {
     }
     
     // Present a user-friendly view/response
-    http_response_code(500);
+    // http_response_code(500);
     // echo "<h1>An internal error occurred. Please try again later.</h1>";
     // // In a production environment, avoid echoing the raw message
     include BASEPATH . "/views/error/500.php";

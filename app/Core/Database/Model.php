@@ -63,7 +63,7 @@ class Model
     {
         $this->setParams($params);
         $exec = $this->setSQL($query)->query();
-        write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');
+        // write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');
 
         if ($exec && $lastInsertId) {
             return $this->getPDO()->lastInsertId();

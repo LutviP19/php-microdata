@@ -51,6 +51,46 @@ function logs_path($log_name)
 }
 
 /**
+ * Sanitize the given uri.
+ *
+ * @param string $uri
+ * @return string
+ */
+function sanitizeUri($uri)
+{
+    if (str_starts_with($uri, '/')) {
+        $uri = ltrim($uri, '/');
+    }
+
+    return filter_var(
+        $uri,
+        FILTER_SANITIZE_URL
+    );
+}
+
+/**
+ * Create a url from a given uri.
+ *
+ * @param string $uri
+ * @return string
+ */
+function url($uri = '')
+{
+    $uri = sanitizeUri($uri);
+    return config('app.url')."/{$uri}";
+}
+
+/**
+ * Helper untuk memanggil file di folder public/assets
+ */
+if (!function_exists('asset')) {
+    function asset($path) {
+        $baseUrl = rtrim(config('app.url'), '/');
+        return $baseUrl . '/assets/' . ltrim($path, '/');
+    }
+}
+
+/** 
  * Memuat variabel dari file .env ke dalam lingkungan PHP
  */
 if (!function_exists('load_env')) {
@@ -261,7 +301,7 @@ if (!function_exists('expects_json')) {
 }
 
 /**
- * Sistem logging sederhana dengan level kategori.
+ * Sistem log sederhana dengan level kategori.
  */
 if (!function_exists('write_log')) {
     function write_log($message, $moduleName = '', $level = 'info', $file = '') {

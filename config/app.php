@@ -1,7 +1,7 @@
 <?php
 
 if (!defined('BASEPATH')) {
-    define('BASEPATH', str_replace('config', '', __DIR__));
+    define('BASEPATH', str_replace('/config', '', __DIR__));
 }
 
 /**

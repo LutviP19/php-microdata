@@ -53,6 +53,21 @@ Update composer :
 -----------------
 composer dump-autoload -o
 
+
+Build Core Directory structure :
+--------------------------------
+mkdir ./config && 
+mkdir -p ./app/Core/Database && 
+mkdir -p ./app/Core/Support && 
+mkdir ./app/Helpers && 
+mkdir ./app/Models && 
+mkdir ./static && 
+mkdir -p ./storage/database && 
+mkdir -p ./storage/logs && 
+mkdir -p ./views/partial && 
+mkdir -p ./views/error
+
+
 // Log-Debug :
 --------------
 write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');

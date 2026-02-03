@@ -27,7 +27,7 @@
             <span class="text-xs text-gray-400 ml-2 font-mono italic">cron_output.log</span>
         </div>
 
-        <div id="log-container" hx-get="get_logs.php" hx-trigger="every 5s" hx-swap="innerHTML"
+        <div id="log-container" hx-get="<?= url('get_logs'); ?>" hx-trigger="every 5s" hx-swap="innerHTML"
             hx-on::after-settle="this.scrollTo({top: this.scrollHeight, behavior: 'smooth'})"
             class="h-96 overflow-y-auto p-4 font-mono text-xs md:text-sm text-green-400 leading-none space-y-0.5 bg-black/90 rounded-xl border border-gray-800 shadow-inner">
             <div class="flex items-center space-x-2">

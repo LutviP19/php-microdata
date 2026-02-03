@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Arahkan semua request ke folder /public
+    RewriteRule ^$ public/index.php [L]
+
+    # 2. Jika request bukan file/folder asli di root, lempar ke /public
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

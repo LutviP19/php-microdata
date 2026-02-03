@@ -65,7 +65,7 @@ class DashboardModel extends Model
         $data = [
             'data' => $request ?? [],
             'errors' => $errors ?? [],
-            'status' => $status ?? 201,
+            'status' => $status ?? 200,
             'message' => $message ?? 'testing edit',
         ];
 
