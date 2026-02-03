@@ -1,5 +1,10 @@
 <?php
 
+/**
+ *  @author LutviP19 <lutvip19@gmail.com>
+ *  main app configurations
+ */
+
 if (!defined('BASEPATH')) {
     define('BASEPATH', str_replace('/config', '', __DIR__));
 }

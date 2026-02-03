@@ -27,7 +27,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased" x-data="{ sidebarOpen: false }">
+<body class="bg-gray-900 text-gray-100 font-sans antialiased" x-data="{ sidebarOpen: false, openLogout: false, userMenuOpen: false, activePage: '<?= $page ?>' }">
 
     <nav class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
         <div class="flex items-center space-x-3">
@@ -37,10 +37,67 @@
             <span class="text-xl font-bold tracking-wider text-indigo-400 uppercase">Cron<span class="text-white text-sm font-light italic">Job</span></span>
         </div>
         
-        <div class="flex items-center space-x-4">
+        <!-- <div class="flex items-center space-x-4">
             <span class="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full animate-pulse font-mono">SYSTEM ACTIVE</span>
             <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">JD</div>
+        </div> -->
+        <div class="flex items-center space-x-4">
+            <span class="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full animate-pulse font-mono">SYSTEM ACTIVE</span>
+            
+            <div class="relative" x-data="{ userMenuOpen: false }" @click.away="userMenuOpen = false">
+                <button 
+                    @click="userMenuOpen = !userMenuOpen"
+                    class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold hover:bg-indigo-500 transition focus:outline-none ring-2 ring-indigo-900">
+                    <?= get_initials($_SESSION['user_name'] ?? 'Demo User') ?>
+                </button>
+
+                <div 
+                    x-show="userMenuOpen"
+                    x-cloak
+                    x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="transform opacity-0 scale-95"
+                    x-transition:enter-end="transform opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="transform opacity-100 scale-100"
+                    x-transition:leave-end="transform opacity-0 scale-95"
+                    class="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-lg shadow-xl py-2 z-50">
+                    
+                    <div class="px-4 py-2 border-b border-gray-800 mb-2">
+                        <p class="text-xs text-gray-400">Signed in as</p>
+                        <p class="text-sm font-semibold text-white truncate">
+                            <?= htmlspecialchars($_SESSION['user_name'] ?? 'Demo User') ?>
+                        </p>
+                    </div>
+
+                    <a href="/user-profile" 
+                       hx-get="/user-profile" 
+                       hx-target="#main-content" 
+                       hx-push-url="true"
+                       @click="userMenuOpen = false"
+                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition">
+                       My Profile
+                    </a>
+
+                    <a href="/user-settings" 
+                       hx-get="/user-settings" 
+                       hx-target="#main-content" 
+                       hx-push-url="true"
+                       @click="userMenuOpen = false"
+                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition">
+                       Settings
+                    </a>
+
+                    <div class="border-t border-gray-800 mt-2"></div>
+                    
+                    <button 
+                        @click="openLogout = true; userMenuOpen = false" 
+                        class="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-red-900/30 transition">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
         </div>
+        
     </nav>
 
     <div class="flex h-screen overflow-hidden">
@@ -116,6 +173,60 @@
             </div>
         </main>
     </div>
+
+<!-- ModalBox -->
+<div 
+    x-show="openLogout" 
+    x-cloak
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto">
+    
+    <div 
+        x-show="openLogout"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="openLogout = false"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+
+    <div 
+        x-show="openLogout"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="relative w-full max-w-md p-6 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl">
+        
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-900/20 mb-4">
+                <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Konfirmasi Logout</h3>
+            <p class="mt-2 text-sm text-gray-400">
+                Apakah Anda yakin ingin mengakhiri sesi terminal ini? Data yang belum tersimpan mungkin akan hilang.
+            </p>
+        </div>
+
+        <div class="mt-6 flex space-x-3">
+            <button 
+                @click="openLogout = false"
+                class="flex-1 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+                Batalkan
+            </button>
+            <button 
+                hx-post="<?= url('/logout') ?>"
+                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
+                Ya, Keluar
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
 // document.body.addEventListener('htmx:afterRequest', function(evt) {

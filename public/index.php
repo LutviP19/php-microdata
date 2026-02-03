@@ -46,6 +46,13 @@ if($isHtmx) {
         include BASEPATH . "/views/error/404.php";
     }
 } else {
-    // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
-    include BASEPATH . "/views/index.php";
+    // Tentukan apakah kita di halaman login
+    $isLoginPage = ($page === 'login');
+    if ($isLoginPage) {
+        // Render hanya halaman login (tanpa sidebar/nav)
+        include BASEPATH . "/views/login.php";
+    } else {
+        // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
+        include BASEPATH . "/views/index.php";
+    }
 }

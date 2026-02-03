@@ -384,3 +384,19 @@ if (!function_exists('format_log_status')) {
         return "<span class='font-bold $colorClass'>" . strtoupper($status) . "</span>";
     }
 }
+
+/**
+ * Menghasilkan inisial dari nama (misal: "John Doe" -> "JD")
+ */
+if (!function_exists('get_initials')) {
+    function get_initials($name) {
+        $words = explode(' ', strtoupper($name));
+        $initials = '';
+        
+        foreach ($words as $w) {
+            $initials .= $w[0] ?? '';
+        }
+        
+        return substr($initials, 0, 2);
+    }
+}
