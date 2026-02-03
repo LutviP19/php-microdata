@@ -23,7 +23,7 @@
     </div>
 
     <div class="w-full max-w-3xl relative group">
-        <form hx-get="get_logs.php" 
+        <form hx-get="<?= url('get_logs'); ?>" 
               hx-target="#search-results" 
               hx-indicator="#loading-spinner"
               @submit.prevent="search()"

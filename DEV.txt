@@ -54,6 +54,11 @@ Update composer :
 composer dump-autoload -o
 
 
+GIT Clone from branch :
+-----------------------
+git clone -b <branch_name> --single-branch <repository_url>
+
+
 Build Core Directory structure :
 --------------------------------
 mkdir ./config && 
