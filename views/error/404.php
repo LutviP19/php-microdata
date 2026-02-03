@@ -15,7 +15,7 @@
     </div>
 
     <div class="mt-10">
-        <a href="index.php?page=dashboard" 
+        <a href="<?= url('dashboard'); ?>" 
            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150 ease-in-out shadow-lg shadow-indigo-500/20">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>

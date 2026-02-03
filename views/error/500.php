@@ -54,9 +54,9 @@
                     <span>Coba Lagi</span>
                 </button>
                 
-                <a href="index.php?page=dashboard" 
+                <a href="<?= url('dashboard'); ?>" 
                    class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-500/20">
-                    Kembali ke Beranda
+                   Kembali ke Dashboard
                 </a>
             </div>
         </div>
