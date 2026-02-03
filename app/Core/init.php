@@ -8,9 +8,6 @@ if (!defined('BASEPATH')) {
     define('BASEPATH', __DIR__ . '/../..');
 }
 
-// Set defaut PHP conf
-date_default_timezone_set('Asia/Jakarta');
-
 /**
  * Require the composer autoload File.
  */
@@ -52,10 +49,13 @@ set_exception_handler(function (Throwable $exception) {
 // Muat file .env
 load_env();
 
-use App\Core\Support\App;
+// Set defaut konfigurasi timezone PHP
+date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Jakarta'));
 
 // Mendaftarkan konfigurasi ke aplikasi.
+use App\Core\Support\App;
 App::register('config', require BASEPATH . '/config/app.php');
 
-
+// Jalankan fungsi CORS
+handle_cors();
 
