@@ -1,7 +1,2 @@
-*
-/*
-.*
-!/lib*
-!*.h
-!*.so
+*.dev
 !.gitignore

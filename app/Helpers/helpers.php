@@ -228,6 +228,9 @@ if (!function_exists('sanitize')) {
 // Untuk menangani CORS (Cross-Origin Resource Sharing)
 // Tentukan origin yang diizinkan (dari file .env)
 function handle_cors() {
+    if(!isset($_SERVER['HTTP_ORIGIN']) || !isset($_SERVER['HTTP_REFERER']))
+    return;
+
     // 1. Ambil string dari .env, default ke '*' jika kosong
     $envOrigins = env('ALLOWED_ORIGINS', '*');
     
@@ -398,5 +401,108 @@ if (!function_exists('get_initials')) {
         }
         
         return substr($initials, 0, 2);
+    }
+}
+
+/**
+ * Membersihkan newline berlebihan dalam teks
+ * * @param string $text Teks input
+ * @param int $max_newlines Batas maksimal newline yang diizinkan (default 2)
+ * @return string
+ */
+if (!function_exists('clean_newlines')) {
+    function clean_newlines($text, $max_newlines = 2) {
+        // Regex untuk mencari baris baru (\r\n atau \n)
+        // {{$max_newlines + 1},} artinya cari yang jumlahnya lebih dari batas
+        $pattern = "/(\r?\n){" . ($max_newlines + 1) . ",}/";
+        
+        // Ganti dengan jumlah newline yang diinginkan
+        $replacement = str_repeat("\n", $max_newlines);
+        
+        return preg_replace($pattern, $replacement, trim($text));
+    }
+}
+
+// Pecah raw text menjadi Array
+if (!function_exists('parse_crawler_logs')) {
+    function parse_crawler_logs($raw_text) {
+        // 1. Bersihkan noise log sistem di awal (Opsional)
+        $clean_text = preg_replace('/\[\d{4}-\d{2}-\d{2}.*?\].*?\n/s', '', $raw_text);
+        
+        // 2. Pecah berdasarkan pemisah END URL
+        $blocks = explode('===========================END URL============================', $clean_text);
+        $results = [];
+
+        foreach ($blocks as $block) {
+            $block = trim($block);
+            if (empty($block) || strlen($block) < 5) continue;
+
+            $results[] = parse_scraped_content($block);
+        }
+
+        return $results;
+    }
+}
+
+// Untuk memproses teks mentah hasil scraping atau log tersebut menjadi data terstruktur (Array/JSON)
+if (!function_exists('parse_scraped_content')) {
+    function parse_scraped_content($block) {
+        $entry = [
+            'url'      => null,
+            'status'   => null,
+            'title'    => null,
+            'content'  => null,
+            'metadata' => ['posted_at' => null, 'author' => null, 'labels' => []],
+            'links'    => []
+        ];
+
+        // 1. Ekstrak Status & URL Awal
+        if (preg_match('/^(https?:\/\/[^\s]+):\s+(\d+)/m', $block, $matches)) {
+            $entry['url'] = $matches[1];
+            $entry['status'] = (int)$matches[2];
+        }
+
+        // 2. Ekstrak Title secara spesifik
+        if (preg_match('/Title:\s+(.*?)(?:\s+\||$)/m', $block, $matches)) {
+            $entry['title'] = trim($matches[1]);
+        }
+
+        // 3. Ekstrak Metadata (Posted & Author)
+        if (preg_match('/Diposting pada (.*?) oleh ([^\s\xA0]+)/u', $block, $matches)) {
+            $entry['metadata']['posted_at'] = trim($matches[1]);
+            $entry['metadata']['author']    = trim($matches[2]);
+            
+            // Tentukan "Anchor" atau titik potong
+            $authorName = $matches[2];
+            $searchAnchor = "oleh " . $authorName;
+
+            // 4. Potong Content: Ambil teks HANYA SETELAH nama Author
+            $contentStartPos = strpos($block, $searchAnchor);
+            if ($contentStartPos !== false) {
+                // Ambil sisa teks setelah 'oleh Lutvi'
+                $rawContent = substr($block, $contentStartPos + strlen($searchAnchor));
+                
+                // Bersihkan Content dari noise sisa
+                $rawContent = preg_replace('/\x{00a0}/u', ' ', $rawContent); // Bersihkan &nbsp;
+                $rawContent = preg_replace('/\s+Daftar Isi\s+/u', ' ', $rawContent); // Buang Daftar Isi
+                
+                // Ambil teks sampai sebelum bagian "Labels:" atau "Link found:"
+                if (preg_match('/^(.*?)(?=Labels:|Link found:|Bagikan :|$)/s', $rawContent, $contentMatches)) {
+                    $entry['content'] = trim(preg_replace('/\s+/', ' ', $contentMatches[1]));
+                }
+            }
+        }
+
+        // 5. Ekstrak Labels
+        if (preg_match('/Labels:\s*(.*?)\s*Bagikan/s', $block, $matches)) {
+            $entry['metadata']['labels'] = array_filter(array_map('trim', explode("\n", $matches[1])));
+        }
+
+        // 6. Ekstrak Links
+        if (preg_match_all('/Link found:\s+(https?:\/\/[^\s]+)/', $block, $matches)) {
+            $entry['links'] = $matches[1];
+        }
+
+        return $entry;
     }
 }

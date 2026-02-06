@@ -90,3 +90,23 @@ curl --request GET \
 	"float": 1.090,
 	"integer": 20
 }'
+
+
+crawler.go
+===========
+$ cd ffi/source/crawler
+$ go mod init mycrawler
+$ go get github.com/PuerkitoBio/goquery
+$ go mod tidy
+$ go run crawler.go
+$ go build -o ../../lib/crawler.so -buildmode=c-shared ./crawler.go
+
+
+$ chmod +x ./ffi/lib/crawler.so
+$ file ./ffi/lib/crawler.so
+
+php cron/test.php >> ./storage/logs/test.txt
+
+php cron/crawler.php >> ./storage/logs/crawler-out.txt
+php cron/crawler.php > ./storage/logs/crawler-out.txt
+
