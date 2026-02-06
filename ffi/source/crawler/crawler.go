@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"unsafe"
 	"github.com/PuerkitoBio/goquery"
 )
@@ -26,82 +25,63 @@ func crawler(filePath *C.char) *C.char {
 	}
 	defer urlFile.Close()
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
 	var results []string
 	scanner := bufio.NewScanner(urlFile)
 	for scanner.Scan() {
 		url := scanner.Text()
-		if url == "" { continue }
+		resp, err := http.Get(url)
+		if err != nil {
+			results = append(results, fmt.Sprintf("%s: Error - %v", url, err))
+			continue
+		}
+		defer resp.Body.Close()
 
-		wg.Add(1)
-		// Launch a Goroutine for each URL
-		go func(target string) {
-			defer wg.Done()
-			
-			resp, err := http.Get(target)
-			status := ""
+		// Only parse if the response code is 200 OK
+		if resp.StatusCode == http.StatusOK {
+
+			results = append(results, fmt.Sprintf("%s: %d", url, http.StatusOK))
+
+			doc, err := goquery.NewDocumentFromReader(resp.Body)
 			if err != nil {
-				status = fmt.Sprintf("FAILED (%v)", err)
-
-				// Safely append to the results slice
-				mu.Lock()
-				results = append(results, fmt.Sprintf("%s: %s", target, status))
-				mu.Unlock()
-			} else {
-				// status = fmt.Sprintf("SUCCESS (%d)", resp.StatusCode)
-
-				// Only parse if the response code is 200 OK
-				if resp.StatusCode == http.StatusOK {
-
-					results = append(results, fmt.Sprintf("%s: %d", url, http.StatusOK))
-
-					doc, err := goquery.NewDocumentFromReader(resp.Body)
-					if err != nil {
-						mu.Lock()
-						results = append(results, fmt.Sprintf("Error parsing %s: %v", target, err))
-						mu.Unlock()
-						return
-					}
-
-					// Example: Extract and save the <title> tag text
-					title := doc.Find("title").Text()
-					// body := doc.Find("body").Text()
-
-					// Safety: Always lock when appending in a Goroutine
-					mu.Lock()
-					results = append(results, fmt.Sprintf("URL: %s | Title: %s", target, title))
-					// results = append(results, fmt.Sprintf("URL: %s | Body: %s", target, body))
-					mu.Unlock()
-
-					// Select a specific tag with a specific class (e.g., <div class="article-title">)
-					doc.Find("article.card").Each(func(i int, s *goquery.Selection) {
-						content := s.Text()
-						link, _ := s.Find("a").Attr("href")
-
-						mu.Lock()
-						results = append(results, fmt.Sprintf("  - Article Content: %s", content))
-						if link != "" {
-							results = append(results, fmt.Sprintf("  - Link: %s", link))
-						}
-						mu.Unlock()
-					})
-				} else {
-					mu.Lock()
-					results = append(results, fmt.Sprintf("%s: %d", target, resp.StatusCode))
-					mu.Unlock()
-				}
-
-				mu.Lock()
-				results = append(results, fmt.Sprint("===========================END URL============================\n"))
-				mu.Unlock()
-				resp.Body.Close()
+				fmt.Printf("Error parsing %s: %v\n", url, err)
+				results = append(results, fmt.Sprintf("Error parsing %s: %v\n", url, err))
+				continue
 			}
-		}(url)
+
+			// Example: Extract and save the <title> tag text
+			title := doc.Find("title").Text()
+			// body := doc.Find("body").Text()
+
+
+			// 2. Select a specific tag with a specific class (e.g., <div class="article-title">)
+			doc.Find("article.card").Each(func(i int, s *goquery.Selection) {
+			    // 3. Extract the text within the tag
+			    content := s.Text()
+
+				// URL and Title
+				results = append(results, fmt.Sprintf("URL: %s | Title: %s\n", url, title))
+				// Article Content
+				results = append(results, fmt.Sprintf("Article Content: %s\n", content))
+			    
+			    // Optional: Get an attribute like a link
+			    if link, exists := s.Find("a").Attr("href"); exists {
+			        // fmt.Println("Link found:", link)
+					results = append(results, fmt.Sprintf("Link found: %s\n", link))
+			    }
+			})
+		} else {
+			results = append(results, fmt.Sprintf("%s: %d", url, resp.StatusCode))
+		}
+
+		// Separator for each URL
+		results = append(results, fmt.Sprint("===========================END URL============================\n"))
 	}
 
-	wg.Wait() // Wait for all crawlers to finish
-	return C.CString(strings.Join(results, "\n"))
+	// 2. Join the slice into one multi-line string
+	finalOutput := strings.Join(results, "\n")
+
+	// 3. Convert Go string to C-string (Allocates memory!)
+	return C.CString(finalOutput)
 }
 
 //export FreeString
