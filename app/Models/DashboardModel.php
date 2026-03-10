@@ -24,7 +24,7 @@ class DashboardModel extends Model
         // $selectCols = $cols ?? '*';
         // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
         // $result = Model::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
-        // // dd($result, true);
+        // dd($result, true);
 
         // dd($request, true);
         // dd(config('app.url'), true);
@@ -35,7 +35,7 @@ class DashboardModel extends Model
         $data = [
             'data' => $modelA,
             // 'errors' => $errors ?? [],
-            'status' => $status ?? 201,
+            'status' => $status ?? 200,
             // 'message' => $message ?? 'testing index',
         ];
 

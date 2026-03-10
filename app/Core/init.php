@@ -13,6 +13,12 @@ if (!defined('BASEPATH')) {
  */
 require_once BASEPATH .'/vendor/autoload.php';
 
+// Muat file .env
+load_env();
+
+// Set defaut konfigurasi timezone PHP
+date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Jakarta'));
+
 // Gunakan Throwable untuk menangkap Error.
 set_exception_handler(function (Throwable $exception) {
     // 1. Ambil detail error
@@ -45,12 +51,6 @@ set_exception_handler(function (Throwable $exception) {
     include BASEPATH . "/views/error/500.php";
     die();
 });
-
-// Muat file .env
-load_env();
-
-// Set defaut konfigurasi timezone PHP
-date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Jakarta'));
 
 // Mendaftarkan konfigurasi ke aplikasi.
 use App\Core\Support\App;
