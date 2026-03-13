@@ -331,6 +331,104 @@ if (!function_exists('handle_json_request')) {
 }
 
 /**
+ * Refine the raw $_REQUEST data into native types
+ */
+if (!function_exists('refineRequest')) {
+    function refineRequest(array $request, array $rules): array {
+        $filters = [];
+        
+        foreach ($rules as $field => $ruleString) {
+            // Map Go-style rules back to PHP Filter constants
+            $tags = explode(',', $ruleString);
+            
+            if (in_array('numeric', $tags)) {
+                $filters[$field] = FILTER_VALIDATE_FLOAT; // Handles both int and float
+            } elseif (in_array('email', $tags)) {
+                $filters[$field] = FILTER_SANITIZE_EMAIL;
+            } else {
+                $filters[$field] = FILTER_DEFAULT;
+            }
+        }
+
+        // filter_var_array returns the refined data or null/false on failure
+        $refined = filter_var_array($request, $filters);
+        
+        // Manual cast for Booleans (since they often arrive as "true"/"false" strings)
+        foreach ($request as $key => $value) {
+            if ($value === 'true' || $value === '1') $refined[$key] = true;
+            if ($value === 'false' || $value === '0') $refined[$key] = false;
+        }
+
+        return $refined;
+    }
+}
+
+
+/**
+ * Validasi Struct berdasarkan tipe data.
+ * Mendukung Rules required, email, string, integer, float, boolean, dll.
+ * https://pkg.go.dev/github.com/go-playground/validator#section-documentation
+ */
+if (!function_exists('validateStructData')) {
+    function validateStructData($data, $rules) {
+        static $ffi = null;
+        if ($ffi === null) {
+            $ffi = FFI::cdef("
+                char* ValidateDynamic(char* input);
+                void free(void* ptr);
+            ", BASEPATH . "/ffi/lib/dynamic_validate.so");
+        }
+
+        // Wrap data and rules into one JSON object
+        $payload = json_encode([
+            "data"  => $data,
+            "rules" => $rules
+        ]);
+
+        $cResult = $ffi->ValidateDynamic($payload);
+        $response = json_decode(FFI::string($cResult), true);
+        $ffi->free($cResult);
+
+        return $response;
+    }
+}
+
+/**
+ * Get Struct roles
+ */
+if (!function_exists('parseStructToRules')) {
+    function parseStructToRules(string $className): array {
+        $reflection = new ReflectionClass($className);
+        $rules = [];
+
+        foreach ($reflection->getProperties() as $property) {
+            // FIX: Use the fully qualified class name for the attribute
+            $attributes = $property->getAttributes(\App\Core\Database\SchemaProperty::class);
+            
+            if (empty($attributes)) continue;
+
+            $attr = $attributes[0]->newInstance();
+            $goTags = [];
+
+            // ... (rest of your logic is correct)
+            if ($attr->required) $goTags[] = 'required';
+            if ($attr->email)    $goTags[] = 'email';
+            if ($attr->numeric)  $goTags[] = 'numeric';
+            if ($attr->gte !== null) $goTags[] = "gte={$attr->gte}";
+            if ($attr->lte !== null) $goTags[] = "lte={$attr->lte}";
+            if ($attr->min !== null) $goTags[] = "min={$attr->min}";
+            if ($attr->max !== null) $goTags[] = "max={$attr->max}";
+            if (!empty($attr->custom)) $goTags[] = $attr->custom;
+
+            $rules[$property->getName()] = implode(',', $goTags);
+        }
+
+        return $rules;
+    }
+}
+
+
+/**
  * Mengirimkan respons JSON yang standar dan menghentikan eksekusi script.
  */
 if (!function_exists('json_response')) {

@@ -21,7 +21,9 @@ $page = ($segments[0] !== '') ? $segments[0] : 'dashboard';
 include "static-router.php";
 
 // Auto Load Model if exists
+$structName = ucwords($page) . 'Struct';
 $modelName = ucwords($page) . 'Model';
+$structPath = BASEPATH . "/app/Structs/" . $structName . ".php";
 $modelPath = BASEPATH . "/app/Models/" . $modelName . ".php";
 if (file_exists($modelPath)) { 
     // Cek url edit, lalu tambahkan param $_GET['id']

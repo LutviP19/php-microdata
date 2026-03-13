@@ -18,9 +18,6 @@ if(!handle_json_request()) {
     die();
 }
 
-// Auth
-
-
 // Bersihkan lagi seluruh input $_REQUEST setelah di konversi
 $_REQUEST = sanitize($_REQUEST);
 $_POST = sanitize($_POST);
@@ -29,6 +26,27 @@ $_GET = sanitize($_GET);
 // Check var $modelName
 if(!isset($modelName)) {
     throw new Exception("var modelName not set.");
+}
+
+// Validate Struct
+if (file_exists($structPath)) {
+    $structName = '\\App\\Structs\\'.$structName;
+    $structClass = new $structName();
+    $rules = parseStructToRules($structClass::class);
+    // // $rules = parseStructToRules(\App\Structs\DashboardStruct::class);
+    // dd($rules);
+
+    // Refine the raw $_REQUEST data into native types
+    $safeData = refineRequest($_REQUEST, $rules);
+
+    // Then call your FFI function
+    $result = validateStructData($safeData, $rules);
+    // dd($result);
+
+    if(isset($result['errors'])) {
+        json_response([], 406, 'Validation errors', $result['errors']);
+        die();
+    }
 }
 
 // Create a new instance from $className

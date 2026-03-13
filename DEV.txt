@@ -134,3 +134,13 @@ go build -o ../../lib/sanitize.so -buildmode=c-shared ./sanitize.go
 go build -buildmode=c-shared -o ./ffi/lib/sanitize.so ./ffi/source/sanitize/sanitize.go
 
 
+Validator:
+---------
+cd ffi/source/dynamic_validate
+go mod init phpffi.lutvi/dynamic_validate
+go mod tidy
+
+go build -o ../../lib/dynamic_validate.so -buildmode=c-shared ./dynamic_validate.go
+
+go build -buildmode=c-shared -o ./ffi/lib/dynamic_validate.so ./ffi/source/dynamic_validate/dynamic_validate.go
+

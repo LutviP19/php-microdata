@@ -59,3 +59,4 @@ App::register('config', require BASEPATH . '/config/app.php');
 // Jalankan fungsi CORS
 handle_cors();
 
+// Auth
