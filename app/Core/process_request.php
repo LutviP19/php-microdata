@@ -11,10 +11,17 @@
 require_once 'init.php';
 // dd(BASEPATH);
 
-// Otomatis konversi JSON ke array
-handle_json_request();
+// Otomatis validasi format JSON dan sanitize JSON dengan FFI
+// kemudian JSON dikonversi ke $_REQUEST
+if(!handle_json_request()) {
+    json_response([], 406, 'Invalid JSON', ['input' => 'Invalid JSON format.']);
+    die();
+}
 
-// Bersihkan seluruh input $_REQUEST
+// Auth
+
+
+// Bersihkan lagi seluruh input $_REQUEST setelah di konversi
 $_REQUEST = sanitize($_REQUEST);
 $_POST = sanitize($_POST);
 $_GET = sanitize($_GET);

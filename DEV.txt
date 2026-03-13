@@ -122,3 +122,15 @@ RabbitMQ:
 php cron/rabbitmq-receiver.php 
 php cron/rabbitmq-send.php
 
+
+Sanitize:
+---------
+cd ffi/source/sanitize
+go mod init phpffi.lutvi/sanitize
+go mod tidy
+
+go build -o ../../lib/sanitize.so -buildmode=c-shared ./sanitize.go
+
+go build -buildmode=c-shared -o ./ffi/lib/sanitize.so ./ffi/source/sanitize/sanitize.go
+
+

@@ -199,6 +199,36 @@ if (!function_exists('is_json_request')) {
 }
 
 /**
+ * Sanitasi JSON berdasarkan tipe data.
+ * Mendukung string, integer, float, boolean, dan array secara rekursif.
+ */
+if (!function_exists('sanitizeJson')) {
+    function sanitizeJson($dataJson) {
+        // Ensure input is a string (if passed as an array/object)
+        $input = is_string($dataJson) ? $dataJson : json_encode($dataJson);
+
+        $ffi = FFI::cdef("
+            char* SanitizeJSON(char* input);
+            void free(void* ptr);
+        ", BASEPATH . "/ffi/lib/sanitize.so");
+
+        $cResult = $ffi->SanitizeJSON($input);
+        
+        if ($cResult === null) {
+            return null;
+        }
+
+        // Convert the C pointer back to a PHP string
+        $safeJson = FFI::string($cResult);
+
+        // Free the memory allocated by Go's C.CString
+        $ffi->free($cResult);
+
+        return $safeJson;
+    }
+}
+
+/**
  * Sanitasi input berdasarkan tipe data.
  * Mendukung string, integer, float, boolean, dan array secara rekursif.
  */
@@ -233,6 +263,7 @@ function handle_cors() {
 
     // 1. Ambil string dari .env, default ke '*' jika kosong
     $envOrigins = env('ALLOWED_ORIGINS', '*');
+    // dd($envOrigins);
     
     // 2. Ubah string menjadi array
     $allowedOrigins = ($envOrigins !== '*') 
@@ -277,7 +308,14 @@ if (!function_exists('handle_json_request')) {
         if (stripos($contentType, 'application/json') !== false) {
             // Ambil data mentah dari body
             $rawInput = file_get_contents('php://input');
-            $decoded = json_decode($rawInput, true);
+
+            // Sanitize Json
+            $dataJson = sanitizeJson($rawInput);
+            $decoded = json_decode($dataJson, true);
+            // dd($decoded);
+            if(isset($decoded['error'])) {
+                return false;
+            }
 
             // Jika JSON valid, gabungkan ke dalam $_REQUEST
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
@@ -287,7 +325,7 @@ if (!function_exists('handle_json_request')) {
                 $_POST = array_merge($_POST, $decoded);
                 return true;
             }
-        }
+        }        
         return false;
     }
 }
