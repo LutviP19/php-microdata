@@ -5,7 +5,11 @@
     "keywords": ["php8", "ffi", "cronjob"],
     "require": {
         "php": "^8.2",
-        "phpstreamserver/scheduler": "^0.8.1"
+        "phpstreamserver/scheduler": "^0.8.1",
+        "meilisearch/meilisearch-php": "^1.16",        
+        "php-http/curl-client": "^2.4",
+        "nyholm/psr7": "^1.8",
+        "php-amqplib/php-amqplib": "^3.7"
     },
     "autoload": {
         "psr-4": {
@@ -14,5 +18,10 @@
         "files": [
             "app/Helpers/helpers.php"
         ]
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     }
 }

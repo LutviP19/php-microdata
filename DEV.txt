@@ -110,3 +110,15 @@ php cron/test.php >> ./storage/logs/test.txt
 php cron/crawler.php >> ./storage/logs/crawler-out.txt
 php cron/crawler.php > ./storage/logs/crawler-out.txt
 
+
+
+Meilisearch:
+------------
+php cron/meiliserach.php
+
+
+RabbitMQ:
+---------
+php cron/rabbitmq-receiver.php 
+php php cron/rabbitmq-send.php
+
