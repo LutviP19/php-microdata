@@ -1,6 +1,19 @@
-<?php
+<?php 
 
-require_once __DIR__ . '/../vendor/autoload.php';
+/**
+ *  @author Lutvip19 <lutvip19@gmail.com>
+ */
+
+// file: cron/rabbitmq-receiver.php
+
+if (!defined('BASEPATH')) {
+    define('BASEPATH', __DIR__ . "/..");
+}
+
+/**
+ * Require Core init File.
+ */
+require_once BASEPATH .'/app/Core/init.php';
 
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
