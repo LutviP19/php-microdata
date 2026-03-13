@@ -59,4 +59,53 @@ App::register('config', require BASEPATH . '/config/app.php');
 // Jalankan fungsi CORS
 handle_cors();
 
-// Auth
+// INI Set Session
+if (session_status() == PHP_SESSION_NONE) {
+    try {
+        //Starting the session will be the first we do.
+        ini_set('session.save_handler', env('SESSION_DRIVER', 'files'));
+        
+        if (env('SESSION_DRIVER') === "redis") {
+            ini_set('session.save_path', "tcp://" . env('REDIS_HOST') . ":" . env('REDIS_PORT') . "?auth" . env('REDIS_PASSWORD'));
+            ini_set('session.gc_maxlifetime', (env('SESSION_LIFETIME', 120) * 60)); // Set default to 2 hours
+        } else {
+            ini_set('session.save_handler', 'files');
+            ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
+        }            
+    } catch (\Exception $e) {
+        $errLog = "An unexpected error occurred: " . $e->getMessage();
+        write_log('error', $errLog, 'session.save_path.Redis');
+
+        // Fallback to default driver
+        ini_set('session.save_handler', 'files');
+        ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
+    }
+
+    session_name('PHPFFISESSID'); // Set a custom session name
+    // @session_start();
+    bp_session_start();
+
+    // Set Client Identity
+    $_SESSION['IPaddress'] = clientIP();
+    $_SESSION['userAgent'] = $_SERVER['HTTP_USER_AGENT'] ?: "Unknown";
+} 
+
+
+// Auth Session
+if($_COOKIE['PHPFFISESSID']){
+    // // Test Invalid
+    // $_SESSION['IPaddress'] = '192.168.0.101';
+
+    if(!checkSession()) {
+        if (is_json_request()) {
+            json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
+        } else {
+            http_response_code(403);
+            // include BASEPATH . "/views/error/403.php";
+            echo '<h1 style="color:orange;">403 Forbidden.</h1>';
+        }
+        die;
+    }
+}
+
+

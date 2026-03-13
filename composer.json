@@ -16,7 +16,8 @@
             "App\\": "app/"
         },
         "files": [
-            "app/Helpers/helpers.php"
+            "app/Helpers/helpers.php",
+            "app/Helpers/inject_php.php"
         ]
     },
     "config": {
