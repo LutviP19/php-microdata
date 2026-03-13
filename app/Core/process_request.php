@@ -13,7 +13,7 @@ require_once 'init.php';
 
 // Otomatis validasi format JSON dan sanitize JSON dengan FFI
 // kemudian JSON dikonversi ke $_REQUEST
-if(!handle_json_request()) {
+if(is_json_request() && !handle_json_request()) {
     json_response([], 406, 'Invalid JSON', ['input' => 'Invalid JSON format.']);
     die();
 }
@@ -29,7 +29,7 @@ if(!isset($modelName)) {
 }
 
 // Validate Struct
-if (file_exists($structPath)) {
+if (is_json_request() && file_exists($structPath)) {
     $structName = '\\App\\Structs\\'.$structName;
     $structClass = new $structName();
     $rules = parseStructToRules($structClass::class);
