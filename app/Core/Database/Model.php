@@ -18,7 +18,7 @@ class Model
      * and primary key property with extending to
      * a model.
      *
-     * @var QueryBuilder|null
+     * @var Model|null
      */
     private static $instance = null;
 
@@ -84,7 +84,7 @@ class Model
      * Create a new instance or return the
      * previously created instance.
      *
-     * @return App\Core\Database\QueryBuilder
+     * @return App\Core\Database\Model
      */
     protected static function instance()
     {
@@ -96,7 +96,7 @@ class Model
      * database without models.
      *
      * @param string $table
-     * @return QueryBuilder
+     * @return Model
      */
     public static function table($table)
     {
@@ -142,7 +142,7 @@ class Model
      * Set parameters for current statement.
      *
      * @param array|[] $params
-     * @return App\Core\Database\QueryBuilder
+     * @return App\Core\Database\Model
      */
     protected function setParams($params = [])
     {
@@ -166,7 +166,7 @@ class Model
      * Set the current SQL statement.
      *
      * @param string $sql
-     * @return App\Core\Database\QueryBuilder
+     * @return App\Core\Database\Model
      */
     protected function setSQL($sql)
     {

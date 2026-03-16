@@ -57,6 +57,8 @@ if (!function_exists('refineRequest')) {
                 $filters[$field] = FILTER_VALIDATE_FLOAT; // Handles both int and float
             } elseif (in_array('email', $tags)) {
                 $filters[$field] = FILTER_SANITIZE_EMAIL;
+            } elseif (in_array('url', $tags)) {
+                $filters[$field] = FILTER_SANITIZE_URL;
             } else {
                 $filters[$field] = FILTER_DEFAULT;
             }
@@ -67,8 +69,8 @@ if (!function_exists('refineRequest')) {
         
         // Manual cast for Booleans (since they often arrive as "true"/"false" strings)
         foreach ($request as $key => $value) {
-            if ($value === 'true' || $value === '1') $refined[$key] = true;
-            if ($value === 'false' || $value === '0') $refined[$key] = false;
+            if ($value === 'true') $refined[$key] = true;
+            if ($value === 'false') $refined[$key] = false;
         }
 
         return $refined;
@@ -167,6 +169,42 @@ function clientIP()
     }
 
     return $ip == '::1' ? '127.0.0.1' : $ip;
+}
+
+/**
+ * setHeaders function, to add header response
+ *
+ * @param  array $headers
+ *
+ * @return bool
+ */
+function setHeaders($headers = [])
+{
+    if(count($headers)) {
+        foreach ($headers as $header) {
+            if(is_array($header)) {
+                foreach ($header as $key => $value)
+                header("{$key}: {$value}");
+            }
+        }
+    }
+}
+
+/**
+ * sort function to generate ulid
+ *
+ * @param  boolean $lowercased
+ * @param  int  $timestamp
+ *
+ * @return string
+ */
+function generateUlid($lowercased = false, $timestamp = null): string
+{
+    if (!is_null($timestamp)) {
+        return (string) \App\Core\Support\Ulid::fromTimestamp($timestamp, $lowercased);
+    }
+
+    return (string) \App\Core\Support\Ulid::generate($lowercased);
 }
 
 function checkSession()

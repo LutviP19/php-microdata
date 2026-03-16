@@ -82,17 +82,16 @@ if (session_status() == PHP_SESSION_NONE) {
     }
 
     session_name('PHPFFISESSID'); // Set a custom session name
-    // @session_start();
     bp_session_start();
 
     // Set Client Identity
     $_SESSION['IPaddress'] = clientIP();
     $_SESSION['userAgent'] = $_SERVER['HTTP_USER_AGENT'] ?: "Unknown";
-} 
+}
 
 
 // Auth Session
-if($_COOKIE['PHPFFISESSID']){
+if(isset($_COOKIE['PHPFFISESSID'])){
     // // Test Invalid
     // $_SESSION['IPaddress'] = '192.168.0.101';
 

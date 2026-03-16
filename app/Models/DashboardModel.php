@@ -6,20 +6,57 @@
 namespace App\Models;
 
 
-use App\Core\Database\Model;
+// use App\Core\Database\Model;
+use App\Core\Support\Session;
 
-class DashboardModel extends Model
+use PDO; // new PDO object
+
+class DashboardModel extends CoreModel
 {
-    public function __construct()
+
+    /**
+     * static table name for this model.
+     *
+     * @var string
+     */
+    protected static $tableM = "users";
+
+    public function __construct(PDO $pdo = null)
     {
-        parent::__construct();
+        // // Custom connection
+        // $driver = '';
+        // $name = '';
+        // $host = '';
+        // $port = '';
+        // $username = '';
+        // $password = '';
+        // $options = [];
+        // $conn = $pdo ?: Connection::custom($driver, $name, $host, $port, $username, $password, $options);
+        // parent::__construct($conn);
+        
+        // Default connection
+        parent::__construct($pdo);
 
         // Set default table
-        $this->table = 'roles';
+        $this->table = self::$tableM;
     }
 
     public function index(?array $request = [])
     {
+        // // Test Session
+        // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
+        // $data = CoreModel::table($this->table)->execQuery($sql, [], false, false, true);
+        // dd($data);
+
+        // // Testing Regenerate SessioId
+        // $oldSessionId = session_id();
+        // $headers = bp_session_regenerate_id($oldSessionId);
+        // setHeaders($headers);
+
+        // // Session::set('jwtId', generateUlid());
+        // dd(Session::get('jwtId'));
+
+
 
         // $selectCols = $cols ?? '*';
         // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';

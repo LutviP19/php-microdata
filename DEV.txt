@@ -144,3 +144,11 @@ go build -o ../../lib/dynamic_validate.so -buildmode=c-shared ./dynamic_validate
 
 go build -buildmode=c-shared -o ./ffi/lib/dynamic_validate.so ./ffi/source/dynamic_validate/dynamic_validate.go
 
+
+
+// Benchmark
+ab -c 128 -n 10000 -k http://localhost:8000/health 2>&1
+
+// Cleaner
+php cron/cleanTmp.php
+

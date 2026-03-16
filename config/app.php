@@ -67,4 +67,13 @@ return [
         ],
     ],
 
+    /**
+     * Session
+     */
+    'session' => [
+        'csrf_token' => 'csrf_token',
+        'lifetime' => (int) env('SESSION_LIFETIME', 120),
+        'encrypt' => env('SESSION_ENCRYPT', false),
+    ],
+
 ];

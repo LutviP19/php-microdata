@@ -9,7 +9,8 @@
         "meilisearch/meilisearch-php": "^1.16",        
         "php-http/curl-client": "^2.4",
         "nyholm/psr7": "^1.8",
-        "php-amqplib/php-amqplib": "^3.7"
+        "php-amqplib/php-amqplib": "^3.7",
+        "robinvdvleuten/ulid": "^5.0"
     },
     "autoload": {
         "psr-4": {

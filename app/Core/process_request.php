@@ -5,11 +5,6 @@
 // process_request.php
 // Global process request and Response output
 
-/**
- * Require Core init File.
- */
-require_once 'init.php';
-// dd(BASEPATH);
 
 // Otomatis validasi format JSON dan sanitize JSON dengan FFI
 // kemudian JSON dikonversi ke $_REQUEST
@@ -33,7 +28,6 @@ if (is_json_request() && file_exists($structPath)) {
     $structName = '\\App\\Structs\\'.$structName;
     $structClass = new $structName();
     $rules = parseStructToRules($structClass::class);
-    // // $rules = parseStructToRules(\App\Structs\DashboardStruct::class);
     // dd($rules);
 
     // Refine the raw $_REQUEST data into native types
@@ -53,7 +47,7 @@ if (is_json_request() && file_exists($structPath)) {
 $className = '\\App\\Models\\'.$modelName;
 $modelClass = new $className();
 
-// Check $modelClass is has validMethods
+// Check $modelClass is has default validMethods
 $validMethods = (method_exists($modelClass,'index') && 
                     method_exists($modelClass,'store') && 
                     method_exists($modelClass,'edit') && 

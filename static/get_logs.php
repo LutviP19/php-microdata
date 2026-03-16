@@ -15,3 +15,4 @@ if (file_exists($logFile)) {
 } else {
     echo "Belum ada log.";
 }
+exit();

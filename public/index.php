@@ -20,20 +20,30 @@ $page = ($segments[0] !== '') ? $segments[0] : 'dashboard';
 // Static router untuk execute file php
 include "static-router.php";
 
-// Auto Load Model if exists
-$structName = ucwords($page) . 'Struct';
-$modelName = ucwords($page) . 'Model';
-$structPath = BASEPATH . "/app/Structs/" . $structName . ".php";
-$modelPath = BASEPATH . "/app/Models/" . $modelName . ".php";
-if (file_exists($modelPath)) { 
-    // Cek url edit, lalu tambahkan param $_GET['id']
-    if(isset($segments[1])) {
-        $_GET['id'] = $segments[1];
-    }
 
-    include_once $modelPath;
-    include_once BASEPATH .'/app/Core/process_request.php';
+// Look for the model name in the router file
+include BASEPATH . "/config/router.php";
+$model = $router[$page] ?: null;
+// dd($model);
+if(!empty($model)) {
+    // Auto Load Model if exists
+    $structName = ucwords($model) . 'Struct';
+    $modelName = ucwords($model) . 'Model';
+    $structPath = BASEPATH . "/app/Structs/" . $structName . ".php";
+    $modelPath = BASEPATH . "/app/Models/" . $modelName . ".php";
+    if (file_exists($modelPath)) {
+        // Cek url edit, lalu tambahkan param $_GET['id']
+        if(isset($segments[1]) && is_numeric($segments[1])) {
+            $_GET['id'] = (int) $segments[1];
+        }
+        // dd($_GET);
+
+        include_once $modelPath;
+        include_once BASEPATH .'/app/Core/process_request.php';
+    }
 }
+
+
 
 // Load View
 // Cek apakah ini request dari HTMX
