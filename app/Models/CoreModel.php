@@ -11,6 +11,7 @@ use App\Core\Database\Model;
 use PDO;
 use Exception;
 use PDOException;
+use App\Core\Database\Connection;
 
 class CoreModel extends Model
 {
@@ -23,7 +24,14 @@ class CoreModel extends Model
 
     public function __construct(PDO $pdo = null)
     {
-        parent::__construct($pdo);
+        $conn = $pdo ?: Connection::make();
+        parent::__construct($conn);
+
+        // Set PDO connection
+        $this->setPDO($conn);
+    
+        // Set default table
+        // $this->table = self::$tableM;
     }
 
 

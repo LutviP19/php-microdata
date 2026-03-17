@@ -8,37 +8,29 @@ namespace App\Models;
 
 use App\Core\Support\Session;
 use App\Structs\DashboardStruct;
-// use App\Core\Database\Connection; // Uncomment to use custom DB connection
+use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
 // class DashboardModel extends CoreModel
 class DashboardModel extends DashboardStruct
 {
 
-    /**
-     * static table name for this model.
-     *
-     * @var string
-     */
-    // protected static $tableM = "users";
-
     public function __construct()
     {
-        // // Global Custom connection
-        // $driver = '';
-        // $name = '';
-        // $host = '';
-        // $port = '';
-        // $username = '';
-        // $password = '';
+        // // Global Set Custom connection
+        // $driver = 'mysql';
+        // $name = 'test';
+        // $host = '127.0.0.1';
+        // $port = '3306';
+        // $username = 'rootx';
+        // $password = 'aa';
         // $options = [];
         // $conn = Connection::custom($driver, $name, $host, $port, $username, $password, $options);
         // parent::__construct($conn);
+        // $this->setPDO($conn);
+        
         
         // Default connection
-        parent::__construct($pdo);
-
-        // Set default table
-        // $this->table = self::$tableM;
+        parent::__construct();
     }
 
     public function index(?array $request = [])

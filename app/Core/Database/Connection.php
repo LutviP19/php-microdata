@@ -2,6 +2,7 @@
 
 /**
  * Connection class
+ * @package Backend-PHP
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
@@ -47,6 +48,45 @@ class Connection
                 // $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Set error mode for better error handling
             }
             // dd($pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
+
+            return $pdo;
+
+        } catch (PDOException $e) {
+            die($e->getMessage());
+        }
+    }
+
+    /**
+     * Method make Custom PDO connection
+     *
+     * @return void
+     */
+    public static function custom($driver = '', $dbname = '', $host = '', $port = '', $username = '', $password = '', $options = [])
+    {
+        try {
+            $driver = $driver ?: Config::get('default_db');
+
+
+            if ($driver !== 'sqlite') {
+                // dd("{$driver}:host={$host};port={$port};dbname={$dbname}");
+                // dd(['username' => $username, 'password' => $password, 'options' => $options]);
+
+                $pdo = new PDO(
+                    "{$driver}:host={$host};port={$port};dbname={$dbname}",
+                    $username,
+                    $password,
+                    $options
+                );
+
+            } else {
+                $databaseFile = database_path($dbname);
+                // dd("sqlite:{$databaseFile}");
+
+                $pdo = new PDO("sqlite:{$databaseFile}");
+                // $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Set error mode for better error handling
+            }
+            // dd($pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
+
 
             return $pdo;
 

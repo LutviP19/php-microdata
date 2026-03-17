@@ -10,7 +10,7 @@ namespace App\Structs;
 use App\Core\Database\SchemaProperty;
 use App\Models\CoreModel;
 use PDO; // new PDO object
-// use App\Core\Database\Connection; // Uncomment to use custom DB connection
+use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
 class DashboardStruct extends CoreModel {
 
@@ -32,19 +32,21 @@ class DashboardStruct extends CoreModel {
      * @var string
      */
     protected static $tableM = "users";
+    // public static $tableM;
 
     public function __construct(PDO $pdo = null)
     {
-        // // Custom connection
-        // $driver = '';
-        // $name = '';
-        // $host = '';
-        // $port = '';
-        // $username = '';
-        // $password = '';
+        // // Global Set Custom connection
+        // $driver = 'mysql';
+        // $name = 'test';
+        // $host = '127.0.0.1';
+        // $port = '3306';
+        // $username = 'rooty';
+        // $password = 'cccc';
         // $options = [];
         // $conn = $pdo ?: Connection::custom($driver, $name, $host, $port, $username, $password, $options);
         // parent::__construct($conn);
+        // $this->setPDO($conn);
         
         // Default connection
         parent::__construct($pdo);
