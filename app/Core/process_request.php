@@ -26,13 +26,13 @@ if(!isset($modelName)) {
 
 // Validate Struct
 if (is_json_request() && file_exists($structPath)) {
-    $structName = '\\App\\Structs\\'.$structName;    
+    $structNameSpace = '\\App\\Structs\\'.$structName;
 
     switch ($requestMethod) {
         case 'POST':
         case 'PUT':
         case 'PATCH':
-            $structClass = new $structName();
+            $structClass = new $structNameSpace();
             $rules = parseStructToRules($structClass::class);
             // dd($rules);
 
@@ -40,16 +40,57 @@ if (is_json_request() && file_exists($structPath)) {
             $safeData = refineRequest($_REQUEST, $rules);
             // dd($safeData);
 
+            if(isset($_REQUEST['id'])) {
+                $rules += ["id" => "required,numeric,min=1"];
+                // Refine the raw $_REQUEST data into native types
+                $id =  $_GET['id'] ?? $_POST['id'];
+                // dd($id);
+                $safeData += refineRequest(["id" => $id], $rules);
+            }
+
             $result = validateStructData($safeData, $rules);
             break;
         case 'GET':
             // Process GET data
             if(isset($_GET['id'])) {
-                $result = validateStructData(["id" => $_GET['id']], ["id" => "required,numeric,min=1"]);
+                $rules = ["id" => "required,numeric,min=1"];
+                // Refine the raw $_REQUEST data into native types
+                $safeData = refineRequest(["id" => $_GET['id']], $rules);
+
+                $result = validateStructData($safeData, $rules);
+            } else {
+                $rules = $safeData = [];
+                if(isset($_REQUEST['page'])) {
+                    $rules['page'] = "numeric,min=1";
+                    $safeData += refineRequest(["page" => $_REQUEST['page']], $rules);
+                }
+                if(isset($_REQUEST['limit'])) {
+                    $rules['limit'] = "numeric,min=10";
+                    $safeData += refineRequest(["limit" => $_REQUEST['limit']], $rules);
+                }
+                if(isset($_REQUEST['offset'])) {
+                    $rules['offset'] = "numeric,min=0";
+                    $safeData += refineRequest(["offset" => $_REQUEST['offset']], $rules);
+                }
+                // Refine the raw $_REQUEST data into native types
+                // $safeData = refineRequest($_REQUEST, $rules);
+
+                
+                // dd($_REQUEST);
+                // dd($safeData);
+                // dd($rules);
+
+                if(!empty($rules)) {
+                    $result = validateStructData($safeData, $rules);
+                    // dd($result);
+                }
             }
             break;
         case 'DELETE':
-            $result = validateStructData(["id" => $_GET['id'] ?? $_POST['id']], ["id" => "required,numeric,min=1"]);
+            $rules = ["id" => "required,numeric,min=1"];
+            // Refine the raw $_REQUEST data into native types
+            $safeData = refineRequest(["id" => $_GET['id'] ?? $_POST['id']], $rules);
+            $result = validateStructData($safeData, $rules);
             break;
         default:
             $result = [];
@@ -60,6 +101,8 @@ if (is_json_request() && file_exists($structPath)) {
         json_response([], 406, 'Validation errors', $result['errors']);
         die();
     }
+
+    $_REQUEST = $safeData;
 }
 
 // Create a new instance from $className
@@ -77,10 +120,11 @@ if(false === $validMethods) {
     throw new Exception("modelClass $className not valid, must have methods 'index', 'store', 'edit', 'update' and 'destroy'.");
 }
 
+$request = &$_REQUEST;
 switch ($requestMethod) {
     case 'GET':
         // Process GET data
-        $request = &$_REQUEST;
+        
         if(isset($_GET['id'])) {
             $dataModel = $modelClass->edit($request);
         } else {
@@ -89,18 +133,18 @@ switch ($requestMethod) {
         break;
     case 'POST':
         // Process POST data
-        $request = &$_POST;
+        // $request = &$_POST;
         $dataModel = $modelClass->store($request);
         break;
     case 'PUT':
     case 'PATCH':
         // Handle PUT & PATCH request
-        $request = &$_POST;
+        // $request = &$_REQUEST;
         $dataModel = $modelClass->update($request);
         break;
     case 'DELETE':
         // Handle DELETE request
-        $request = &$_POST;
+        // $request = &$_REQUEST;
         $dataModel = $modelClass->destroy($request);
         break;
     default:

@@ -27,7 +27,7 @@ try {
     // Send PATCH to Enabling the experimental feature
     $clientGuzzle = new GuzzleClient([
         // Base URI is used with relative requests
-        'base_uri' => 'http://127.0.0.1:7700',
+        'base_uri' => env('MEILISEARCH_URL', 'http://localhost:7700'),
         // You can set default request options here
         'timeout'  => 2.0,
     ]);
@@ -37,7 +37,7 @@ try {
             'containsFilter' => true,
         ],
         'headers' => [
-            'Authorization' => 'Bearer ms',
+            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
             'Accept'        => 'application/json',
         ]
     ]);
@@ -76,7 +76,7 @@ try {
 }
 
 // Melisearch Client
-$client = new MelisearchClient('http://127.0.0.1:7700', 'ms');
+$client = new MelisearchClient(env('MEILISEARCH_URL', 'http://localhost:7700'), env('MEILISEARCH_KEY', 'ms'));
 
 // Add Documents to Your PHP Search Engine
 $index = $client->index('movies');

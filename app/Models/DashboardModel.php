@@ -81,6 +81,7 @@ class DashboardModel extends DashboardStruct
         
 
         $modelA = [
+            'request' => $request,
             'table' => $this->table,
             'data' => $structDB->getAllData(),
             'title' => $request['title'] ?? 'Testing model',
