@@ -6,6 +6,7 @@
 namespace App\Models;
 
 
+use App\Core\Support\EncryptDecrypt;
 use App\Core\Support\Session;
 use App\Structs\DashboardStruct;
 use App\Core\Database\Connection; // Uncomment to use custom DB connection
@@ -115,6 +116,28 @@ class DashboardModel extends DashboardStruct
 
     public function edit(?array $request = [])
     {
+        // // Generate random App Key
+        // $appKey = generateAppKey();
+        // die($appKey);
+
+        // Test EncryptDecrypt
+        // $enc = new EncryptDecrypt(); // Otomatis ambil dari Config::get('app.key')
+
+        // // Enkripsi
+        // // $encrypted = $enc->encrypt(['id' => 123, 'secret' => 'rahasia']);
+        // $encrypted = encryptData(['id' => 123, 'secret' => 'rahasia']);
+        // // die($encrypted); // Output: Base64 string panjang
+
+        // // // Dekripsi
+        // // $decrypted = $enc->decrypt($encrypted);
+        // $decrypted = decryptData($encrypted);
+        // // dd($decrypted, true); // Output: Array ( [id] => 123 [secret] => rahasia )
+
+        // // Match data
+        // $match = matchEncryptedData($decrypted, $encrypted);
+        // dd($match);
+        
+
         $modelA = [
             'table' => $this->table,
             'data' => (new DashboardStruct())->getAllData(1),

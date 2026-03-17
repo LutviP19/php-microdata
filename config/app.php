@@ -26,6 +26,7 @@ return [
         'env' => env('APP_ENV', 'production'),
         'debug' => (bool) env('APP_DEBUG', false),
         'logdir' => BASEPATH . '/storage/logs/',
+        'key' => env('APP_KEY', 'base64:AA2L6m2LEf0WzxHpVuHxkLZEd7vsm6TWDGUUAjmYGnk='),
     ],
 
     /**

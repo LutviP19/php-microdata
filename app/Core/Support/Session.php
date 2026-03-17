@@ -6,6 +6,7 @@ use App\Core\Support\Config;
 
 /**
  * Handle all the stuff related to session.
+ * @package Backend-PHP
  * @author Lutvi <lutvip19@gmail.com>
  */
 class Session
@@ -26,7 +27,7 @@ class Session
                 continue;
             }
 
-            $sessions[$key] = $value;
+            $sessions[$key] = env('SESSION_ENCRYPT') ? decryptData($value) : $value;
         }
 
         return $sessions;
@@ -41,7 +42,7 @@ class Session
      */
     public static function get($key)
     {
-        return self::has($key) == true ? $_SESSION[$key] : '';
+        return self::has($key) == true ? (env('SESSION_ENCRYPT') ? decryptData($_SESSION[$key]) : $_SESSION[$key]): '';
     }
 
     /**
@@ -53,7 +54,7 @@ class Session
      */
     public static function set($key, $value)
     {
-        return (bool)($_SESSION[$key] = $value);
+        return (bool)($_SESSION[$key] = env('SESSION_ENCRYPT') ? encryptData($value) : $value);
     }
 
     /**

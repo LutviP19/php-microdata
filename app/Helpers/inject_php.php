@@ -191,6 +191,100 @@ function setHeaders($headers = [])
 }
 
 /**
+ * Generates random keys for AES-256 encryption (32 bytes).
+ * Output in Base64 format with prefix 'base64:'
+ */
+function generateAppKey() {
+    // AES-256 requires a key that is 32 bytes (256 bits) long.
+    $bytes = random_bytes(32);
+    
+    // Encode to base64 for safe text format
+    return 'base64:' . base64_encode($bytes);
+}
+
+/**
+ * Match encryption data
+ *
+ * @param  [string] $value
+ * @param  [string] $encryptedData
+ * @param  [string] $key
+ *
+ * @return mixed
+ */
+function matchEncryptedData($value, $encryptedData, $key = null)
+{
+    try {
+        $encryption = new \App\Core\Support\EncryptDecrypt($key);
+        return $encryption->match($value, $encryptedData);
+    } catch (Throwable $ex) {
+        if (config('app.debug')) {
+            \write_log([
+                'message' => $ex->getMessage(),
+                'file' => $ex->getFile(),
+                'line' => $ex->getLine(),
+                // 'trace' => $ex->getTraceAsString(),
+            ], 'InjectHelper.matchEncryptedData', 'eeror', 'error_ENCRYPTION.log');
+        }
+
+        return false;
+    }
+}
+
+/**
+ * sort function to encypt data
+ *
+ * @param  [string] $value
+ * @param  [string] $key
+ *
+ * @return string|null
+ */
+function encryptData($value, $key = null)
+{
+    try {
+        $encryption = new \App\Core\Support\EncryptDecrypt($key);
+        return $encryption->encrypt($value);
+    } catch (Throwable $ex) {
+        if (config('app.debug')) {
+            \write_log([
+                'message' => $ex->getMessage(),
+                'file' => $ex->getFile(),
+                'line' => $ex->getLine(),
+                // 'trace' => $ex->getTraceAsString(),
+            ], 'InjectHelper.encryptData', 'error', 'error_ENCRYPTION.log');
+        }
+
+        return null;
+    }
+}
+
+/**
+ * sort function to decypt data
+ *
+ * @param  [string] $value
+ * @param  [string] $key
+ *
+ * @return string|null
+ */
+function decryptData($value, $key = null)
+{
+    try {
+        $encryption = new \App\Core\Support\EncryptDecrypt($key);
+        return $encryption->decrypt($value);
+    } catch (Throwable $ex) {
+        if (config('app.debug')) {
+            \write_log([
+                'message' => $ex->getMessage(),
+                'file' => $ex->getFile(),
+                'line' => $ex->getLine(),
+                // 'trace' => $ex->getTraceAsString(),
+            ], 'InjectHelper.decryptData', 'error', 'error_ENCRYPTION.log');
+        }
+
+        return null;
+    }
+}
+
+/**
  * sort function to generate ulid
  *
  * @param  boolean $lowercased
