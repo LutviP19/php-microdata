@@ -72,7 +72,7 @@ class DashboardModel extends DashboardStruct
         // // Test Session
         // // Session::set('jwtId', generateUlid());
         // dd(Session::get('jwtId'));
-        
+
 
         // $selectCols = $cols ?? '*';
         // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
@@ -81,9 +81,21 @@ class DashboardModel extends DashboardStruct
 
         // dd($request, true);
         // dd(config('app.url'), true);
-        
+
+
+        // // Pagination
+        // $page = $request['page'] ?? 1;
+        // $limit = 10;
+        // // $structDB->table = 'assets';
+        // // Query dasar
+        // // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
+        // $query = "SELECT * FROM assets ORDER BY created_at DESC";
+        // // Panggil fungsi paginate
+        // $result = $structDB->paginate($query, [], $page, $limit);
+        // // dd($result, true);
 
         $modelA = [
+            // 'result' => $result,
             'request' => $request,
             'table' => $this->table,
             'data' => $structDB->getAllData(),

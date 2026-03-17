@@ -125,6 +125,11 @@ class Model
     protected function setPDO($pdo = null)
     {
         $this->pdo = $pdo;
+
+        // // Add this line so that all query results automatically become an Associative Array
+        // if ($this->pdo) {
+        //     $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        // }
     }
 
     /**
@@ -208,5 +213,49 @@ class Model
         } catch (PDOException $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Handle Pagination
+     *
+     * @param string $query Main query without LIMIT/OFFSET
+     * @param array $params Parameters for the query
+     * @param int $page Current page
+     * @param int $limit Amount of data per page
+     * @return array [data, total, current_page, last_page, limit]
+     */
+    public function paginate($query, array $params = [], $page = 1, $limit = 10)
+    {
+        // Calculate Total Data (for info pagination)
+        $countQuery = "SELECT COUNT(*) FROM ($query) AS total_count";
+        $total = $this->execQuery($countQuery, $params, false, true);
+
+        // Parsing data (Supports Objects and Arrays)
+        if ($total) {
+            $totalRows = is_object($total) ? (int)$total->total_count : (int)$total['total_count'];
+        }
+
+        // Offset Calculation
+        $page = (int)$page > 0 ? (int)$page : 1;
+        $offset = ($page - 1) * $limit;
+
+        // Add LIMIT and OFFSET in Query
+        $paginatedQuery = $query . " LIMIT $limit OFFSET $offset";
+
+        // Data Query Execution
+        $data = $this->execQuery($paginatedQuery, $params, false, false, true);
+
+        // Metadata calculations
+        $lastPage = ceil($totalRows / $limit);
+
+        return [
+            'data'         => $data,
+            'total'        => $totalRows,
+            'current_page' => $page,
+            'last_page'    => $lastPage,
+            'limit'        => $limit,
+            'from'         => $offset + 1,
+            'to'           => min($offset + $limit, $totalRows)
+        ];
     }
 }
