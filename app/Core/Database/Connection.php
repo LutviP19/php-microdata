@@ -65,6 +65,8 @@ class Connection
     {
         try {
             $driver = $driver ?: Config::get('default_db');
+            $options  = $options ?: Config::get("database.{$driver}.options");
+            // dd($username);
 
 
             if ($driver !== 'sqlite') {
@@ -76,7 +78,7 @@ class Connection
                     $username,
                     $password,
                     $options
-                );
+                );            
 
             } else {
                 $databaseFile = database_path($dbname);
@@ -86,12 +88,20 @@ class Connection
                 // $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Set error mode for better error handling
             }
             // dd($pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
-
-
+        
             return $pdo;
 
         } catch (PDOException $e) {
-            die($e->getMessage());
+            // die($e->getMessage());
+            if(env('APP_ENV') !== 'local') {
+                if(env('APP_DEBUG'))
+                \write_log($e->getMessage(), 'App\Core\Database\Connection', 'error', 'error_DB.log');
+                
+                json_response([], 403, 'Auth errors', ['auth' => 'Invalid credentials.']);
+            }  else {                
+                json_response([], 403, 'Auth errors', ['auth' => $e->getMessage()]);
+            }
+            die();
         }
     }
 

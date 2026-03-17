@@ -10,34 +10,52 @@ use App\Core\Support\Session;
 use App\Structs\DashboardStruct;
 use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
-// class DashboardModel extends CoreModel
+
 class DashboardModel extends DashboardStruct
 {
 
-    public function __construct()
+    public function __construct(PDO $pdo = null)
     {
         // // Global Set Custom connection
         // $driver = 'mysql';
-        // $name = 'test';
+        // $dbname = 'test';
         // $host = '127.0.0.1';
         // $port = '3306';
         // $username = 'rootx';
         // $password = 'aa';
         // $options = [];
-        // $conn = Connection::custom($driver, $name, $host, $port, $username, $password, $options);
-        // parent::__construct($conn);
-        // $this->setPDO($conn);
+        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
-        
+
         // Default connection
-        parent::__construct();
+        $conn = $pdo ?: Connection::make();
+        parent::__construct($conn);
+
+        // Set PDO connection
+        $this->pdo = $conn;
     }
 
     public function index(?array $request = [])
     {
-        // // Test Session
+        $conn = null;
+        // // Use Custom connection
+        // $driver = 'mysql';
+        // $dbname = 'new_dbx';
+        // $host = 'localhost';
+        // $port = '3306';
+        // $username = 'root';
+        // $password = '';
+        // $options = [];
+        // $conn = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
+        // // dd($dbname);
+
+        // Create instance
+        $structDB = new DashboardStruct($conn);
+        // dd($structDB->table);
+
+        // // Test execQuery
         // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
-        // $data = DashboardStruct::table($this->table)->execQuery($sql, [], false, false, true);
+        // $data = $structDB::table($this->table)->execQuery($sql, [], false, false, true);
         // dd($data);
 
         // // Testing Regenerate SessioId
@@ -45,6 +63,7 @@ class DashboardModel extends DashboardStruct
         // $headers = bp_session_regenerate_id($oldSessionId);
         // setHeaders($headers);
 
+        // // Test Session
         // // Session::set('jwtId', generateUlid());
         // dd(Session::get('jwtId'));
 
@@ -58,20 +77,11 @@ class DashboardModel extends DashboardStruct
         // dd($request, true);
         // dd(config('app.url'), true);
 
-        $conn = null;
-        // // Use Custom connection
-        // $driver = '';
-        // $name = '';
-        // $host = '';
-        // $port = '';
-        // $username = '';
-        // $password = '';
-        // $options = [];
-        // $conn = Connection::custom($driver, $name, $host, $port, $username, $password, $options);
+        
 
         $modelA = [
             'table' => $this->table,
-            'data' => (new DashboardStruct($conn))->getAllData(),
+            'data' => $structDB->getAllData(),
             'title' => $request['title'] ?? 'Testing model',
         ];
 

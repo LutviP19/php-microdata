@@ -49,7 +49,7 @@ if (is_json_request() && file_exists($structPath)) {
             }
             break;
         case 'DELETE':
-            $result = validateStructData(["id" => $_GET['id']], ["id" => "required,numeric,min=1"]);
+            $result = validateStructData(["id" => $_GET['id'] ?? $_POST['id']], ["id" => "required,numeric,min=1"]);
             break;
         default:
             $result = [];

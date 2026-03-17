@@ -51,6 +51,15 @@ class Model
         $this->setPDO($conn);
     }
 
+    // Destructor to close the database connection.
+    public function __destruct() 
+    {
+        // Assigning null to the connection variable closes the PDO connection
+        $this->pdo = null;
+
+        $this->table = null;
+    }
+
     /**
      * execQuery
      *

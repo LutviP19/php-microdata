@@ -13,7 +13,7 @@ use Exception;
 use PDOException;
 use App\Core\Database\Connection;
 
-class CoreModel extends Model
+class BaseModel extends Model
 {
     /**
      * static table name for this model.
@@ -28,10 +28,7 @@ class CoreModel extends Model
         parent::__construct($conn);
 
         // Set PDO connection
-        $this->setPDO($conn);
-    
-        // Set default table
-        // $this->table = self::$tableM;
+        $this->pdo = $conn;
     }
 
 
