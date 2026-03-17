@@ -31,5 +31,18 @@ class BaseModel extends Model
         $this->pdo = $conn;
     }
 
-
+    protected function setRatelimiter($identifier, $perSeconds = 120, $limit = 10)
+    {
+        $identifier = str_replace(" ", "_", $identifier);
+        $identifier = $identifier.'-'.\clientIP();
+        if (false === checkRateLimit($identifier, $limit, $perSeconds)) {
+            $after = $perSeconds / 60;
+            $afteText = $after > 1 ? "{$after} minutes" : "{$after} minute";
+            $errors = [
+                'busy' => ["Please try again after {$afteText}."]
+            ];
+            
+            json_response([], 429, 'Too many requests', $errors);
+        }
+    }
 }

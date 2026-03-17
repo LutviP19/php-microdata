@@ -29,6 +29,18 @@ function dd($data = [], $json = false)
 /**
  * default database path for sqlite
  *
+ * @param  string $key
+ *
+ * @return string
+ */
+function storage_path($filePath)
+{
+    return BASEPATH . '/storage/' . $filePath;
+}
+
+/**
+ * default database path for sqlite
+ *
  * @param  string $db_name
  *
  * @return string

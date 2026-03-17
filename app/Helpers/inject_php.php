@@ -301,6 +301,53 @@ function generateUlid($lowercased = false, $timestamp = null): string
     return (string) \App\Core\Support\Ulid::generate($lowercased);
 }
 
+/**
+ * checkRateLimit function
+ *
+ * @param  string $identifier : client identity IP, Location, etc...
+ * @param  int $limit : limit hit 
+ * @param  int $timeframeSeconds : time in second
+ *
+ * @return void
+ */
+function checkRateLimit($identifier, $limit, $timeframeSeconds) {
+    $dirPath = storage_path('/framework/tmp/rate_limits');
+    $filePath =  $dirPath .'/'. md5($identifier) . '.txt';
+
+    // Create directory if it doesn't exist
+    if (!is_dir($dirPath)) {
+        mkdir($dirPath, 0775, true);
+    }
+
+    $timestamps = [];
+    if (file_exists($filePath)) {
+        $content = file_get_contents($filePath);
+        $timestamps = json_decode($content, true) ?: [];
+    }
+
+    $currentTime = time();
+    $newTimestamps = [];
+    $requestCount = 0;
+
+    // Filter out old timestamps and count recent requests
+    foreach ($timestamps as $timestamp) {
+        if ($currentTime - $timestamp < $timeframeSeconds) {
+            $newTimestamps[] = $timestamp;
+            $requestCount++;
+        }
+    }
+
+    if ($requestCount >= $limit) {
+        return false; // Rate limit exceeded
+    }
+
+    // Add current request timestamp
+    $newTimestamps[] = $currentTime;
+    file_put_contents($filePath, json_encode($newTimestamps));
+
+    return true; // Request allowed
+}
+
 function checkSession()
 {
     try {

@@ -54,6 +54,11 @@ class DashboardModel extends DashboardStruct
         $structDB = new DashboardStruct($conn);
         // dd($structDB->table);
 
+        // // Middleware - Rate limiter
+        // $identifier = 'Dashboard-Index-'.\clientIP();
+        // $perSeconds = 6000;
+        // $structDB->setRatelimiter($identifier, $perSeconds, 3);
+
         // // Test execQuery
         // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
         // $data = $structDB::table($this->table)->execQuery($sql, [], false, false, true);
@@ -67,8 +72,7 @@ class DashboardModel extends DashboardStruct
         // // Test Session
         // // Session::set('jwtId', generateUlid());
         // dd(Session::get('jwtId'));
-
-
+        
 
         // $selectCols = $cols ?? '*';
         // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
@@ -77,7 +81,6 @@ class DashboardModel extends DashboardStruct
 
         // dd($request, true);
         // dd(config('app.url'), true);
-
         
 
         $modelA = [
