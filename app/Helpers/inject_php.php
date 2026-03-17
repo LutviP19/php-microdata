@@ -311,8 +311,8 @@ function generateUlid($lowercased = false, $timestamp = null): string
  * @return void
  */
 function checkRateLimit($identifier, $limit, $timeframeSeconds) {
-    $dirPath = storage_path('/framework/tmp/rate_limits');
-    $filePath =  $dirPath .'/'. md5($identifier) . '.txt';
+    $dirPath = storage_path('/framework/tmp/rate_limits/');
+    $filePath =  $dirPath . md5($identifier) . '.txt';
 
     // Create directory if it doesn't exist
     if (!is_dir($dirPath)) {
@@ -452,4 +452,38 @@ function bp_session_regenerate_id($oldSessionId)
     }
 
     return $setcookie;
+}
+
+
+/**
+ * slug function
+ *
+ * @param  [string] $title
+ * @param  string $separator
+ * @param  string $language
+ * @param  array  $dictionary
+ *
+ * @return void
+ */
+function slug($title, $separator = '-', $language = 'en', $dictionary = ['@' => 'at'])
+{
+    // Convert all dashes/underscores into separator
+    $flip = $separator === '-' ? '_' : '-';
+
+    $title = preg_replace('![' . preg_quote($flip) . ']+!u', $separator, (string) $title);
+
+    // Replace dictionary words
+    foreach ($dictionary as $key => $value) {
+        $dictionary[$key] = $separator . $value . $separator;
+    }
+
+    $title = str_replace(array_keys($dictionary), array_values($dictionary), $title);
+
+    // Remove all characters that are not the separator, letters, numbers, or whitespace
+    $title = preg_replace('![^' . preg_quote($separator) . '\pL\pN\s]+!u', '', strtolower($title));
+
+    // Replace all separator characters and whitespace by a single separator
+    $title = preg_replace('![' . preg_quote($separator) . '\s]+!u', $separator, (string) $title);
+
+    return trim((string) $title, $separator);
 }

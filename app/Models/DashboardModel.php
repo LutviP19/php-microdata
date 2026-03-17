@@ -93,12 +93,27 @@ class DashboardModel extends DashboardStruct
         // // Panggil fungsi paginate
         // $result = $structDB->paginate($query, [], $page, $limit);
         // // dd($result, true);
+        
+        
+        // // Cache Query
+        // $key = 'cache_index_'.$page;
+        // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
+        // $cacheData = $structDB->getCachedData($key, $sql, [], 600);
+        // // dd($cacheData, true);
+
+
+        // Cache data
+        $cache = new \App\Core\Support\Cache();
+        // Ambil data chart dari cache selama 5 menit
+        $dataDashboard = $cache->remember('dashboard_index', function() use ($structDB) {
+            return $structDB->getAllData();
+        }, 300);
 
         $modelA = [
             // 'result' => $result,
             'request' => $request,
             'table' => $this->table,
-            'data' => $structDB->getAllData(),
+            'cache_data' => $dataDashboard,
             'title' => $request['title'] ?? 'Testing model',
         ];
 

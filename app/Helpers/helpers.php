@@ -362,6 +362,34 @@ if (!function_exists('expects_json')) {
 }
 
 /**
+ * Kompres data JSON
+ */
+if (!function_exists('compress_payload')) {
+    function compress_payload($data) {
+        $json = json_encode($data);
+        // gzencode menghasilkan format yang kompatibel dengan browser (.gz)
+        return gzencode($json, 9); // Level 9 adalah kompresi maksimal
+
+        // // Contoh Penggunaan:
+        // $data = ['status' => 'success', 'data' => range(1, 1000)]; // Data besar
+        // $compressed = compress_payload($data);
+
+        // header('Content-Encoding: gzip');
+        // header('Content-Type: application/json');
+        // echo $compressed;
+    }
+}
+
+/**
+ * Dekompres data
+ */
+if (!function_exists('decompress_payload')) {
+    function decompress_payload($payload) {
+        return json_decode(gzdecode($payload), true);
+    }
+}
+
+/**
  * Sistem log sederhana dengan level kategori.
  */
 if (!function_exists('write_log')) {

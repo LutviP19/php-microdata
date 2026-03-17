@@ -258,4 +258,19 @@ class Model
             'to'           => min($offset + $limit, $totalRows)
         ];
     }
+
+    /**
+     * Method get Cached Data with Fallback
+     * @param string $key Unique identifier for cache
+     * @param string $query Main query
+     * @param array $params Parameters for the query
+     * @param int|null $expiry Expiry time in seconds (600 = 5min)
+     */
+    public function getCachedData($key, $query, $params = [], $expiry = 600) {
+        $cache = new \App\Core\Support\Cache();
+        
+        return $cache->remember($key, function() use ($query, $params) {
+            return $this->execQuery($query, $params, false, false, true);
+        }, $expiry);
+    }
 }

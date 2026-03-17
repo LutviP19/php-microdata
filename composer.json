@@ -10,7 +10,8 @@
         "php-http/curl-client": "^2.4",
         "nyholm/psr7": "^1.8",
         "php-amqplib/php-amqplib": "^3.7",
-        "robinvdvleuten/ulid": "^5.0"
+        "robinvdvleuten/ulid": "^5.0",
+        "predis/predis": "^3.4"
     },
     "autoload": {
         "psr-4": {
