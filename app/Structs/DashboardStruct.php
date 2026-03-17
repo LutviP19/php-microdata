@@ -6,9 +6,13 @@
 
 namespace App\Structs;
 
-use App\Core\Database\SchemaProperty;
 
-class DashboardStruct {
+use App\Core\Database\SchemaProperty;
+use App\Models\CoreModel;
+use PDO; // new PDO object
+// use App\Core\Database\Connection; // Uncomment to use custom DB connection
+
+class DashboardStruct extends CoreModel {
 
    #[SchemaProperty(description: 'User display name', required: true, min: 3)]
     public string $username;
@@ -21,4 +25,41 @@ class DashboardStruct {
 
     #[SchemaProperty(description: 'Website URL', custom: 'url')]
     public string $website;
+
+    /**
+     * static table name for this CoreModel.
+     *
+     * @var string
+     */
+    protected static $tableM = "users";
+
+    public function __construct(PDO $pdo = null)
+    {
+        // // Custom connection
+        // $driver = '';
+        // $name = '';
+        // $host = '';
+        // $port = '';
+        // $username = '';
+        // $password = '';
+        // $options = [];
+        // $conn = $pdo ?: Connection::custom($driver, $name, $host, $port, $username, $password, $options);
+        // parent::__construct($conn);
+        
+        // Default connection
+        parent::__construct($pdo);
+
+        // Set default table
+        $this->table = self::$tableM;
+    }
+
+    public function getAllData($id = null, $selectCols = '*') {
+        // $selectCols = $cols ?? '*';
+        $id = $id ? [$id] : [];
+        $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
+        $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": "";
+        $result = CoreModel::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
+        // dd($result, true);
+        return $result;
+    }
 }

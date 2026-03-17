@@ -6,12 +6,12 @@
 namespace App\Models;
 
 
-// use App\Core\Database\Model;
 use App\Core\Support\Session;
+use App\Structs\DashboardStruct;
+// use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
-use PDO; // new PDO object
-
-class DashboardModel extends CoreModel
+// class DashboardModel extends CoreModel
+class DashboardModel extends DashboardStruct
 {
 
     /**
@@ -19,11 +19,11 @@ class DashboardModel extends CoreModel
      *
      * @var string
      */
-    protected static $tableM = "users";
+    // protected static $tableM = "users";
 
-    public function __construct(PDO $pdo = null)
+    public function __construct()
     {
-        // // Custom connection
+        // // Global Custom connection
         // $driver = '';
         // $name = '';
         // $host = '';
@@ -31,21 +31,21 @@ class DashboardModel extends CoreModel
         // $username = '';
         // $password = '';
         // $options = [];
-        // $conn = $pdo ?: Connection::custom($driver, $name, $host, $port, $username, $password, $options);
+        // $conn = Connection::custom($driver, $name, $host, $port, $username, $password, $options);
         // parent::__construct($conn);
         
         // Default connection
         parent::__construct($pdo);
 
         // Set default table
-        $this->table = self::$tableM;
+        // $this->table = self::$tableM;
     }
 
     public function index(?array $request = [])
     {
         // // Test Session
         // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
-        // $data = CoreModel::table($this->table)->execQuery($sql, [], false, false, true);
+        // $data = DashboardStruct::table($this->table)->execQuery($sql, [], false, false, true);
         // dd($data);
 
         // // Testing Regenerate SessioId
@@ -60,16 +60,30 @@ class DashboardModel extends CoreModel
 
         // $selectCols = $cols ?? '*';
         // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
-        // $result = Model::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
+        // $result = DashboardStruct::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
         // dd($result, true);
 
         // dd($request, true);
         // dd(config('app.url'), true);
+
+        $conn = null;
+        // // Use Custom connection
+        // $driver = '';
+        // $name = '';
+        // $host = '';
+        // $port = '';
+        // $username = '';
+        // $password = '';
+        // $options = [];
+        // $conn = Connection::custom($driver, $name, $host, $port, $username, $password, $options);
+
         $modelA = [
+            'table' => $this->table,
+            'data' => (new DashboardStruct($conn))->getAllData(),
             'title' => $request['title'] ?? 'Testing model',
         ];
 
-        $data = [
+        $data = [            
             'data' => $modelA,
             // 'errors' => $errors ?? [],
             'status' => $status ?? 200,
@@ -99,8 +113,14 @@ class DashboardModel extends CoreModel
 
     public function edit(?array $request = [])
     {
-        $data = [
-            'data' => $request ?? [],
+        $modelA = [
+            'table' => $this->table,
+            'data' => (new DashboardStruct())->getAllData(1),
+            'title' => $request['title'] ?? 'Edit model',
+        ];
+
+        $data = [            
+            'data' => array_merge($modelA, $request),
             'errors' => $errors ?? [],
             'status' => $status ?? 200,
             'message' => $message ?? 'testing edit',
@@ -126,7 +146,7 @@ class DashboardModel extends CoreModel
         $data = [
             'data' => $request ?? [],
             'errors' => $errors ?? [],
-            'status' => $status ?? 201,
+            'status' => $status ?? 200,
             'message' => $message ?? 'testing destroy',
         ];
 

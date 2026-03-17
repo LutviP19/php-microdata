@@ -17,6 +17,7 @@ if(is_json_request() && !handle_json_request()) {
 $_REQUEST = sanitize($_REQUEST);
 $_POST = sanitize($_POST);
 $_GET = sanitize($_GET);
+$requestMethod = $_SERVER['REQUEST_METHOD'];
 
 // Check var $modelName
 if(!isset($modelName)) {
@@ -25,17 +26,35 @@ if(!isset($modelName)) {
 
 // Validate Struct
 if (is_json_request() && file_exists($structPath)) {
-    $structName = '\\App\\Structs\\'.$structName;
-    $structClass = new $structName();
-    $rules = parseStructToRules($structClass::class);
-    // dd($rules);
+    $structName = '\\App\\Structs\\'.$structName;    
 
-    // Refine the raw $_REQUEST data into native types
-    $safeData = refineRequest($_REQUEST, $rules);
+    switch ($requestMethod) {
+        case 'POST':
+        case 'PUT':
+        case 'PATCH':
+            $structClass = new $structName();
+            $rules = parseStructToRules($structClass::class);
+            // dd($rules);
 
-    // Then call your FFI function
-    $result = validateStructData($safeData, $rules);
-    // dd($result);
+            // Refine the raw $_REQUEST data into native types
+            $safeData = refineRequest($_REQUEST, $rules);
+            // dd($safeData);
+
+            $result = validateStructData($safeData, $rules);
+            break;
+        case 'GET':
+            // Process GET data
+            if(isset($_GET['id'])) {
+                $result = validateStructData(["id" => $_GET['id']], ["id" => "required,numeric,min=1"]);
+            }
+            break;
+        case 'DELETE':
+            $result = validateStructData(["id" => $_GET['id']], ["id" => "required,numeric,min=1"]);
+            break;
+        default:
+            $result = [];
+            break;
+    }
 
     if(isset($result['errors'])) {
         json_response([], 406, 'Validation errors', $result['errors']);
@@ -58,7 +77,6 @@ if(false === $validMethods) {
     throw new Exception("modelClass $className not valid, must have methods 'index', 'store', 'edit', 'update' and 'destroy'.");
 }
 
-$requestMethod = $_SERVER['REQUEST_METHOD'];
 switch ($requestMethod) {
     case 'GET':
         // Process GET data
