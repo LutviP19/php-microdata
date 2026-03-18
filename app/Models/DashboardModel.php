@@ -138,20 +138,31 @@ class DashboardModel extends DashboardData
 
     public function store(?array $request = [])
     {
-        // $errors = [
-        //     'input_a' => 'This field is required.',
-        // ];
+        // // Test Error
         // $status = 400;
         // $message = 'Invalid input store.';
 
+        $modelA = [
+            'request' => $request ?? [],
+            'table' => $this->table,
+            'title' => $request['title'] ?? 'Testing store',
+
+            // // Sample Errors
+            // 'errors' => [
+            //     'status' => $status ?? 500,
+            //     'message' => $message ?? 'Errors occured.',
+            //     'path' => 'Path not found',
+            //     'input_a' => 'This field is required.',
+            // ]
+        ];
+
         $data = [
-            'data' => $request ?? [],
-            'errors' => $errors ?? [],
+            'data' => $modelA,
             'status' => $status ?? 201,
             'message' => $message ?? 'testing store',
         ];
 
-        return $data;
+        return handle_response_error($data, $modelA);
     }
 
     public function edit(?array $request = [])
@@ -176,45 +187,89 @@ class DashboardModel extends DashboardData
         // // Match data
         // $match = matchEncryptedData($decrypted, $encrypted);
         // dd($match);
-        
+
+        // // Test Error
+        // $status = 400;
+        // $message = 'Invalid id.';
 
         $modelA = [
             'table' => $this->table,
-            'data' => (new DashboardStruct())->getAllData(1),
+            'data' => (new DashboardData())->getAllData($request['id']),
             'title' => $request['title'] ?? 'Edit model',
+
+            // // Sample Errors
+            // 'errors' => [
+            //     'status' => $status ?? 500,
+            //     'message' => $message ?? 'Errors occured.',
+            //     'path' => 'Path not found',
+            //     'input_id' => 'This field is required.',
+            // ]
         ];
 
         $data = [            
             'data' => array_merge($modelA, $request),
-            'errors' => $errors ?? [],
             'status' => $status ?? 200,
             'message' => $message ?? 'testing edit',
         ];
 
-        return $data;
+        return handle_response_error($data, $modelA);
     }
 
     public function update(?array $request = [])
     {
+        // // Test Error
+        // $status = 400;
+        // $message = 'Invalid input update.';
+
+        $modelA = [
+            'request' => $request ?? [],
+            'table' => $this->table,
+            'title' => $request['title'] ?? 'Testing update',
+
+            // // Sample Errors
+            // 'errors' => [
+            //     'status' => $status ?? 500,
+            //     'message' => $message ?? 'Errors occured.',
+            //     'path' => 'Path not found',
+            //     'input_a' => 'This field is required.',
+            // ]
+        ];
+
         $data = [
-            'data' => $request ?? [],
-            'errors' => $errors ?? [],
+            'data' => $modelA,
             'status' => $status ?? 201,
             'message' => $message ?? 'testing update',
         ];
 
-        return $data;
+        return handle_response_error($data, $modelA);
     }
 
     public function destroy(?array $request = [])
     {
+        // // Test Error
+        // $status = 400;
+        // $message = 'Invalid id.';
+
+        $modelA = [
+            'request' => $request ?? [],
+            'table' => $this->table,
+            'title' => $request['title'] ?? 'Destroy model',
+
+            // // Sample Errors
+            // 'errors' => [
+            //     'status' => $status ?? 500,
+            //     'message' => $message ?? 'Errors occured.',
+            //     'path' => 'Path not found',
+            //     'input_id' => 'This field is required.',
+            // ]
+        ];
+
         $data = [
-            'data' => $request ?? [],
-            'errors' => $errors ?? [],
+            'data' => $modelA,
             'status' => $status ?? 200,
             'message' => $message ?? 'testing destroy',
         ];
 
-        return $data;
+        return handle_response_error($data, $modelA);
     }
 }
