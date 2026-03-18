@@ -8,11 +8,11 @@ namespace App\Models;
 
 use App\Core\Support\EncryptDecrypt;
 use App\Core\Support\Session;
-use App\Structs\DashboardStruct;
+use App\Data\Dashboard\DashboardData;
 use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
 
-class DashboardModel extends DashboardStruct
+class DashboardModel extends DashboardData
 {
 
     public function __construct(PDO $pdo = null)
@@ -51,17 +51,17 @@ class DashboardModel extends DashboardStruct
         // // dd($dbname);
 
         // Create instance
-        $structDB = new DashboardStruct($conn);
-        // dd($structDB->table);
+        $mainData = new DashboardData($conn);
+        // dd($mainData->table);
 
         // // Middleware - Rate limiter
         // $identifier = 'Dashboard-Index-'.\clientIP();
         // $perSeconds = 6000;
-        // $structDB->setRatelimiter($identifier, $perSeconds, 3);
+        // $mainData->setRatelimiter($identifier, $perSeconds, 3);
 
         // // Test execQuery
         // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
-        // $data = $structDB::table($this->table)->execQuery($sql, [], false, false, true);
+        // $data = $mainData::table($this->table)->execQuery($sql, [], false, false, true);
         // dd($data);
 
         // // Testing Regenerate SessioId
@@ -74,39 +74,42 @@ class DashboardModel extends DashboardStruct
         // dd(Session::get('jwtId'));
 
 
+        // // Test change table
+        // $this->table = "assets";
         // $selectCols = $cols ?? '*';
         // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
-        // $result = DashboardStruct::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
+        // $result = DashboardData::table($this->table)->execQuery($sql, [$id ?? 1], false, true, false);
         // dd($result, true);
 
         // dd($request, true);
         // dd(config('app.url'), true);
 
 
-        // // Pagination
+        // // Test - Pagination
         // $page = $request['page'] ?? 1;
-        // $limit = 10;
-        // // $structDB->table = 'assets';
+        // $limit = $request['limit'] ?? 10;
+        // // $mainData->table = 'assets';
         // // Query dasar
         // // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
         // $query = "SELECT * FROM assets ORDER BY created_at DESC";
         // // Panggil fungsi paginate
-        // $result = $structDB->paginate($query, [], $page, $limit);
-        // // dd($result, true);
+        // $result = $mainData->paginate($query, [], $page, $limit);
+        // dd($result, true);
         
         
         // // Cache Query
+        // $this->table = "assets";
         // $key = 'cache_index_'.$page;
         // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
-        // $cacheData = $structDB->getCachedData($key, $sql, [], 600);
-        // // dd($cacheData, true);
+        // $cacheData = $mainData->getCachedData($key, $sql, [], 600);
+        // dd($cacheData, true);
 
 
         // Cache data
         $cache = new \App\Core\Support\Cache();
         // Ambil data chart dari cache selama 5 menit
-        $dataDashboard = $cache->remember('dashboard_index', function() use ($structDB) {
-            return $structDB->getAllData();
+        $dataDashboard = $cache->remember('dashboard_index', function() use ($mainData) {
+            return $mainData->getAllData();
         }, 300);
 
         $modelA = [
@@ -115,16 +118,22 @@ class DashboardModel extends DashboardStruct
             'table' => $this->table,
             'cache_data' => $dataDashboard,
             'title' => $request['title'] ?? 'Testing model',
+
+            // // Sample Errors
+            // 'errors' => [
+            //     'status' => 500,
+            //     'message' => $message ?? 'Errors occured.',
+            //     'path' => 'Path not found',
+            // ]
         ];
 
         $data = [            
             'data' => $modelA,
-            // 'errors' => $errors ?? [],
             'status' => $status ?? 200,
-            // 'message' => $message ?? 'testing index',
+            'message' => $message ?? 'testing index',
         ];
 
-        return $data;
+        return handle_response_error($data, $modelA);
     }
 
     public function store(?array $request = [])

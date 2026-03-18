@@ -26,7 +26,7 @@ if(!isset($modelName)) {
 
 // Validate Struct
 if (is_json_request() && file_exists($structPath)) {
-    $structNameSpace = '\\App\\Structs\\'.$structName;
+    $structNameSpace = '\\App\\Structs\\'.$model.'\\'.$structName;
 
     switch ($requestMethod) {
         case 'POST':

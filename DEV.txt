@@ -59,6 +59,12 @@ GIT Clone from branch :
 git clone -b <branch_name> --single-branch <repository_url>
 
 
+git add -f app/Structs/Dashboard/DashboardStruct.php
+
+
+
+
+
 Build Core Directory structure :
 --------------------------------
 mkdir ./config && 

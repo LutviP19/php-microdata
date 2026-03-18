@@ -29,7 +29,7 @@ if(!empty($model)) {
     // Auto Load Model if exists
     $structName = ucwords($model) . 'Struct';
     $modelName = ucwords($model) . 'Model';
-    $structPath = BASEPATH . "/app/Structs/" . $structName . ".php";
+    $structPath = BASEPATH . "/app/Structs/$model/" . $structName . ".php";
     $modelPath = BASEPATH . "/app/Models/" . $modelName . ".php";
     if (file_exists($modelPath)) {
         // Cek url edit, lalu tambahkan param $_GET['id']
@@ -44,8 +44,7 @@ if(!empty($model)) {
 }
 
 
-
-// Load View
+// Load HTMX View
 // Cek apakah ini request dari HTMX
 $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
 

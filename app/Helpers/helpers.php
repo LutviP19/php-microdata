@@ -312,6 +312,34 @@ if (!function_exists('handle_json_request')) {
     }
 }
 
+/**
+ * Mendeteksi payload JSON dan merubahnya menjadi array di $_REQUEST
+ * Berguna untuk integrasi API atau library frontend yang mengirim JSON.
+ */
+if (!function_exists('handle_response_error')) {
+    function handle_response_error($data, $dataModel) {
+
+        if(isset($dataModel['errors'])) {
+            unset($data); // clean data
+
+            // Parse Errors
+            $errors = $dataModel['errors'];
+            $status = $errors['status'] ?? 417;
+            $message = $errors['message'] ?? 'Your expectations not match to server capabilities.';
+
+            // Unset extra errors
+            unset($errors['status']);
+            unset($errors['message']);
+
+            $data['status'] = $status;
+            $data['message'] = $message;
+            $data['errors'] =  $errors;
+        }
+
+        return $data;
+    }
+}
+
 
 /**
  * Mengirimkan respons JSON yang standar dan menghentikan eksekusi script.

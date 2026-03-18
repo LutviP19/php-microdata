@@ -4,30 +4,17 @@
  */
 
 
-namespace App\Structs;
+namespace App\Data\Dashboard;
 
 
-use App\Core\Database\SchemaProperty;
-use App\Models\BaseModel;
+use App\Structs\Dashboard\DashboardStruct;
 use PDO; // new PDO object
 use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
-class DashboardStruct extends BaseModel {
-
-   #[SchemaProperty(description: 'User display name', required: true, min: 3)]
-    public string $username;
-
-    #[SchemaProperty(description: 'Primary contact', required: true, email: true)]
-    public string $email;
-
-    #[SchemaProperty(description: 'User age', numeric: true, gte: 18, lte: 99)]
-    public int $age;
-
-    #[SchemaProperty(description: 'Website URL', custom: 'url')]
-    public string $website;
+class DashboardData extends DashboardStruct {
 
     /**
-     * static table name for this BaseModel.
+     * static table name for this Class.
      *
      * @var string
      */
@@ -62,7 +49,7 @@ class DashboardStruct extends BaseModel {
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": "";
-        $result = BaseModel::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
+        $result = DashboardStruct::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
         // dd($result, true);
         return $result;
     }

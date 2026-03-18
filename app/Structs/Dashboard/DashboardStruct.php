@@ -26,13 +26,6 @@ class DashboardStruct extends BaseModel {
     #[SchemaProperty(description: 'Website URL', custom: 'url')]
     public string $website;
 
-    /**
-     * static table name for this BaseModel.
-     *
-     * @var string
-     */
-    protected static $tableM = "users";
-
     public function __construct(PDO $pdo = null)
     {
         // // Global Set Custom connection
@@ -48,22 +41,8 @@ class DashboardStruct extends BaseModel {
         // Default connection
         $conn = $pdo ?: Connection::make();
         parent::__construct($conn);
-
         
         // Set PDO connection
         $this->pdo = $conn;
-
-        // Set default table
-        $this->table = self::$tableM;
-    }
-
-    public function getAllData($id = null, $selectCols = '*') {
-        // $selectCols = $cols ?? '*';
-        $id = $id ? [$id] : [];
-        $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
-        $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": "";
-        $result = BaseModel::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
-        // dd($result, true);
-        return $result;
     }
 }
