@@ -121,8 +121,8 @@ class DashboardModel extends DashboardData
 
             // // Sample Errors
             // 'errors' => [
-            //     'status' => 500,
-            //     'message' => $message ?? 'Errors occured.',
+            //     // 'status' => 500,
+            //     // 'message' => $message ?? 'Errors occured.',
             //     'path' => 'Path not found',
             // ]
         ];

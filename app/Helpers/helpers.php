@@ -320,14 +320,14 @@ if (!function_exists('handle_response_error')) {
     function handle_response_error($data, $dataModel) {
 
         if(isset($dataModel['errors'])) {
-            unset($data); // clean data
-
             // Parse Errors
             $errors = $dataModel['errors'];
             $status = $errors['status'] ?? 417;
             $message = $errors['message'] ?? 'Your expectations not match to server capabilities.';
 
-            // Unset extra errors
+            // clean data
+            unset($dataModel);
+            unset($data);
             unset($errors['status']);
             unset($errors['message']);
 
