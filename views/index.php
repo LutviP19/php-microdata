@@ -27,7 +27,11 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased" x-data="{ sidebarOpen: false, openLogout: false, userMenuOpen: false, activePage: '<?= $page ?>' }">
+<body 
+    hx-headers='{"X-API-KEY": "<?= str_replace('base64:', '', config('api.key')) ?>"}' 
+    class="bg-gray-900 text-gray-100 font-sans antialiased" 
+    x-data="{ sidebarOpen: false, openLogout: false, userMenuOpen: false, activePage: '<?= $page ?>' }"
+    >
 
     <nav class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
         <div class="flex items-center space-x-3">

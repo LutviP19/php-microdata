@@ -237,47 +237,6 @@ if (!function_exists('sanitize')) {
     }
 }
 
-// Untuk menangani CORS (Cross-Origin Resource Sharing)
-// Tentukan origin yang diizinkan (dari file .env)
-function handle_cors() {
-    if(!isset($_SERVER['HTTP_ORIGIN']) || !isset($_SERVER['HTTP_REFERER']))
-    return;
-
-    // 1. Ambil string dari .env, default ke '*' jika kosong
-    $envOrigins = env('ALLOWED_ORIGINS', '*');
-    // dd($envOrigins);
-    
-    // 2. Ubah string menjadi array
-    $allowedOrigins = ($envOrigins !== '*') 
-        ? explode(',', $envOrigins) 
-        : ['*'];
-
-    // 3. Ambil Origin dari browser (misal: http://localhost:8000)
-    $currentOrigin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
-    // dd($currentOrigin);
-
-    // 4. Bersihkan skema (http://) dari currentOrigin untuk perbandingan
-    // karena di .env kita hanya menulis domainnya saja
-    $cleanOrigin = parse_url($currentOrigin, PHP_URL_HOST);
-    // dd($cleanOrigin);
-
-    // 5. Cek apakah origin browser ada di whitelist kita
-    if (in_array('*', $allowedOrigins) || in_array($cleanOrigin, $allowedOrigins)) {
-        header("Access-Control-Allow-Origin: $currentOrigin");
-    }
-
-    // Set output header ke browser
-    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, hx-request, hx-target, hx-current-url, hx-trigger, hx-trigger-name");
-    header("Access-Control-Allow-Credentials: true");
-
-    // Handle "Preflight" request (browser mengirimkan method OPTIONS sebelum POST/PUT)
-    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-        http_response_code(204); // No Content
-        exit();
-    }
-}
-
 /**
  * Mendeteksi payload JSON dan merubahnya menjadi array di $_REQUEST
  * Berguna untuk integrasi API atau library frontend yang mengirim JSON.

@@ -91,7 +91,7 @@ class DashboardModel extends DashboardData
         // // $mainData->table = 'assets';
         // // Query dasar
         // // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
-        // $query = "SELECT * FROM assets ORDER BY created_at DESC";
+        // $query = "SELECT * FROM ".$this->table." ORDER BY to_date DESC";
         // // Panggil fungsi paginate
         // $result = $mainData->paginate($query, [], $page, $limit);
         // dd($result, true);
@@ -107,19 +107,31 @@ class DashboardModel extends DashboardData
 
         // Cache data
         $cache = new \App\Core\Support\Cache();
-        // Ambil data chart dari cache selama 5 menit
-        $dataDashboard = $cache->remember('dashboard_index', function() use ($mainData) {
-            return $mainData->getAllData();
+
+        // // Ambil data chart dari cache selama 5 menit
+        // $dataDashboard = $cache->remember('dashboard_index', function() use ($mainData) {
+        //     return $mainData->getAllData();
+        // }, 300);
+
+        // Ambil data paginate result dari cache selama 5 menit
+        $dataDashboard = $cache->remember('dashboard_result_c', function() use ($request, $mainData) {
+            $page = $request['page'] ?? 1;
+            $limit = $request['limit'] ?? 10;
+            // $mainData->table = 'salaries';
+            // Query dasar
+            // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
+            $query = "SELECT * FROM ".$this->table." ORDER BY to_date DESC";
+            return $mainData->paginate($query, [], $page, $limit);
         }, 300);
 
         $modelA = [
             // 'result' => $result,
             'request' => $request,
             'table' => $this->table,
-            'cache_data' => $dataDashboard,
             'title' => $request['title'] ?? 'Testing model',
+            'cache_data' => $dataDashboard ?: null,            
 
-            // // Sample Errors
+            // // Sample Errors - Default 417
             // 'errors' => [
             //     // 'status' => 500,
             //     // 'message' => $message ?? 'Errors occured.',
@@ -132,6 +144,8 @@ class DashboardModel extends DashboardData
             'status' => $status ?? 200,
             'message' => $message ?? 'testing index',
         ];
+
+        // $data = array_merge($data, $dataDashboard);
 
         return handle_response_error($data, $modelA);
     }
@@ -171,7 +185,7 @@ class DashboardModel extends DashboardData
         // $appKey = generateAppKey();
         // die($appKey);
 
-        // Test EncryptDecrypt
+        // // Test EncryptDecrypt
         // $enc = new EncryptDecrypt(); // Otomatis ambil dari Config::get('app.key')
 
         // // Enkripsi
@@ -193,6 +207,7 @@ class DashboardModel extends DashboardData
         // $message = 'Invalid id.';
 
         $modelA = [
+            'request' => $request,
             'table' => $this->table,
             'data' => (new DashboardData())->getAllData($request['id']),
             'title' => $request['title'] ?? 'Edit model',
@@ -207,7 +222,7 @@ class DashboardModel extends DashboardData
         ];
 
         $data = [            
-            'data' => array_merge($modelA, $request),
+            'data' => $modelA,
             'status' => $status ?? 200,
             'message' => $message ?? 'testing edit',
         ];

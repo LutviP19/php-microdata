@@ -59,6 +59,16 @@ App::register('config', require BASEPATH . '/config/app.php');
 // Jalankan fungsi CORS
 handle_cors();
 
+// Validasi API Key
+if (!validateApiKey()) {
+    header('Content-Type: application/json', true, 401);
+    echo json_encode([
+        'statusCode'  => 401,
+        'message' => 'Unauthorized: Invalid API Key'
+    ]);
+    exit();
+}
+
 // INI Set Session
 if (session_status() == PHP_SESSION_NONE) {
     try {

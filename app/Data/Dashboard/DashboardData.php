@@ -18,7 +18,8 @@ class DashboardData extends DashboardStruct {
      *
      * @var string
      */
-    protected static $tableM = "users";
+    // protected static $tableM = "users";
+    protected static $tableM = "salaries";
 
     public function __construct(PDO $pdo = null)
     {

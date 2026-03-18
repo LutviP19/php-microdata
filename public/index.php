@@ -37,8 +37,7 @@ if(!empty($model)) {
             $_GET['id'] = (int) $segments[1];
         }
         // dd($_GET);
-
-        include_once $modelPath;
+        
         include_once BASEPATH .'/app/Core/process_request.php';
     }
 }

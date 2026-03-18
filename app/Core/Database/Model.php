@@ -56,7 +56,7 @@ class Model
     {
         // Assigning null to the connection variable closes the PDO connection
         $this->pdo = null;
-
+        // Assigning null to the Current table variable
         $this->table = null;
     }
 
@@ -227,7 +227,7 @@ class Model
     public function paginate($query, array $params = [], $page = 1, $limit = 10)
     {
         // Calculate Total Data (for info pagination)
-        $countQuery = "SELECT COUNT(*) FROM ($query) AS total_count";
+        $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
         $total = $this->execQuery($countQuery, $params, false, true);
 
         // Parsing data (Supports Objects and Arrays)

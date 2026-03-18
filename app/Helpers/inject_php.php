@@ -301,6 +301,102 @@ function generateUlid($lowercased = false, $timestamp = null): string
     return (string) \App\Core\Support\Ulid::generate($lowercased);
 }
 
+
+// Mendapatkan Header Origin
+function get_request_origin() {
+    // 1. Cek Header Origin (Utama)
+    if (isset($_SERVER['HTTP_ORIGIN'])) {
+        return $_SERVER['HTTP_ORIGIN'];
+    }
+
+    // 2. Cek Header Referer (Fallback)
+    if (isset($_SERVER['HTTP_REFERER'])) {
+        $referer = $_SERVER['HTTP_REFERER'];
+        $parts = parse_url($referer);
+        if (isset($parts['scheme']) && isset($parts['host'])) {
+            $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+            return $parts['scheme'] . '://' . $parts['host'] . $port;
+        }
+    }
+
+    // 3. Jika tidak ada, mungkin request langsung (CLI atau Browser tab baru)
+    return null;
+}
+
+// Untuk menangani CORS (Cross-Origin Resource Sharing)
+// Tentukan origin yang diizinkan (dari file .env)
+function handle_cors() {
+    // 1. Ambil Origin. Jika tidak ada, coba Referer (tapi Origin lebih prioritas untuk CORS)
+    // $currentOrigin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
+    $currentOrigin = get_request_origin();
+    
+    // Jika request dari domain yang sama (bukan cross-origin), browser sering tidak kirim Origin.
+    // Kita tetap izinkan lanjut tanpa set header CORS khusus.
+    if (!$currentOrigin) return;
+
+    // 2. Ambil string dari .env, pecah jadi array, dan bersihkan spasi
+    $envOrigins = env('ALLOWED_ORIGINS', '*');
+    $allowedOrigins = ($envOrigins !== '*') 
+        ? array_map('trim', explode(',', $envOrigins)) 
+        : ['*'];
+
+    // 3. Bersihkan Host untuk pengecekan (hapus http:// dan :port)
+    $cleanHost = parse_url($currentOrigin, PHP_URL_HOST);
+
+    // 4. LOGIKA VALIDASI
+    $isAllowed = false;
+    if (in_array('*', $allowedOrigins)) {
+        $isAllowed = true;
+    } else {
+        // Cek apakah host (localhost) ada di daftar whitelist
+        if (in_array($cleanHost, $allowedOrigins)) {
+            $isAllowed = true;
+        }
+    }
+
+    if ($isAllowed) {
+        // PENTING: Header harus berisi $currentOrigin LENGKAP (termasuk port)
+        header("Access-Control-Allow-Origin: $currentOrigin");
+        header("Access-Control-Allow-Credentials: true");
+    }
+
+    // 5. Header Pendukung (Tetap dikirim untuk preflight)
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-API-KEY, hx-request, hx-target, hx-current-url, hx-trigger, hx-trigger-name");
+
+    // 6. Handle "Preflight" OPTIONS request
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        // Browser butuh status 200 atau 204 untuk preflight
+        http_response_code(204); 
+        exit();
+    }
+}
+
+
+/**
+ * Fungsi Validasi API Key
+ * * @param string $headerName Nama header yang digunakan (default: X-API-KEY)
+ * @return bool
+ */
+function validateApiKey($headerName = 'X-API-KEY') {
+    // 1. Dapatkan header dari server
+    // PHP mengubah "X-API-KEY" menjadi "HTTP_X_API_KEY" di $_SERVER
+    $serverKey = 'HTTP_' . str_replace('-', '_', strtoupper($headerName));
+    $apiKeyInput = $_SERVER[$serverKey] ?? null;
+    // dd($apiKeyInput);
+
+    if (!$apiKeyInput) {
+        return false;
+    }
+
+    // 2. Ambil key asli dari config/env
+    $secureKey = config('api.key'); // Misal: 'base64:...' atau string random
+
+    // 3. Perbandingan yang aman dari "Timing Attack"
+    // Gunakan hash_equals untuk membandingkan string sensitif
+    return hash_equals($secureKey, 'base64:'.$apiKeyInput);
+}
+
 /**
  * checkRateLimit function
  *
@@ -313,6 +409,10 @@ function generateUlid($lowercased = false, $timestamp = null): string
 function checkRateLimit($identifier, $limit, $timeframeSeconds) {
     $dirPath = storage_path('/framework/tmp/rate_limits/');
     $filePath =  $dirPath . md5($identifier) . '.txt';
+
+    // Clean tmp-rate_limits
+    if(file_exists($dirPath))
+        cleanTmpFiles($dirPath, 1);
 
     // Create directory if it doesn't exist
     if (!is_dir($dirPath)) {
@@ -486,4 +586,51 @@ function slug($title, $separator = '-', $language = 'en', $dictionary = ['@' => 
     $title = preg_replace('![' . preg_quote($separator) . '\s]+!u', $separator, (string) $title);
 
     return trim((string) $title, $separator);
+}
+
+function cleanTmpFiles($tmpDir, $daysOld = 3)
+{
+    // Calculate the timestamp for the threshold
+    $thresholdTimestamp = strtotime("-$daysOld days");
+
+    // Check if the directory exists and is readable
+    if (!is_dir($tmpDir) || !is_readable($tmpDir)) {
+        $message = "Error: Temporary directory '$tmpDir' does not exist or is not readable.\n";
+        throw new Exception($message);
+    }
+
+    // Open the directory
+    if ($handle = opendir($tmpDir)) {
+        $message = '';
+        while (false !== ($file = readdir($handle))) {
+            // Skip '.' and '..'
+            if ($file != "." && $file != ".." && $file != ".gitignore") {
+                $filePath = $tmpDir . '/' . $file;
+
+                // Check if it's a file and get its modification time
+                if (is_file($filePath) && file_exists($filePath)) {
+                    $fileModTime = filemtime($filePath);
+
+                    // If the file's modification time is older than the threshold, delete it
+                    if ($fileModTime < $thresholdTimestamp) {
+                        if (unlink($filePath)) {
+                            $message .= "Deleted old temporary file: $filePath\n";
+                        } else {
+                            $message .= "Failed to delete file: $filePath\n";
+                        }
+                    }
+                }
+            }
+        }
+
+        // Logging
+        if(config('app.debug') && $message !== '') {
+            write_log($message, 'InjectHelper.cleanTmpFiles', 'info', 'cleanTmp_'.date('d-m-Y').'.log');
+        }
+
+        closedir($handle);
+    } else {
+        $message = "Error: Could not open temporary directory '$tmpDir'.\n";
+        throw new Exception($message);
+    }
 }

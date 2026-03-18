@@ -30,6 +30,13 @@ return [
     ],
 
     /**
+     * Api config details.
+     */
+    'api' => [
+        'key' => env('API_KEY', 'base64:FxfDQdiN9IguAgG5NSfESiNryDdAQf9aBiZKLIklNoE='),
+    ],
+
+    /**
      * Database Credentials.
      */
     'default_db' => env('DB_CONNECTION', 'sqlite'),
