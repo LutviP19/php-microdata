@@ -15,6 +15,7 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 // dd($requestPath);
 $segments = explode('/', trim($requestPath, '/'));
 $page = ($segments[0] !== '') ? $segments[0] : 'dashboard';
+$isPageExists = true;
 // -------------------------
 
 // Static router untuk execute file php
@@ -37,8 +38,21 @@ if(!empty($model)) {
             $_GET['id'] = (int) $segments[1];
         }
         // dd($_GET);
-        
+
         include_once BASEPATH .'/app/Core/process_request.php';
+    } else {
+        if(is_json_request()) {
+            $message = "Model '$model' Not Found";
+            $errors = [
+                'model' => 'Model not found: ' . str_replace(BASEPATH, '', $modelPath)
+            ];
+            json_response([], 404, $message, $errors);
+        } else {
+            $isPageExists = false;
+            // http_response_code(404);
+            include BASEPATH . "/views/error/404.php";
+            exit();
+        }
     }
 }
 

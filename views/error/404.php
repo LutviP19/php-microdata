@@ -1,3 +1,17 @@
+<?php if(!$isPageExists): ?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased">
+<?php endif; ?>
+
 <div class="flex flex-col items-center justify-center min-h-[60vh] text-center">
     <div class="relative">
         <h1 class="text-9xl font-black text-gray-800 animate-pulse">404</h1>
@@ -29,3 +43,6 @@
         <p class="text-red-400">HTTP/1.1 404 Not Found</p>
     </div>
 </div>
+<?php if(!$isPageExists): ?>
+</body>
+<?php endif; ?>

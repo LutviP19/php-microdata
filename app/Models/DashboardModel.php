@@ -9,6 +9,7 @@ namespace App\Models;
 use App\Core\Support\EncryptDecrypt;
 use App\Core\Support\Session;
 use App\Data\Dashboard\DashboardData;
+use App\Data\Dashboard\StatsData;
 use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
 
@@ -52,7 +53,10 @@ class DashboardModel extends DashboardData
 
         // Create instance
         $mainData = new DashboardData($conn);
+        $statsData = new StatsData($conn);
         // dd($mainData->table);
+        // dd($statsData->table);
+        // dd($this->table);
 
         // // Middleware - Rate limiter
         // $identifier = 'Dashboard-Index-'.\clientIP();
@@ -90,10 +94,19 @@ class DashboardModel extends DashboardData
         // $limit = $request['limit'] ?? 10;
         // // $mainData->table = 'assets';
         // // Query dasar
-        // // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
         // $query = "SELECT * FROM ".$this->table." ORDER BY to_date DESC";
         // // Panggil fungsi paginate
         // $result = $mainData->paginate($query, [], $page, $limit);
+        // dd($result, true);
+
+        // // Test - Pagination 2
+        // $page = $request['page'] ?? 1;
+        // $limit = $request['limit'] ?? 10;
+        // // $statsData->table = 'assets';
+        // // Query dasar
+        // $query = "SELECT * FROM ".$statsData->table." ORDER BY hire_date DESC";
+        // // Panggil fungsi paginate
+        // $result = $statsData->paginate($query, [], $page, $limit);
         // dd($result, true);
         
         
@@ -108,10 +121,10 @@ class DashboardModel extends DashboardData
         // Cache data
         $cache = new \App\Core\Support\Cache();
 
-        // // Ambil data chart dari cache selama 5 menit
-        // $dataDashboard = $cache->remember('dashboard_index', function() use ($mainData) {
-        //     return $mainData->getAllData();
-        // }, 300);
+        // Ambil data stats dari cache selama 5 menit
+        $dataStats = $cache->remember('dashboard_index', function() use ($statsData) {
+            return $statsData->getAllData();
+        }, 300);
 
         // Ambil data paginate result dari cache selama 5 menit
         $dataDashboard = $cache->remember('dashboard_result_c', function() use ($request, $mainData) {
@@ -129,7 +142,8 @@ class DashboardModel extends DashboardData
             'request' => $request,
             'table' => $this->table,
             'title' => $request['title'] ?? 'Testing model',
-            'cache_data' => $dataDashboard ?: null,            
+            'stats_data' => $dataStats ?: null,
+            'cache_data' => $dataDashboard ?: null,
 
             // // Sample Errors - Default 417
             // 'errors' => [

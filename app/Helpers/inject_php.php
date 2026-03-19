@@ -379,6 +379,11 @@ function handle_cors() {
  * @return bool
  */
 function validateApiKey($headerName = 'X-API-KEY') {
+
+    // Proses hanya jika API Request
+    if(!is_json_request())
+        return true;
+
     // 1. Dapatkan header dari server
     // PHP mengubah "X-API-KEY" menjadi "HTTP_X_API_KEY" di $_SERVER
     $serverKey = 'HTTP_' . str_replace('-', '_', strtoupper($headerName));

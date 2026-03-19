@@ -1,7 +1,7 @@
 <?php 
 
 /**
- * Connection class
+ * App class
  * @author LutviP19 <lutvip19@gmail.com>
  */
 

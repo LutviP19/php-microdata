@@ -7,19 +7,17 @@
 namespace App\Data\Dashboard;
 
 
-use App\Structs\Dashboard\DashboardStruct;
 use PDO; // new PDO object
-use App\Core\Database\Connection; // Uncomment to use custom DB connection
+// use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
-class DashboardData extends DashboardStruct {
+class StatsData extends DashboardData {
 
     /**
      * static table name for this Class.
      *
      * @var string
      */
-    // protected static $tableM = "users";
-    protected static $tableM = "salaries";
+    protected static $tableM = "employees";
 
     public function __construct(PDO $pdo = null)
     {
@@ -34,13 +32,12 @@ class DashboardData extends DashboardStruct {
         // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
-        $conn = $pdo ?: Connection::make();
-        parent::__construct($conn);
+        parent::__construct($pdo);
 
         
-        // Set PDO connection
-        $this->pdo = $conn;
-
+        // // Set Custom PDO connection
+        // $this->pdo = $pdo;
+        
         // Set default table
         $this->table = self::$tableM;
     }

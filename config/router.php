@@ -1,6 +1,10 @@
 <?php 
 
+/**
+ * Router url to Base Model file
+ */
+
 $router = [
-    'home' => 'Dashboard',
+    'home' => 'Dashboardx',
     'dashboard' => 'Dashboard',
 ];
