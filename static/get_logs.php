@@ -1,4 +1,5 @@
 <?php 
+declare(strict_types=1);
 
 /**
  *  @author LutviP19 <lutvip19@gmail.com>

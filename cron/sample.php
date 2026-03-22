@@ -1,19 +1,16 @@
 <?php 
+declare(strict_types=1);
 
 /**
  *  @author Lutvip19 <lutvip19@gmail.com>
  */
 
-// file: sample.php
-
-if (!defined('BASEPATH')) {
-    define('BASEPATH', __DIR__ . "/..");
-}
 
 /**
- * Require Core init File.
+ * Require Worker Bootstrap File.
  */
-require_once BASEPATH .'/app/Core/init.php';
+require_once 'bootstrap.php';
+
 
 $interval = 60; // Jalankan setiap 60 detik (1 menit)
 $logFile = logs_path('cron_log.txt');

@@ -1,4 +1,6 @@
-<?php
+<?php 
+declare(strict_types=1);
+
 // Pastikan session dimulai
 if (session_status() === PHP_SESSION_NONE) {
     bp_session_start();

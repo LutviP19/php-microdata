@@ -1,17 +1,15 @@
 <?php 
+declare(strict_types=1);
 
 /**
  *  @author Lutvip19 <lutvip19@gmail.com>
  */
 
-if (!defined('BASEPATH_FFI')) {
-    define('BASEPATH_FFI', __DIR__ . '/../ffi');
-}
 
 /**
- * Require Core init File.
+ * Require Worker Bootstrap File.
  */
-require_once BASEPATH .'/app/Core/init.php';
+require_once 'bootstrap.php';
 
 
 // Meili Search
