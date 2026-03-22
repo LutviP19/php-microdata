@@ -3,8 +3,8 @@
  *  @author LutviP19 <lutvip19@gmail.com>
  */
 // static-router.php
-// simple routing untuk execute file static php 
-// bisa juga untuk menjalankan kode FFi jika diperlukan
+// simple routing untuk execute file static php
+// You can also run FFi ​​code if needed with single php script
 
 $staticFile = BASEPATH . '/static/' .$page.'.php';
 if (file_exists($staticFile)) {
