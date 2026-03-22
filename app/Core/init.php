@@ -78,7 +78,7 @@ if (session_status() == PHP_SESSION_NONE) {
         if (env('SESSION_DRIVER') === "redis") {
             // ini_set('session.save_path', "tcp://" . env('REDIS_HOST') . ":" . env('REDIS_PORT') . "?auth" . env('REDIS_PASSWORD'));
             // ini_set('session.gc_maxlifetime', (env('SESSION_LIFETIME', 120) * 60)); // Set default to 2 hours
-            
+
             ini_set('session.save_path', "tcp://" . config('redis.default.host') . ":" . config('redis.default.port') . "?auth" . config('redis.default.password'));
             ini_set('session.gc_maxlifetime', (int)(config('session.lifetime') * 60)); // Set default to 2 hours
         } else {
@@ -114,12 +114,11 @@ if(isset($_COOKIE['PHPFFISESSID'])){
         if (is_json_request()) {
             json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
         } else {
+            $isAllowAccess = false;
             http_response_code(403);
-            // include BASEPATH . "/views/error/403.php";
-            echo '<h1 style="color:orange;">403 Forbidden.</h1>';
+            include BASEPATH . "/views/error/403.php";
         }
         die;
     }
 }
-
 
