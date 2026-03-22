@@ -151,6 +151,19 @@ go build -o ../../lib/dynamic_validate.so -buildmode=c-shared ./dynamic_validate
 go build -buildmode=c-shared -o ./ffi/lib/dynamic_validate.so ./ffi/source/dynamic_validate/dynamic_validate.go
 
 
+Bulk_Data:
+----------
+cd ffi/source/bulk_data
+go mod init bulk_data
+go mod tidy
+
+go build -buildmode=c-shared -o ../../lib/bulk_data.so ./bulk_data.go
+OR ---
+go build -buildmode=c-shared -o ./ffi/lib/bulk_data.so ./ffi/source/bulk_data/bulk_data.go
+
+php cron/bulkData.php
+php cron/searchBulkData.php
+
 
 // Benchmark
 ab -c 128 -n 10000 -k http://localhost:8000/health 2>&1

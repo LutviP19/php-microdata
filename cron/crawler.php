@@ -40,6 +40,29 @@ if($rawMode) {
     $result = clean_newlines($raw_input); // Test raw-ouput
 } else {
     $result = parse_crawler_logs(clean_newlines($raw_input));
+
+    // $refinedData = [];
+    // foreach ($result as $item) {
+    //     if(is_null($item['title']))
+    //         continue;
+
+    //     // Flatten labels into a comma-separated string
+    //     $tags = "";
+    //     if (isset($item['metadata']['labels'])) {
+    //         $tags = implode(', ', $item['metadata']['labels']);
+    //     }
+
+    //     $refinedData[] = [
+    //         'title'   => $item['title'],
+    //         'content' => $item['content'],
+    //         'tags'    => $tags
+    //     ];
+    // }
+
+    // // This $payload is now ready for Go
+    // $payload = json_encode($refinedData);
+    // if(!file_exists(logs_path('crawler'))) mkdir(logs_path('crawler'), 775, true);
+    // file_put_contents(logs_path('crawler/crawler'.date('Ymd-His').'.json'), $payload);
 }
 
 // Use the exact name defined in cdef
@@ -52,7 +75,8 @@ echo "PHP-FFI Go Webcrawler result:" . PHP_EOL;
 if ($rawMode) {
     echo $result . PHP_EOL; // Test raw-ouput
 } else {
-    echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    $jsonResult = json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    echo $jsonResult . PHP_EOL;
 }
 echo "It took {$time} seconds to finished." . PHP_EOL;
 echo "[" . date('Y-m-d H:i:s') . "] End Webcrawler..." . PHP_EOL;
