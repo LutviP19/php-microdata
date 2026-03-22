@@ -8,8 +8,8 @@ if (!defined('BASEPATH')) {
     define('BASEPATH', __DIR__ );
 }
 
-// Require Core init File.
-require_once BASEPATH . '/app/Core/init.php';
+// Require Worker Bootstrap File.
+require_once BASEPATH . '/cron/bootstrap.php';
 
 use PHPStreamServer\Core\Server;
 use PHPStreamServer\Core\Worker\WorkerProcess;
