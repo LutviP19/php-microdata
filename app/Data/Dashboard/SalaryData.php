@@ -10,15 +10,14 @@ namespace App\Data\Dashboard;
 use PDO; // new PDO object
 // use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
-class StatsData extends DashboardData {
+class SalaryData extends DashboardData {
 
     /**
      * static table name for this Class.
      *
      * @var string
      */
-    // protected static $tableM = "roles";
-    protected static $tableM = "employees";
+    protected static $tableM = "salaries";
 
     public function __construct(PDO $pdo = null)
     {
@@ -47,7 +46,7 @@ class StatsData extends DashboardData {
         // $selectCols = $cols ?? '*';
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
-        $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10";
+        $sql .= !empty($id) ? " WHERE emp_no = ? LIMIT 1 ": " LIMIT 10";
         $result = self::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
         // dd($result, true);
         return $result;

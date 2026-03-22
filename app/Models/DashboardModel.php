@@ -8,9 +8,8 @@ namespace App\Models;
 
 use App\Core\Support\EncryptDecrypt;
 use App\Core\Support\Session;
-use App\Data\Dashboard\DashboardData;
-use App\Data\Dashboard\StatsData;
-use App\Core\Database\Connection; // Uncomment to use custom DB connection
+use App\Data\Dashboard\{DashboardData, StatsData, EmployeeData, SalaryData};
+use App\Core\Database\Connection;
 
 
 class DashboardModel extends DashboardData
@@ -29,7 +28,7 @@ class DashboardModel extends DashboardData
         // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
 
-        // Default connection
+        // Use Default connection
         $conn = $pdo ?: Connection::make();
         parent::__construct($conn);
 
@@ -52,7 +51,7 @@ class DashboardModel extends DashboardData
         // // dd($dbname);
 
         // Create instance
-        $mainData = new DashboardData($conn);
+        $mainData = new EmployeeData($conn);
         $statsData = new StatsData($conn);
         // dd($mainData->table);
         // dd($statsData->table);
@@ -133,7 +132,7 @@ class DashboardModel extends DashboardData
             // $mainData->table = 'salaries';
             // Query dasar
             // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
-            $query = "SELECT * FROM ".$this->table." ORDER BY to_date DESC";
+            $query = "SELECT * FROM ".$this->table." ORDER BY hire_date DESC";
             return $mainData->paginate($query, [], $page, $limit);
         }, 300);
 
@@ -220,10 +219,13 @@ class DashboardModel extends DashboardData
         // $status = 400;
         // $message = 'Invalid id.';
 
+        // Set model Data
+        $modelData = new EmployeeData();
+
         $modelA = [
             'request' => $request,
-            'table' => $this->table,
-            'data' => (new DashboardData())->getAllData($request['id']),
+            'table' => $modelData->table,
+            'data' => $modelData->getAllData($request['id']),
             'title' => $request['title'] ?? 'Edit model',
 
             // // Sample Errors

@@ -5,6 +5,6 @@
  */
 
 $router = [
-    'home' => 'Dashboardx',
+    'home' => 'Dashboard',
     'dashboard' => 'Dashboard',
 ];

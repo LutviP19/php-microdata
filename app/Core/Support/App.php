@@ -111,12 +111,38 @@ class App
                     if(isset($_REQUEST['total'])) {
                         $rules['total'] = "numeric,min=0";
                         $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
-                    }                
+                    }
+                    if(isset($_REQUEST['query'])) {
+                        $rules['total'] = "numeric,min=0";
+                        $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
+                    } 
                     // dd($_REQUEST);
                     // dd($safeData);
                     // dd($rules);
 
                     if(!empty($rules)) {
+
+                        // Allow only struct keys
+                        $structClass = new $structNameSpace();
+                        $structRules = parseStructToRules($structClass::class);
+                        foreach($structRules as $index => $structRule) {
+                            // dd($index);
+                            // dd($structRule);
+                            // dd(isset($_REQUEST[$index]));
+                            
+                            // if($index === "website") 
+                            //     dd($structRule);
+
+                            if(isset($_REQUEST[$index]) && (!is_null($_REQUEST[$index]) || $_REQUEST[$index] !== "")) {
+                                $rules[$index] = ltrim(str_replace(['required', 'email', 'url'], '', $structRule), ",");
+                                // $rules[$index] = "";
+                                $safeData += refineRequest(["$index" => $_REQUEST[$index]], $rules);
+                            }
+                            continue;
+                        }
+                        // dd($safeData);
+                        // dd($rules);
+
                         $result = validateStructData($safeData, $rules);
                         // dd($result);
                     }
@@ -134,6 +160,7 @@ class App
                 break;
         }
 
+        // Validation errors
         if(isset($result['errors'])) {
             json_response([], 406, 'Validation errors', $result['errors']);
             die();
