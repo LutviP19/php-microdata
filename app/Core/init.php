@@ -76,11 +76,15 @@ if (session_status() == PHP_SESSION_NONE) {
         ini_set('session.save_handler', env('SESSION_DRIVER', 'files'));
         
         if (env('SESSION_DRIVER') === "redis") {
-            ini_set('session.save_path', "tcp://" . env('REDIS_HOST') . ":" . env('REDIS_PORT') . "?auth" . env('REDIS_PASSWORD'));
-            ini_set('session.gc_maxlifetime', (env('SESSION_LIFETIME', 120) * 60)); // Set default to 2 hours
+            // ini_set('session.save_path', "tcp://" . env('REDIS_HOST') . ":" . env('REDIS_PORT') . "?auth" . env('REDIS_PASSWORD'));
+            // ini_set('session.gc_maxlifetime', (env('SESSION_LIFETIME', 120) * 60)); // Set default to 2 hours
+            
+            ini_set('session.save_path', "tcp://" . config('redis.default.host') . ":" . config('redis.default.port') . "?auth" . config('redis.default.password'));
+            ini_set('session.gc_maxlifetime', (int)(config('session.lifetime') * 60)); // Set default to 2 hours
         } else {
             ini_set('session.save_handler', 'files');
-            ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
+            // ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
+            ini_set('session.save_path', storage_path('framework/sessions'));
         }            
     } catch (\Exception $e) {
         $errLog = "An unexpected error occurred: " . $e->getMessage();
@@ -88,7 +92,8 @@ if (session_status() == PHP_SESSION_NONE) {
 
         // Fallback to default driver
         ini_set('session.save_handler', 'files');
-        ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
+        // ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
+        ini_set('session.save_path', storage_path('framework/sessions'));
     }
 
     session_name('PHPFFISESSID'); // Set a custom session name

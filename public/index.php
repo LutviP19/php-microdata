@@ -16,7 +16,26 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $segments = explode('/', trim($requestPath, '/'));
 $page = ($segments[0] !== '') ? $segments[0] : 'dashboard';
 $isPageExists = true;
+$isAllowAccess = true;
 // -------------------------
+
+// // --- Test Auth Gate
+// $isAllowAccess = false;
+// $permission = 'asset-delete';
+// if (!$isAllowAccess) {
+//     if(is_json_request()) {
+//         $message = "You don't have access[$permission]";
+//         $errors = [
+//             'auth' => 'Forbidden to access: ' . $permission
+//         ];
+//         json_response([], 403, $message, $errors);
+//     } else {
+//         http_response_code(403);
+//         include BASEPATH . "/views/error/403.php";
+//         exit();
+//     }
+// }
+
 
 // Set the model name in the router file
 include BASEPATH . "/config/router.php";

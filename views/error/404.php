@@ -45,4 +45,5 @@
 </div>
 <?php if(!$isPageExists): ?>
 </body>
+</html>
 <?php endif; ?>

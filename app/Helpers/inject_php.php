@@ -457,8 +457,10 @@ function checkSession()
 {
     try {
 
-        // if(!is_numeric($_SESSION['user_id']))
-        //     throw new Exception('No session started.');
+        // // Load Gate
+        // if(isset($_SESSION['user_id']) && isset($_SESSION['current_team_id'])) {
+        //     \App\Core\Auth\Gate::loadAbilities($_SESSION['user_id'], $_SESSION['current_team_id']);
+        // }
 
         if ($_SESSION['IPaddress'] !== $_SERVER['REMOTE_ADDR']) {
             throw new Exception('IP Address mixmatch (possible session hijacking attempt).');
@@ -484,7 +486,8 @@ function bp_session_start()
     @session_start();
     if (isset($_SESSION['destroyed'])) {
 
-        $ttl = (int)env('SESSION_REGENERATE', 300);
+        // $ttl = (int)env('SESSION_REGENERATE', 300);
+        $ttl = config('session.regenerate', 300);
 
         // $valid = (bool)($_SESSION['destroyed'] < time() - $ttl);
         // // dd($ttl);
@@ -528,7 +531,8 @@ function bp_session_regenerate_id($oldSessionId)
 
     $sessionName = session_name();
     $cookie = session_get_cookie_params();
-    $sessionExp = (env('SESSION_LIFETIME', 120) * 60);
+    // $sessionExp = (env('SESSION_LIFETIME', 120) * 60);
+    $sessionExp = (config('session.lifetime') * 60);
     $setcookie = ['Set-Cookie' => "{$sessionName}={$new_session_id}; Max-Age={$sessionExp}; Path={$cookie['path']};"];
 
     // use_strict_mode is mandatory for security reasons.
@@ -553,7 +557,7 @@ function bp_session_regenerate_id($oldSessionId)
     } else {
         // Delete data redis PHPREDIS_SESSION
         if($saveHandler === 'redis')
-        delDataFromRedis($oldSessionId, 'PHPREDIS_SESSION', '0', true);
+            delDataFromRedis($oldSessionId, 'PHPREDIS_SESSION', config('redis.default.database'), true);
     }
 
     return $setcookie;
@@ -591,6 +595,26 @@ function slug($title, $separator = '-', $language = 'en', $dictionary = ['@' => 
     $title = preg_replace('![' . preg_quote($separator) . '\s]+!u', $separator, (string) $title);
 
     return trim((string) $title, $separator);
+}
+
+function delDataFromRedis($id, $prefix = null, $db = null, $force = false)
+{
+    if(empty($id))
+        return;
+
+    // Connect to Redis
+    $redis = new \Predis\Client([
+        'host' => config('redis.cache.host'),
+        'port' => config('redis.cache.port'),
+        'database' => $db ?? config('redis.cache.database')
+    ]);
+    
+    $prefix ??= 'bp_data';
+
+    $data = $redis->get($prefix.':'.$id);
+
+    if ((! is_null($data) && isset($data[0])) || $force)
+        $redis->del($prefix.':'.$id);
 }
 
 function cleanTmpFiles($tmpDir, $daysOld = 3)

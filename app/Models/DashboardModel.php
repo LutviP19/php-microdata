@@ -281,6 +281,14 @@ class DashboardModel extends DashboardData
         // $status = 400;
         // $message = 'Invalid id.';
 
+
+        // // Hanya user dengan izin 'asset-delete' yang bisa lewat
+        // \App\Core\Auth\Gate::authorize('asset-delete');
+        // $model = new AssetModel();
+        // if ($model->delete($id)) {
+        //     return "Asset berhasil dihapus";
+        // }
+
         $modelA = [
             'request' => $request ?? [],
             'table' => $this->table,

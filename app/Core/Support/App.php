@@ -238,4 +238,34 @@ class App
 
         return $dataModel;
     }
+
+    // public function getUserAbilities($userId, $groupId) 
+    // {
+    //     $cache = new \App\Core\Support\Cache();
+    //     $cacheKey = "user_abilities_{$userId}_{$groupId}";
+
+    //     return $cache->remember($cacheKey, function() use ($userId, $groupId) {
+    //         $db = new \App\Core\Database\Model();
+    //         $sql = "SELECT DISTINCT p.slug 
+    //                 FROM user_roles ur
+    //                 JOIN role_permissions rp ON ur.role_id = rp.role_id
+    //                 JOIN permissions p ON rp.permission_id = p.id
+    //                 WHERE ur.user_id = ? AND (ur.group_id = ? OR ur.group_id IS NULL)";
+            
+    //         $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
+            
+    //         // Flatten array agar mudah dicek: ['create-asset', 'edit-asset', ...]
+    //         return array_column($rows, 'slug');
+    //     }, 3600); // Simpan 1 jam
+
+    //     // // Cara Penggunaan di View/Controller (HTMX)
+
+    //     // $abilities = $auth->getUserAbilities($user->id, $user->current_team_id);
+
+    //     // // Contoh pengecekan akses
+    //     // if (in_array('delete-asset', $abilities)) {
+    //     //     // Tampilkan tombol hapus untuk HTMX
+    //     //     echo '<button hx-delete="/asset/1">Hapus</button>';
+    //     // }
+    // }
 }
