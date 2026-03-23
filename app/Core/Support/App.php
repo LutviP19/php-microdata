@@ -88,6 +88,7 @@ class App
                 }
 
                 $result = validateStructData($safeData, $rules);
+                // dd($result);
                 break;
             case 'GET':
                 // Process GET data
@@ -101,19 +102,19 @@ class App
                     // Validate Pagination params
                     $rules = $safeData = [];
                     if(isset($_REQUEST['page'])) {
-                        $rules['page'] = "numeric,min=1";
+                        $rules['page'] = "omitempty,numeric,min=1";
                         $safeData += refineRequest(["page" => $_REQUEST['page']], $rules);
                     }
                     if(isset($_REQUEST['limit'])) {
-                        $rules['limit'] = "numeric,min=1";
+                        $rules['limit'] = "omitempty,numeric,min=1";
                         $safeData += refineRequest(["limit" => $_REQUEST['limit']], $rules);
                     }
                     if(isset($_REQUEST['total'])) {
-                        $rules['total'] = "numeric,min=0";
+                        $rules['total'] = "omitempty,numeric,min=0";
                         $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
                     }
                     if(isset($_REQUEST['query'])) {
-                        $rules['total'] = "numeric,min=0";
+                        $rules['total'] = "omitempty,numeric,min=0";
                         $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
                     } 
                     // dd($_REQUEST);
@@ -121,6 +122,7 @@ class App
                     // dd($rules);
 
                     if(!empty($rules)) {
+                        // dd($rules);
 
                         // Allow only struct keys
                         $structClass = new $structNameSpace();
@@ -134,7 +136,7 @@ class App
                             //     dd($structRule);
 
                             if(isset($_REQUEST[$index]) && (!is_null($_REQUEST[$index]) || $_REQUEST[$index] !== "")) {
-                                $rules[$index] = ltrim(str_replace(['required', 'email', 'url'], '', $structRule), ",");
+                                $rules[$index] = rtrim(ltrim(str_replace(['required', 'email', 'url'], '', $structRule), ","), ",");
                                 // $rules[$index] = "";
                                 $safeData += refineRequest(["$index" => $_REQUEST[$index]], $rules);
                             }

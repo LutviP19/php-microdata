@@ -50,6 +50,9 @@ if (!function_exists('refineRequest')) {
         $filters = [];
         
         foreach ($rules as $field => $ruleString) {
+            if(!isset($request[$field]))
+                continue;
+
             // Map Go-style rules back to PHP Filter constants
             $tags = explode(',', $ruleString);
             
@@ -95,6 +98,7 @@ if (!function_exists('validateStructData')) {
 
         // Wrap data and rules into one JSON object
         $payload = json_encode([
+            "lang"  => "id", // en || id
             "data"  => $data,
             "rules" => $rules
         ]);
@@ -126,9 +130,13 @@ if (!function_exists('parseStructToRules')) {
 
             // ... (rest of your logic is correct)
             if ($attr->required) $goTags[] = 'required';
+            if ($attr->omitempty) $goTags[] = 'omitempty';
             if ($attr->email)    $goTags[] = 'email';
             if ($attr->numeric)  $goTags[] = 'numeric';
+            if ($attr->boolean)  $goTags[] = 'boolean';
+            if ($attr->gt !== null) $goTags[] = "gt={$attr->gt}";
             if ($attr->gte !== null) $goTags[] = "gte={$attr->gte}";
+            if ($attr->lt !== null) $goTags[] = "lt={$attr->lt}";
             if ($attr->lte !== null) $goTags[] = "lte={$attr->lte}";
             if ($attr->min !== null) $goTags[] = "min={$attr->min}";
             if ($attr->max !== null) $goTags[] = "max={$attr->max}";

@@ -1,0 +1,41 @@
+package main
+
+import (
+	"C"
+	"encoding/json"
+
+	"github.com/go-playground/validator/v10"
+)
+
+type ValidationRequest struct {
+	Data  map[string]interface{} `json:"data"`
+	Rules map[string]string      `json:"rules"`
+}
+
+var validate = validator.New()
+
+//export ValidateDynamic
+func ValidateDynamic(input *C.char) *C.char {
+	var req ValidationRequest
+	if err := json.Unmarshal([]byte(C.GoString(input)), &req); err != nil {
+		return C.CString(`{"error": "Invalid request format"}`)
+	}
+
+	// Validate each field in Data against its Rule
+	errors := make(map[string]string)
+	for field, rule := range req.Rules {
+		value := req.Data[field]
+		if err := validate.Var(value, rule); err != nil {
+			errors[field] = "Field fails rule: " + rule
+		}
+	}
+
+	if len(errors) > 0 {
+		resp, _ := json.Marshal(map[string]interface{}{"errors": errors})
+		return C.CString(string(resp))
+	}
+
+	return C.CString(`{"status": "success"}`)
+}
+
+func main() {}
