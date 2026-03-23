@@ -91,25 +91,35 @@ class Cache
      */
     public function set($key, $data, $expiry = 3600) 
     {
-        $serialized = serialize($data);
+        //  Only cache if data is not empty
+        if(!empty($data)) {
 
-        // Save to Redis
-        if ($this->redisClient) {
-            try {
-                $this->redisClient->setex($key, $expiry, $serialized);
+            //  Only cache if total data not 0
+            if((isset($data['total']) && $data['total'] === 0) || (isset($data['data']['total']) && $data['data']['total'] === 0)) {
+                // dd($data["total"]);
                 return;
-            } catch (Exception $e) {
-                $this->redisClient = null;
             }
-        }
+        
+            $serialized = serialize($data);
 
-        // Save to File (Fallback)
-        if (!is_dir($this->storagePath)) mkdir($this->storagePath, 0775, true);
-        $content = serialize([
-            'expiry' => time() + $expiry,
-            'data'   => $serialized
-        ]);
-        file_put_contents($this->storagePath . md5($key) . '.cache', $content);
+            // Save to Redis
+            if ($this->redisClient) {
+                try {
+                    $this->redisClient->setex($key, $expiry, $serialized);
+                    return;
+                } catch (Exception $e) {
+                    $this->redisClient = null;
+                }
+            }
+
+            // Save to File (Fallback)
+            if (!is_dir($this->storagePath)) mkdir($this->storagePath, 0775, true);
+            $content = serialize([
+                'expiry' => time() + $expiry,
+                'data'   => $serialized
+            ]);
+            file_put_contents($this->storagePath . md5($key) . '.cache', $content);
+        }
     }
 
     /**

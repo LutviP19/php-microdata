@@ -10,6 +10,7 @@ include "static-router.php";
 
 // Dynamic Models router
 $router = [
+    'auth' => 'Auth',
     'home' => 'Dashboard',
     'dashboard' => 'Dashboard',
 ];
