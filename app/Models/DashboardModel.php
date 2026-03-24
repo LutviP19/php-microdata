@@ -38,6 +38,8 @@ class DashboardModel extends DashboardData
 
     public function index(?array $request = [])
     {
+        // dd($_SESSION);
+        
         $conn = null;
         // // Use Custom connection
         // $driver = 'mysql';

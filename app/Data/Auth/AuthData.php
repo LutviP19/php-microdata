@@ -43,7 +43,14 @@ class AuthData extends AuthStruct {
         // Set default table
         $this->table = self::$tableM;
     }
-
+    
+    /**
+     * getAllData
+     *
+     * @param  mixed $id
+     * @param  mixed $selectCols
+     * @return void
+     */
     public function getAllData($id = null, $selectCols = '*') {
         // $selectCols = $cols ?? '*';
         $id = $id ? [$id] : [];
@@ -53,4 +60,59 @@ class AuthData extends AuthStruct {
         // dd($result, true);
         return $result;
     }
+
+    public function seed() {
+        $db = new AuthStruct();
+        
+        $permissions = [
+            [1, 'Create Asset', 'asset-create'],
+            [2, 'View Asset', 'asset-view'],
+            // ... dst
+        ];
+
+        foreach ($permissions as $p) {
+            $db->execQuery("CALL sp_upsert_permission(?, ?, ?)", $p);
+        }
+
+        // Mapping juga bisa dinamis
+        $db->execQuery("CALL sp_assign_permission(?, ?)", [2, 1]); // Role 2, Perm 1
+    }
+
+    /**
+     * Seeder Dinamis di PHP
+     */
+    public function syncPermissions(array $data) {
+        $db = new AuthStruct();
+        
+        foreach ($data as $item) {
+            // SQL ini aman dijalankan berulang kali (Idempotent)
+            $sql = "INSERT INTO `permissions` (`id`, `name`, `slug`, `created_at`) 
+                    VALUES (?, ?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `slug` = VALUES(`slug`)";
+            
+            $db->execQuery($sql, [$item['id'], $item['name'], $item['slug']]);
+        }
+
+        // // Cara Pakai:
+        // $this->syncPermissions([
+        //     ['id' => 1, 'name' => 'Create Asset', 'slug' => 'asset-create'],
+        //     ['id' => 2, 'name' => 'View Asset', 'slug' => 'asset-view'],
+        // ]);
+    }
+
+    /**
+     * Mendapatkan semua permission user di group tertentu
+     */
+    public function getPermissions($userId, $groupId) {
+        $db = new AuthStruct();
+        $sql = "SELECT permission_slug 
+                FROM v_user_permissions 
+                WHERE user_id = ? 
+                AND (group_id = ? OR group_id IS NULL)";
+                
+        $result = $db->execQuery($sql, [$userId, $groupId], false, false, true);
+        return array_column($result, 'permission_slug');
+    }
+
+    
 }
