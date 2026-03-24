@@ -3,18 +3,15 @@
  *  @author LutviP19 <lutvip19@gmail.com>
  */
 
-namespace App\Core;
+namespace App\Core\Support;
 
-if (!defined('BASEPATH')) {
-    define('BASEPATH', __DIR__ . '/../..');
-}
 
 class RecursiveModelLoader {
     protected $basePath;
     protected $moduleConfig;
 
     public function __construct($config = []) {
-        $this->basePath = realpath(BASEPATH . "/app");
+        $this->basePath = realpath(config('app.path') . "/app");
         // Load konfigurasi modul        
         $this->moduleConfig = $config['modules'] ?? [];
         $this->dataMapping = $config['data_mapping'] ?? [];
@@ -63,14 +60,14 @@ class RecursiveModelLoader {
         if(is_json_request()) {
             $message = "Model '$model' Not Found";
             $errors = [
-                'model' => 'Model not found at: ' . str_replace(BASEPATH, '', $modelPath)
+                'model' => 'Model not found at: ' . str_replace(config('app.path'), '', $modelPath)
             ];
             json_response([], 404, $message, $errors);
         } else {
             if(!$jsonOnly) {
                 $isPageExists = false;
                 http_response_code(404);
-                include BASEPATH . "/views/error/404.php";
+                include config('app.path') . "/views/error/404.php";
                 exit();
             }
         }

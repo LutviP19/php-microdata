@@ -56,10 +56,10 @@ $isAllowAccess = true;
 //             $_GET['id'] = (int) $segments[1];
 //         }
 //         // dd($_GET);
-
+// 
 //         // Set page same as model route
 //         $page = strtolower($model);
-
+// 
 //         include_once BASEPATH .'/app/Core/process_request.php';
 //     } else {
 //         if(is_json_request()) {
@@ -79,7 +79,7 @@ $isAllowAccess = true;
 
 // Load Router and Mapping Models
 include BASEPATH . "/config/router.php";
-$loader = new \App\Core\RecursiveModelLoader($models);
+$loader = new \App\Core\Support\RecursiveModelLoader($models);
 $resolved = $loader->resolve($page);
 // dd($resolved);
 
@@ -123,7 +123,7 @@ if ($resolved) {
         $loader->notFoundHandler($model, $modelPath);
     }
 } else {
-    // Handle 404 - JSON Only
+    // Handle 404 - API JSON Only
     $model = $router[$page];
     $modelPath = "/app/Models/" . $model . "Model.php";
     $loader->notFoundHandler($model, $modelPath, true);
@@ -136,9 +136,10 @@ $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 
 
 // Tentukan apakah kita di halaman login
 $isLoginPage = ($page === 'login');
+$isPageExists = $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
+// dd($viewPath);
 
 if($isHtmx) {
-    $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
     if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
         include $viewPath;
     } else {
@@ -155,6 +156,13 @@ if($isHtmx) {
         // Render hanya halaman login (tanpa sidebar/nav)
         include BASEPATH . "/views/login.php";
     } else {
+        // Handle 404
+        if(!$isPageExists) {
+            http_response_code(404);
+            include BASEPATH . "/views/error/404.php";
+            exit();
+        }
+
         // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
         include BASEPATH . "/views/index.php";
     }
