@@ -22,6 +22,8 @@ class BaseModel extends Model
      */
     protected static $tableM;
 
+    protected $primaryKey = 'id';
+
     public function __construct(PDO $pdo = null)
     {
         $conn = $pdo ?: Connection::make();
@@ -44,5 +46,65 @@ class BaseModel extends Model
             
             json_response([], 429, 'Too many requests', $errors);
         }
+    }
+
+    /**
+     * Ambil semua data
+     */
+    public function all($columns = '*') {
+        $stmt = $this->pdo->prepare("SELECT $columns FROM {$this->table}");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Ambil satu data berdasarkan ID
+     */
+    public function find($id) {
+        $stmt = $this->pdo->prepare("SELECT * FROM {$this->table} WHERE {$this->primaryKey} = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Insert data secara dinamis berdasarkan array
+     */
+    public function insertData(array $data) {
+        $keys = array_keys($data);
+        $fields = implode(', ', $keys);
+        $placeholders = implode(', ', array_fill(0, count($keys), '?'));
+
+        $sql = "INSERT INTO {$this->table} ($fields) VALUES ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array_values($data));
+        
+        return $this->pdo->lastInsertId();
+    }
+
+    /**
+     * Update data berdasarkan ID
+     */
+    public function updateData($id, array $data) {
+        $fields = "";
+        foreach ($data as $key => $value) {
+            $fields .= "$key = ?, ";
+        }
+        $fields = rtrim($fields, ', ');
+
+        $sql = "UPDATE {$this->table} SET $fields WHERE {$this->primaryKey} = ?";
+        $values = array_values($data);
+        $values[] = $id;
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($values);
+    }
+
+    /**
+     * Soft Delete atau Hard Delete
+     */
+    public function deleteData($id) {
+        $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey} = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$id]);
     }
 }
