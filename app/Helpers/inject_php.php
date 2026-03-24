@@ -309,6 +309,22 @@ function generateUlid($lowercased = false, $timestamp = null): string
     return (string) \App\Core\Support\Ulid::generate($lowercased);
 }
 
+/**
+ * sort function to generate random string
+ *
+ * @param  integer $len
+ * @param  boolean $base64
+ *
+ * @return string
+ */
+function generateRandomString($len = 64, $base64 = false, $special = true): string
+{
+    if ($base64) {
+        return base64_encode(\App\Core\Support\Hash::randomString($len, $special));
+    }
+
+    return \App\Core\Support\Hash::randomString($len, $special);
+}
 
 // Mendapatkan Header Origin
 function get_request_origin() {

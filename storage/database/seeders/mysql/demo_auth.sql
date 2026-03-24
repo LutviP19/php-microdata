@@ -49,10 +49,10 @@ INSERT INTO `groups` (`id`, `name`, `code`, `created_at`) VALUES
 -- Data Users
 -- Password semua user adalah password (terenkripsi bcrypt).
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `status`, `created_at`) VALUES
-(1, 'Ahmad Admin', 'admin@demo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NOW()),
-(2, 'Budi Manager', 'budi@demo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NOW()),
-(3, 'Siti Staff', 'siti@demo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NOW()),
-(4, 'Dodi Freelance', 'dodi@demo.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NOW());
+(1, 'Ahmad Admin', 'admin@demo.local', '$2y$10$4aj4jkDojd.2nvLiSYIJ4OBs3XKXF8seUJsoC.r7RIPCvG5iZKpum', 1, NOW()),
+(2, 'Budi Manager', 'budi@demo.local', '$2y$10$4aj4jkDojd.2nvLiSYIJ4OBs3XKXF8seUJsoC.r7RIPCvG5iZKpum', 1, NOW()),
+(3, 'Siti Staff', 'siti@demo.local', '$2y$10$4aj4jkDojd.2nvLiSYIJ4OBs3XKXF8seUJsoC.r7RIPCvG5iZKpum', 1, NOW()),
+(4, 'Dodi Freelance', 'dodi@demo.local', '$2y$10$4aj4jkDojd.2nvLiSYIJ4OBs3XKXF8seUJsoC.r7RIPCvG5iZKpum', 1, NOW());
 
 
 -- Mapping Relasi (The Magic Part)
