@@ -210,6 +210,7 @@ class App
                 // Process GET data
                 if(isset($_REQUEST['id'])) {
                     $request['id'] = $_POST['id'] ?? $_GET['id'];
+                    // dd($request);
                     $dataModel = $modelClass->edit($request);
                 } else {
                     $dataModel = $modelClass->index($request);

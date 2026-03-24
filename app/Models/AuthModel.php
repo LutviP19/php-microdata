@@ -198,6 +198,14 @@ class AuthModel extends AuthData
         // $appKey = generateAppKey();
         // die($appKey);
 
+        // // Generate random string
+        // $rndString= generateRandomString(32, true, true);
+        // die($rndString);
+
+        // // Make Password from string
+        // $password = \App\Core\Support\Hash::makePassword('password');
+        // die($password);
+
         // // Test EncryptDecrypt
         // $enc = new EncryptDecrypt(); // Otomatis ambil dari Config::get('app.key')
 

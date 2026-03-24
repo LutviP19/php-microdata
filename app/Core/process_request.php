@@ -22,6 +22,8 @@ $_REQUEST = sanitize($_REQUEST);
 $_POST = sanitize($_POST);
 $_GET = sanitize($_GET);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
+$_REQUEST = array_merge($_REQUEST, $_POST, $_GET);
+// dd($_REQUEST, true);
 
 // Check var $modelName
 if(!isset($modelName)) {
