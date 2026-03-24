@@ -26,7 +26,7 @@ $_REQUEST = array_merge($_REQUEST, $_POST, $_GET);
 // dd($_REQUEST, true);
 
 // Check var $modelName
-if(!isset($modelName)) {
+if(!isset($modelName) || !isset($model) || !isset($modelPath)) {
     throw new Exception("var modelName not set.");
 }
 

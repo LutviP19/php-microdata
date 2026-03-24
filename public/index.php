@@ -38,45 +38,6 @@ $isAllowAccess = true;
 // }
 // // ===========================================
 
-
-
-// // Set the model name in the router file
-// include BASEPATH . "/config/router.php";
-// $model = $router[$page] ?? null;
-// // dd($model);
-// if(!$model || is_null($model)) {
-//     // Auto Load Model if exists    
-//     $structName = ucwords($model) . 'Struct';
-//     $modelName = ucwords($model) . 'Model';
-//     $structPath = BASEPATH . "/app/Structs/$model/" . $structName . ".php";
-//     $modelPath = BASEPATH . "/app/Models/" . $modelName . ".php";
-//     if (file_exists($modelPath)) {
-//         // Cek url edit, lalu tambahkan param $_GET['id']
-//         if(isset($segments[1]) && is_numeric($segments[1])) {
-//             $_GET['id'] = (int) $segments[1];
-//         }
-//         // dd($_GET);
-// 
-//         // Set page same as model route
-//         $page = strtolower($model);
-// 
-//         include_once BASEPATH .'/app/Core/process_request.php';
-//     } else {
-//         if(is_json_request()) {
-//             $message = "Model '$model' Not Found";
-//             $errors = [
-//                 'model' => 'Model not found: ' . str_replace(BASEPATH, '', $modelPath)
-//             ];
-//             json_response([], 404, $message, $errors);
-//         } else {
-//             $isPageExists = false;
-//             http_response_code(404);
-//             include BASEPATH . "/views/error/404.php";
-//             exit();
-//         }
-//     }
-// }
-
 // Load Router and Mapping Models
 include BASEPATH . "/config/router.php";
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
@@ -134,10 +95,17 @@ if ($resolved) {
 // Cek apakah ini request dari HTMX
 $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
 
-// Tentukan apakah kita di halaman login
+// Tentukan apakah ke halaman login
 $isLoginPage = ($page === 'login');
 $isPageExists = $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
 // dd($viewPath);
+
+// Handle 404 - Non HTMX
+if(!$isHtmx && !$isPageExists) {
+    http_response_code(404);
+    include BASEPATH . "/views/error/404.php";
+    exit();
+}
 
 if($isHtmx) {
     if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
@@ -156,13 +124,6 @@ if($isHtmx) {
         // Render hanya halaman login (tanpa sidebar/nav)
         include BASEPATH . "/views/login.php";
     } else {
-        // Handle 404
-        if(!$isPageExists) {
-            http_response_code(404);
-            include BASEPATH . "/views/error/404.php";
-            exit();
-        }
-
         // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
         include BASEPATH . "/views/index.php";
     }
