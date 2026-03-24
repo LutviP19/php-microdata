@@ -43,7 +43,7 @@ class DashboardModel extends DashboardData
         $conn = null;
         // // Use Custom connection
         // $driver = 'mysql';
-        // $dbname = 'new_dbx';
+        // $dbname = 'employees';
         // $host = 'localhost';
         // $port = '3306';
         // $username = 'root';
