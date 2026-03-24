@@ -15,6 +15,7 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 // dd($requestPath);
 $segments = explode('/', trim($requestPath, '/'));
 $page = ($segments[0] !== '') ? $segments[0] : 'dashboard';
+// dd($page);
 $isPageExists = true;
 $isAllowAccess = true;
 // -------------------------
@@ -42,7 +43,7 @@ include BASEPATH . "/config/router.php";
 $model = $router[$page] ?: null;
 // dd($model);
 if(!empty($model)) {
-    // Auto Load Model if exists
+    // Auto Load Model if exists    
     $structName = ucwords($model) . 'Struct';
     $modelName = ucwords($model) . 'Model';
     $structPath = BASEPATH . "/app/Structs/$model/" . $structName . ".php";
@@ -53,6 +54,9 @@ if(!empty($model)) {
             $_GET['id'] = (int) $segments[1];
         }
         // dd($_GET);
+
+        // Set page same as model route
+        $page = strtolower($model);
 
         include_once BASEPATH .'/app/Core/process_request.php';
     } else {
@@ -76,17 +80,23 @@ if(!empty($model)) {
 // Cek apakah ini request dari HTMX
 $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
 
+// Tentukan apakah kita di halaman login
+$isLoginPage = ($page === 'login');
+
 if($isHtmx) {
     $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
     if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
         include $viewPath;
     } else {
-        // http_response_code(404);
-        include BASEPATH . "/views/error/404.php";
+        if ($isLoginPage) {
+            // Render hanya halaman login (tanpa sidebar/nav)
+            include BASEPATH . "/views/login.php";
+        } else {
+            // http_response_code(404);
+            include BASEPATH . "/views/error/404.php";
+        }
     }
 } else {
-    // Tentukan apakah kita di halaman login
-    $isLoginPage = ($page === 'login');
     if ($isLoginPage) {
         // Render hanya halaman login (tanpa sidebar/nav)
         include BASEPATH . "/views/login.php";

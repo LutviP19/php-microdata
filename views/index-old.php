@@ -30,10 +30,6 @@
     hx-headers='{"X-API-KEY": "<?= str_replace('base64:', '', config('api.key')) ?>"}' 
     class="bg-gray-900 text-gray-100 font-sans antialiased" 
     x-data="{ sidebarOpen: false, openLogout: false, userMenuOpen: false, activePage: '<?= $page ?>' }"
-    @popstate.window="
-        let path = window.location.pathname.split('/').pop();
-        activePage = path || 'dashboard';
-    "
     >
 
     <nav class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
@@ -43,7 +39,11 @@
             </button>
             <span class="text-xl font-bold tracking-wider text-indigo-400 uppercase">Cron<span class="text-white text-sm font-light italic">Job</span></span>
         </div>
-
+        
+        <!-- <div class="flex items-center space-x-4">
+            <span class="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full animate-pulse font-mono">SYSTEM ACTIVE</span>
+            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold">JD</div>
+        </div> -->
         <div class="flex items-center space-x-4">
             <span class="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full animate-pulse font-mono">SYSTEM ACTIVE</span>
             
@@ -114,7 +114,7 @@
                 </button>
             </div>
 
-            <nav class="mt-10 px-4 space-y-2">
+            <nav class="mt-10 px-4 space-y-2" x-data="{ activePage: 'dashboard' }">
                 <button 
                     hx-get="<?= url('dashboard'); ?>" 
                     hx-push-url="true" 
@@ -235,12 +235,109 @@
     </div>
 </div>
 
+<!-- <div 
+    x-show="openLogout" 
+    x-cloak
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto">
+    
+    <div 
+        x-show="openLogout"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="openLogout = false"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+
+    <div 
+        x-show="openLogout"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="relative w-full max-w-md p-6 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl">
+        
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-900/20 mb-4">
+                <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Konfirmasi Logout</h3>
+            <p class="mt-2 text-sm text-gray-400">
+                Apakah Anda yakin ingin mengakhiri sesi terminal ini? Data yang belum tersimpan mungkin akan hilang.
+            </p>
+        </div>
+
+        <div class="mt-6 flex space-x-3">
+            <button 
+                @click="openLogout = false"
+                class="flex-1 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+                Batalkan
+            </button>
+            <button 
+                hx-post="<?= url('/logout') ?>"
+                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
+                Ya, Keluar
+            </button>
+        </div>
+    </div>
+</div> -->
+
 <script>
 // Redirect to login
 document.body.addEventListener("doRedirect", function(evt){
     window.location.href = evt.detail;
 });
+
+
+// document.body.addEventListener('htmx:afterRequest', function(evt) {
+//     console.log("Target Element:", evt.detail.target);
+//     console.log("Response Status:", evt.detail.xhr.status);
+//     if (evt.detail.target.id !== 'main-content') {
+//         console.warn("HTMX tidak menargetkan #main-content!");
+//     }
+// });
+
+// document.body.addEventListener('htmx:beforeSwap', function(evt) {
+//     console.log("Konten yang diterima:", evt.detail.xhr.responseText);
+// });
+
+// document.body.addEventListener('htmx:swapError', function(evt) {
+//     console.error("Terjadi kesalahan saat swap!");
+// });
 </script>
 
+<script>
+    // const targetNode = document.getElementById('main-content');
+    
+    // const observer = new MutationObserver((mutationsList) => {
+    //     for (const mutation of mutationsList) {
+    //         if (mutation.type === 'childList') {
+    //             console.log('🔄 Perubahan DOM terdeteksi pada #main-content');
+    //             console.log('Tipe:', mutation.type);
+    //             console.log('Class saat ini:', targetNode.className);
+                
+    //             // Cek jika htmx-settling masih menempel terlalu lama
+    //             if (targetNode.classList.contains('htmx-settling')) {
+    //                 console.warn('⚠️ Elemen terjebak di fase settling! Mencoba memaksa...');
+    //                 setTimeout(() => {
+    //                     targetNode.classList.remove('htmx-settling');
+    //                     console.log('✅ Paksa hapus htmx-settling');
+    //                 }, 500);
+    //             }
+    //         }
+    //     }
+    // });
+
+    // if (targetNode) {
+    //     observer.observe(targetNode, { attributes: true, childList: true, subtree: true });
+    //     console.log('🚀 Observer aktif: Memantau #main-content');
+    // }
+</script>
 </body>
 </html>
