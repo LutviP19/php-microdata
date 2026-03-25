@@ -233,7 +233,7 @@ class AuthModel extends AuthData
         $modelA = [
             'request' => $request,
             'table' => $modelData->table,
-            'data' => $modelData->getAllData($request['id']),
+            'data' => $modelData->getAllData($request['id']) ?: null,
             'title' => $request['title'] ?? 'Edit model',
 
             // // Sample Errors
@@ -245,7 +245,7 @@ class AuthModel extends AuthData
             // ]
         ];
 
-        $data = [            
+        $data = [
             'data' => $modelA,
             'status' => $status ?? 200,
             'message' => $message ?? 'testing edit',

@@ -80,9 +80,10 @@ class App
                 // dd($safeData);
 
                 if(isset($_REQUEST['id'])) {
-                    $rules += ["id" => "required,numeric,min=1"];
+                    $rules += ["id" => "required,numeric,gte=1"];
                     // Refine the raw $_REQUEST data into native types
-                    $id =  $_POST['id'] ?? $_GET['id'];
+                    // $id =  $_POST['id'] ?? $_GET['id'];
+                    $id = formatReqId();
                     // dd($id);
                     $safeData += refineRequest(["id" => $id], $rules);
                 }
@@ -93,9 +94,12 @@ class App
             case 'GET':
                 // Process GET data
                 if(isset($_REQUEST['id'])) {
-                    $rules = ["id" => "required,numeric,min=1"];
+                    $rules = ["id" => "required,numeric,gte=1"];
                     // Refine the raw $_REQUEST data into native types
-                    $safeData = refineRequest(["id" => $_POST['id'] ?? $_GET['id']], $rules);
+                    // $id =  $_POST['id'] ?? $_GET['id'];
+                    $id = formatReqId();
+                    // dd($id);
+                    $safeData = refineRequest(["id" => $id], $rules);
 
                     $result = validateStructData($safeData, $rules);
                 } else {
@@ -113,10 +117,10 @@ class App
                         $rules['total'] = "omitempty,numeric,min=0";
                         $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
                     }
-                    if(isset($_REQUEST['query'])) {
-                        $rules['total'] = "omitempty,numeric,min=0";
-                        $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
-                    } 
+                    // if(isset($_REQUEST['params'])) {
+                    //     $rules['params'] = "omitempty,min=3";
+                    //     $safeData += refineRequest(["params" => $_REQUEST['params']], $rules);
+                    // }
                     // dd($_REQUEST);
                     // dd($safeData);
                     // dd($rules);
@@ -151,11 +155,34 @@ class App
                 }
                 break;
             case 'DELETE':
-                $rules = ["id" => "required,numeric,min=1"];
-                // Refine the raw $_REQUEST data into native types
-                $id =  $_POST['id'] ?? $_GET['id'];
-                $safeData = refineRequest(["id" => $id], $rules);
-                $result = validateStructData($safeData, $rules);
+                if(isset($_REQUEST['id'])) {
+                    $rules = ["id" => "numeric,required,gte=1"];
+                    // Refine the raw $_REQUEST data into native types
+                    // $id =  (int)($_POST['id'] ?? $_GET['id']);
+
+                    // // Simulate generate ID
+                    // unset($_REQUEST);
+                    // // $id = formatReqId("123456", 1);
+                    // $id = formatReqId("abcd", 1);
+                    // // $id = encryptData("abcd");
+                    // dd($id);
+                    
+                    // // Simulate encrypted ID
+                    // $reqId = "g4RPUbVo0lPHZdTccyJ6z53A9fK9_mphd0ikawMdDk0"; // 123456
+                    // // $reqId = "MP7GTz3IeGdgCcJISx6z4IswrAxv9hhxbzBrYW-Klmw"; // abcd
+                    // $id = formatReqId($reqId, 1);
+                    // dd($id);
+
+                    $id = formatReqId();
+                    // dd($id);
+                    $safeData = refineRequest(["id" => $id], $rules);
+                    // dd($safeData);
+                    $result = validateStructData($safeData, $rules);
+                } else {
+                    $result['errors'] = [
+                        "id"  =>  "Empty ID."
+                    ];
+                }
                 break;
             default:
                 $result = [];

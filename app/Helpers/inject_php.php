@@ -43,6 +43,51 @@ if (!function_exists('sanitizeJson')) {
 }
 
 /**
+ * Format Request ID.
+ * Mendukung enkripsi dengan custom key.
+ */
+if (!function_exists('formatReqId')) {
+    function formatReqId($reqId = null, $encryption = false, $key = null) {
+        
+        // Default flag encrpytion_id dari config
+        $encryption = boolval(config('app.encrpytion_id') ?: (is_null($key) ? $encryption : true));
+        // dd($encryption);
+        // dd($reqId);
+
+        // Jika Request format menjadi integer
+        if($_REQUEST && isset($_REQUEST['id'])) {
+
+            // Set request ID
+            if(isset($_REQUEST['id']) || $reqId) {
+                $reqId = $reqId ?: ($_POST['id'] ?? $_GET['id']);
+                // dd($reqId);
+            }
+
+            // Pastikan ID bukan type integer agar bisa di decrypt
+            if($reqId && $encryption && !filter_var($reqId, FILTER_VALIDATE_INT)) {
+                $reqId = decryptData($reqId, $key);
+            }
+            // dd($reqId);
+
+            return (int)$reqId;
+        } else {
+            // Hanya proses type data integer
+            if(!$reqId || !preg_match('/^-?\d+$/', $reqId))
+                return null;
+
+            // Pastikan type data ID adalah integer agar bisa di encrypt
+            if($encryption && filter_var($reqId, FILTER_VALIDATE_INT)) {
+                $reqId = encryptData($reqId, $key);
+            }
+
+            return $reqId;
+        }
+
+        return null;
+    }
+}
+
+/**
  * Refine the raw $_REQUEST data into native types
  */
 if (!function_exists('refineRequest')) {
@@ -57,7 +102,12 @@ if (!function_exists('refineRequest')) {
             $tags = explode(',', $ruleString);
             
             if (in_array('numeric', $tags)) {
-                $filters[$field] = FILTER_VALIDATE_FLOAT; // Handles both int and float
+                // Handles both int and float
+                if (strpos((string)$request[$field], '.') !== false) {
+                    $filters[$field] = FILTER_VALIDATE_FLOAT;
+                } else {
+                    $filters[$field] = FILTER_VALIDATE_INT;
+                }
             } elseif (in_array('email', $tags)) {
                 $filters[$field] = FILTER_SANITIZE_EMAIL;
             } elseif (in_array('url', $tags)) {
