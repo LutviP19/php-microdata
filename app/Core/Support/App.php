@@ -129,25 +129,27 @@ class App
                         // dd($rules);
 
                         // Allow only struct keys
-                        $structClass = new $structNameSpace();
-                        $structRules = parseStructToRules($structClass::class);
-                        foreach($structRules as $index => $structRule) {
-                            // dd($index);
-                            // dd($structRule);
-                            // dd(isset($_REQUEST[$index]));
-                            
-                            // if($index === "website") 
-                            //     dd($structRule);
+                        if(isset($_REQUEST['params'])) {
+                            $structClass = new $structNameSpace();
+                            $structRules = parseStructToRules($structClass::class);
+                            foreach($structRules as $index => $structRule) {
+                                // dd($index);
+                                // dd($structRule);
+                                // dd(isset($_REQUEST[$index]));
+                                
+                                // if($index === "website") 
+                                //     dd($structRule);
 
-                            if(isset($_REQUEST[$index]) && (!is_null($_REQUEST[$index]) || $_REQUEST[$index] !== "")) {
-                                $rules[$index] = rtrim(ltrim(str_replace(['required', 'email', 'url'], '', $structRule), ","), ",");
-                                // $rules[$index] = "";
-                                $safeData += refineRequest(["$index" => $_REQUEST[$index]], $rules);
+                                if(isset($_REQUEST['params'][$index]) && (!is_null($_REQUEST['params'][$index]) || $_REQUEST['params'][$index] !== "")) {
+                                    $rules[$index] = rtrim(ltrim(str_replace(['required', 'email', 'url'], '', $structRule), ","), ",");
+                                    // $rules[$index] = "";
+                                    $safeData += refineRequest(["$index" => $_REQUEST['params'][$index]], $rules);
+                                }
+                                continue;
                             }
-                            continue;
+                            // dd($safeData);
+                            // dd($rules);
                         }
-                        // dd($safeData);
-                        // dd($rules);
 
                         $result = validateStructData($safeData, $rules);
                         // dd($result);

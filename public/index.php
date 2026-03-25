@@ -52,15 +52,15 @@ if (!$resolved && isset($router[$page])) {
 // dd($resolved);
 
 if ($resolved) {
-    // 1. Load Struct Terlebih Dahulu (Karena di-extend oleh Data/Model)
-    if (file_exists($resolved['structPath'])) {
-        include_once $resolved['structPath'];
-    }
+    // // 1. Load Struct Terlebih Dahulu (Karena di-extend oleh Data/Model)
+    // if (file_exists($resolved['structPath'])) {
+    //     include_once $resolved['structPath'];
+    // }
 
-    // 2. Load Data Query Builder (Karena di-extend oleh Model)
-    if (file_exists($resolved['dataPath'])) {
-        include_once $resolved['dataPath'];
-    }
+    // // 2. Load Data Query Builder (Karena di-extend oleh Model)
+    // if (file_exists($resolved['dataPath'])) {
+    //     include_once $resolved['dataPath'];
+    // }
 
     // 3. Load Model Utama
     $modelPath = $resolved['modelPath'];
