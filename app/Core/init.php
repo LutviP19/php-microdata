@@ -54,6 +54,7 @@ set_exception_handler(function (Throwable $exception) {
 
 // Mendaftarkan konfigurasi ke aplikasi.
 use App\Core\Support\App;
+use App\Core\Support\Session;
 App::register('config', require BASEPATH . '/config/app.php');
 
 // Jalankan fungsi CORS
@@ -100,8 +101,8 @@ if (session_status() == PHP_SESSION_NONE) {
     bp_session_start();
 
     // Set Client Identity
-    $_SESSION['IPaddress'] = clientIP();
-    $_SESSION['userAgent'] = $_SERVER['HTTP_USER_AGENT'] ?: "Unknown";
+    Session::set('IPaddress', clientIP());
+    Session::set('userAgent', $_SERVER['HTTP_USER_AGENT'] ?? "Unknown");
 }
 
 

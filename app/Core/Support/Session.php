@@ -21,7 +21,7 @@ class Session
         $sessions = [];
         // $escaped = ['ori'];
         // Hide non user data
-        $escaped = [Config::get('session.csrf_token'), 'OBSOLETE', 'EXPIRES', 'nonce', 'userAgent', 'IPaddress', 'password', 'pin', 'errors', 'secret', 'jwtId', 'tokenJwt', 'gnr', '_previous_uri', '_old_input'];
+        $escaped = [Config::get('session.csrf_token'), 'OBSOLETE', 'EXPIRES', 'nonce', 'new_session_id', 'destroyed','userAgent', 'IPaddress', 'password', 'pin', 'errors', 'secret', 'jwtId', 'tokenJwt', 'gnr', '_previous_uri', '_old_input'];
         foreach ($_SESSION as $key => $value) {
             if (in_array($key, $escaped)) {
                 continue;

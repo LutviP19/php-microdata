@@ -535,12 +535,12 @@ function checkSession()
         // if(isset($_SESSION['user_id']) && isset($_SESSION['current_team_id'])) {
         //     \App\Core\Auth\Gate::loadAbilities($_SESSION['user_id'], $_SESSION['current_team_id']);
         // }
-
-        if ($_SESSION['IPaddress'] !== $_SERVER['REMOTE_ADDR']) {
+        
+        if (\App\Core\Support\Session::get('IPaddress') !== $_SERVER['REMOTE_ADDR']) {
             throw new Exception('IP Address mixmatch (possible session hijacking attempt).');
         }
 
-        if ($_SESSION['userAgent'] !== $_SERVER['HTTP_USER_AGENT']) {
+        if (\App\Core\Support\Session::get('userAgent') !== ($_SERVER['HTTP_USER_AGENT'] ?? "Unknown")) {
             throw new Exception('Useragent mixmatch (possible session hijacking attempt).');
         }
 
