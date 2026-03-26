@@ -51,7 +51,7 @@ class RecursiveModelLoader {
             'structPath' => $this->basePath . "/Structs/{$parentFolder}/{$structName}.php",
             'dataName'   => $dataName,
             'dataPath'   => $this->basePath . "/Data/{$parentFolder}/{$dataName}.php",
-            'folder'     => $parentFolder
+            'model'     => $parentFolder
         ];
     }
 
