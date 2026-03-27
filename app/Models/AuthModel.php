@@ -194,6 +194,10 @@ class AuthModel extends AuthData
 
     public function edit(?array $request = [])
     {
+        // // Get IPaddress Session
+        // $initSessions = \App\Core\Support\Session::get('IPaddress');
+        // dd($initSessions);
+
         // // Generate random App Key
         // $appKey = generateAppKey();
         // die($appKey);
@@ -217,7 +221,7 @@ class AuthModel extends AuthData
         // // // Dekripsi
         // // $decrypted = $enc->decrypt($encrypted);
         // $decrypted = decryptData($encrypted);
-        // // dd($decrypted, true); // Output: Array ( [id] => 123 [secret] => rahasia )
+        // dd($decrypted, true); // Output: Array ( [id] => 123 [secret] => rahasia )
 
         // // Match data
         // $match = matchEncryptedData($decrypted, $encrypted);

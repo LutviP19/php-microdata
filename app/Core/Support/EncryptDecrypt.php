@@ -73,6 +73,11 @@ class EncryptDecrypt {
      * Data decryption (URL Safe compatible)
      */
     public function decrypt($encryptedData) {
+
+        // Validasi string
+        if (!$this->isValid($encryptedData))
+            return null;
+
         // Kembalikan karakter URL Safe ke standar Base64
         $data = str_replace(['-', '_'], ['+', '/'], $encryptedData);
         
@@ -98,6 +103,30 @@ class EncryptDecrypt {
         );
 
         return json_decode($decrypted, true);
+    }
+
+    /**
+     * Memvalidasi apakah string memiliki format Base64URL Safe 
+     * dan panjang yang masuk akal untuk hasil enkripsi AES-256
+     */
+    public function isValid($string) {
+        if (empty($string) || !is_string($string)) {
+            return false;
+        }
+
+        // 1. Cek karakter: Hanya izinkan Alfanumerik, Dash (-), dan Underscore (_)
+        if (!preg_match('/^[A-Za-z0-9\-_]+$/', $string)) {
+            return false;
+        }
+
+        // 2. Hitung panjang IV minimum (AES-256-CBC biasanya 16 bytes)
+        $ivLength = openssl_cipher_iv_length($this->cipher);
+        
+        // Decode sementara untuk cek ukuran byte asli
+        $raw = base64_decode(str_replace(['-', '_'], ['+', '/'], $string));
+        
+        // String harus lebih panjang dari IV agar ada data terenkripsinya
+        return strlen($raw) > $ivLength;
     }
 
     // /**
