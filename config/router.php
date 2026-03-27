@@ -5,13 +5,13 @@
  */
 
 
-// Static router for execute file php langsung
+// Static router for execute single php file
 include "static-router.php";
 
 // Mapping Models
 $models = include "models.php";
 
-// Dynamic Models router
+// Dynamic router path to Model
 $router = [
     'auth' => 'Auth',
     'roles' => 'Auth',
