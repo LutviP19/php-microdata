@@ -56,14 +56,13 @@ class AuthData extends AuthStruct {
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10";
-        $result = self::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
+        // $result = self::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
+        $result = $this->execQuery($sql, $id, false, !empty($id), empty($id));
         // dd($result, true);
         return $result;
     }
 
-    public function seed() {
-        $db = new AuthStruct();
-        
+    public function seed() {        
         $permissions = [
             [1, 'Create Asset', 'asset-create'],
             [2, 'View Asset', 'asset-view'],
@@ -71,26 +70,24 @@ class AuthData extends AuthStruct {
         ];
 
         foreach ($permissions as $p) {
-            $db->execQuery("CALL sp_upsert_permission(?, ?, ?)", $p);
+            $this->execQuery("CALL sp_upsert_permission(?, ?, ?)", $p);
         }
 
         // Mapping juga bisa dinamis
-        $db->execQuery("CALL sp_assign_permission(?, ?)", [2, 1]); // Role 2, Perm 1
+        $this->execQuery("CALL sp_assign_permission(?, ?)", [2, 1]); // Role 2, Perm 1
     }
 
     /**
      * Seeder Dinamis di PHP
      */
     public function syncPermissions(array $data) {
-        $db = new AuthStruct();
-        
         foreach ($data as $item) {
             // SQL ini aman dijalankan berulang kali (Idempotent)
             $sql = "INSERT INTO `permissions` (`id`, `name`, `slug`, `created_at`) 
                     VALUES (?, ?, ?, NOW())
                     ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `slug` = VALUES(`slug`)";
             
-            $db->execQuery($sql, [$item['id'], $item['name'], $item['slug']]);
+            $this->execQuery($sql, [$item['id'], $item['name'], $item['slug']]);
         }
 
         // // Cara Pakai:
@@ -104,13 +101,14 @@ class AuthData extends AuthStruct {
      * Mendapatkan semua permission user di group tertentu
      */
     public function getPermissions($userId, $groupId) {
-        $db = new AuthStruct();
+        // $db = new AuthStruct();
+        // $db = $this;
         $sql = "SELECT permission_slug 
                 FROM v_user_permissions 
                 WHERE user_id = ? 
                 AND (group_id = ? OR group_id IS NULL)";
                 
-        $result = $db->execQuery($sql, [$userId, $groupId], false, false, true);
+        $result = $this->execQuery($sql, [$userId, $groupId], false, false, true);
         return array_column($result, 'permission_slug');
     }
 

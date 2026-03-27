@@ -123,6 +123,7 @@ class AuthModel extends AuthData
         // Ambil data stats dari cache selama 5 menit
         $dataStats = $cache->remember('auth_index', function() use ($statsData) {
             return $statsData->getAllData();
+            // return $statsData->getPermissions(1,1);
         }, 300);
 
         // Ambil data paginate result dari cache selama 5 menit
