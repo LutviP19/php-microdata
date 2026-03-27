@@ -21,8 +21,11 @@ $isAllowAccess = true;
 // -------------------------
 
 // // --- Test Auth Gate
-// $isAllowAccess = false;
+// // $isAllowAccess = false;
+// // Set Perrmissions
+// \App\Core\Auth\Gate::loadAbilities(1, 1);
 // $permission = 'asset-delete';
+// $isAllowAccess = \App\Core\Auth\Gate::authorize($permission);
 // if (!$isAllowAccess) {
 //     if(is_json_request()) {
 //         $message = "You don't have access[$permission]";

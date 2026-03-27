@@ -38,6 +38,7 @@ class Gate
             $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
             return array_column($rows, 'slug');
         }, (int)(config('session.lifetime') * 30));
+        // dd(self::$abilities);
     }
 
     /**
@@ -75,5 +76,7 @@ class Gate
                 exit();
             }
         }
+
+        return true;
     }
 }
