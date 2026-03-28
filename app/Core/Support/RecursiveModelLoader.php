@@ -25,8 +25,19 @@ class RecursiveModelLoader {
         $cleanName = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $page)));
         
         // 1. Identifikasi Model (Models biasanya di root folder Models)
-        $modelName = $cleanName . "Model";
+        $findListedModels = $this->findListedModels($cleanName);
+        // dd($findListedModels);
+        if ($findListedModels) {                 
+            $cleanName = $findListedModels;
+            $modelName = $findListedModels . "Model";
+        } else {
+            return null;
+            // $modelName = $cleanName . "Model";
+        }
+        
         $modelPath = $this->basePath . "/Models/" . $modelName . ".php";
+        // dd($modelName);
+        // dd($modelPath);
 
         // Jika model tidak ditemukan di root, kita asumsikan $page mungkin mengandung folder
         // Namun sesuai struktur Anda, DashboardModel.php ada di root.
@@ -44,7 +55,7 @@ class RecursiveModelLoader {
         $dataName   = $this->getDataName($cleanName); // e.g., Stats -> StatsData
 
         return [
-            'page'       => $page,
+            'page'       => strtolower($cleanName),
             'modelName'  => $modelName,
             'modelPath'  => $modelPath,
             'structName' => $structName,
@@ -60,7 +71,7 @@ class RecursiveModelLoader {
         if(is_json_request()) {
             $message = "Model '$model' Not Found";
             $errors = [
-                'model' => 'Model not found at: ' . str_replace(config('app.path'), '', $modelPath)
+                'model' => 'Model not found at: ' . str_replace(realpath(config('app.path')), '', $modelPath),
             ];
             json_response([], 404, $message, $errors);
         } else {
@@ -73,18 +84,43 @@ class RecursiveModelLoader {
         }
     }
 
+
     /**
-     * Logika untuk menentukan folder induk (Dashboard, dsb)
+     * Logika untuk mencari folder induk dari config modules (Dashboard, Stats, dsb)
+     */
+    private function findListedModels($page) {
+        if(!isset($this->moduleConfig[$page]))
+            return null;
+
+        $models = \explode("|", \str_replace(['/(',')/i'], '', $this->moduleConfig[$page]));
+        // dd($page);
+        // dd($models);
+
+        foreach ($models as $model) {
+            $modelPath = $this->basePath . "/Models/" . $model . "Model.php";
+            if (file_exists($modelPath)) {
+                return $model;
+            }
+        }
+        
+        // Jika tidak ada di config, gunakan empty string
+        return null;
+    }
+
+    /**
+     * Logika untuk menentukan folder induk (Dashboard, Stats, dsb)
      */
     private function determineParentFolder($name) {
         foreach ($this->moduleConfig as $folder => $pattern) {
             if (preg_match($pattern, $name)) {
-                return $folder;
+                $modelPath = $this->basePath . "/Models/" . $folder;
+                if (is_dir($modelPath))
+                    return $folder;
             }
         }
         
         // Jika tidak ada di config, gunakan namanya sendiri sebagai folder
-        return $name; 
+        return $name;
     }
 
     /**

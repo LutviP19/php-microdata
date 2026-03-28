@@ -16,6 +16,7 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $urlSegments = explode('/', trim($requestPath, '/'));
 $page = ($urlSegments[0] !== '') ? $urlSegments[0] : 'dashboard';
 // dd($page);
+$resolved = null;
 $isPageExists = true;
 $isAllowAccess = true;
 // -------------------------
@@ -44,17 +45,22 @@ $isAllowAccess = true;
 // Load Router and Mapping Models
 include BASEPATH . "/config/router.php";
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
-$resolved = $loader->resolve($page);
-// dd($resolved);
 
-// Jika tidak ketemu secara otomatis, cek manual router.php (Fallback)
-if (!$resolved && isset($router[$page])) {
+// Cek router.php (Main Route)
+if (isset($router[$page])) {
     $manualPath = $router[$page]; // e.g., 'Admin/User'
     $resolved = $loader->resolve(str_replace('/', '-', strtolower($manualPath)));
 }
-// dd($resolved);
+// dd($resolved, true);
+// dd($page);
 
-if ($resolved) {
+// Jika tidak ketemu resolve otomatis
+if (!$resolved) {
+    $resolved = $loader->resolve($page);
+}
+// dd($resolved, true);
+
+if ($resolved && file_exists($resolved['modelPath'])) {
 
     // Load Model Utama
     $modelPath = $resolved['modelPath'];
@@ -65,7 +71,7 @@ if ($resolved) {
     $dataPath = $resolved['dataPath'];
     $model = $resolved['model'];
 
-    if (file_exists($modelPath)) {
+    if ($model && file_exists($modelPath)) {
         // Parameter ID untuk edit/detail
         if (isset($urlSegments[1]) && is_numeric($urlSegments[1])) {
             $_GET['id'] = (int) $urlSegments[1];
@@ -73,11 +79,11 @@ if ($resolved) {
         // dd($_GET);
 
         // Jalankan proses request
-        $page = strtolower($model);
+        $page = $resolved['page'];
         include_once BASEPATH . '/app/Core/process_request.php';
     } else {
         // Handle 404
-        $loader->notFoundHandler($model, $modelPath);
+        $loader->notFoundHandler($page, $modelPath);
     }
 } else {
     // Handle 404 - API JSON Only
