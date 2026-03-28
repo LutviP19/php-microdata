@@ -21,21 +21,49 @@ class RecursiveModelLoader {
      * Mencari komponen model, struct, dan data berdasarkan slug $page
      */
     public function resolve($page) {
-        // Normalisasi slug (e.g., 'dashboard-stats' -> 'DashboardStats')
-        $cleanName = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $page)));
+        $modelName = $version = null;
+        $baseModelPath = $this->basePath . "/Models/";
+        
+        // Jika input adalah "v1-dashboard"
+        if (str_contains($page, '-')) {
+            $parts = explode('-', $page, 2); // ['v1', 'dashboard']
+            $version = strtolower($parts[0]);            // v1
+            $module = $parts[1];             // dashboard
+            
+            // Cek validasi format v[angka]
+            if (!preg_match('/^v[0-9]+$/i', $version)) {
+                return null; // Format salah
+            }
+            
+            // Tentukan folder berdasarkan versi (misal: app/Models/V1/DashboardModel.php)
+            $subFolder = $version; // v1
+            $cleanName = str_replace(' ', '', ucwords(str_replace('-', ' ', $module)));
+            
+            $baseModelPath  = $baseModelPath . "{$subFolder}/";
+        } else {
+            // Normalisasi slug (e.g., 'dashboard-stats' -> 'DashboardStats')
+            $cleanName = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $page)));
+        }
+        // dd($page);
+        // dd($version);
+        // dd($cleanName);
         
         // 1. Identifikasi Model (Models biasanya di root folder Models)
-        $findListedModels = $this->findListedModels($cleanName);
+        $findListedModels = $this->findListedModels($page, $version, $baseModelPath);
         // dd($findListedModels);
-        if ($findListedModels) {                 
+        if ($findListedModels) { 
             $cleanName = $findListedModels;
             $modelName = $findListedModels . "Model";
         } else {
-            return null;
-            // $modelName = $cleanName . "Model";
+
+            // Jika file tidak ada langsung return null
+            if(!\file_exists($baseModelPath . $cleanName . "Model.php"))
+                return null;
+
+            $modelName = $cleanName . "Model";
         }
         
-        $modelPath = $this->basePath . "/Models/" . $modelName . ".php";
+        $modelPath = $baseModelPath . $modelName . ".php";
         // dd($modelName);
         // dd($modelPath);
 
@@ -48,21 +76,28 @@ class RecursiveModelLoader {
         // 2. Identifikasi Parent Folder (e.g., Dashboard) 
         // Kita ambil dari kata pertama sebelum camelCase atau mapping manual
         // Untuk case Anda: StatistcStruct berada di folder 'Dashboard'
-        $parentFolder = $this->determineParentFolder($cleanName);
+        $parentFolder = $this->determineParentFolder($cleanName, $baseModelPath);
+        $parentFolder = $parentFolder . ($version ? '/' . $version : '');
+        // dd($parentFolder);
 
         // 3. Tentukan Nama Struct dan Data
         $structName = $cleanName . "Struct";
         $dataName   = $this->getDataName($cleanName); // e.g., Stats -> StatsData
+
+
+        $baseDataPath = str_replace('Models/'.$version, 'Data/' . $parentFolder, $baseModelPath);
+        $baseStructsPath = str_replace('Models/'.$version, 'Structs/' . $parentFolder, $baseModelPath);
+        // dd($baseDataPath);
 
         return [
             'page'       => strtolower($cleanName),
             'modelName'  => $modelName,
             'modelPath'  => $modelPath,
             'structName' => $structName,
-            'structPath' => $this->basePath . "/Structs/{$parentFolder}/{$structName}.php",
+            'structPath' => $baseStructsPath . "{$structName}.php",
             'dataName'   => $dataName,
-            'dataPath'   => $this->basePath . "/Data/{$parentFolder}/{$dataName}.php",
-            'model'     => $parentFolder
+            'dataPath'   => $baseDataPath . "{$dataName}.php",
+            'model'      => str_replace('-', '/', $page),
         ];
     }
 
@@ -88,17 +123,27 @@ class RecursiveModelLoader {
     /**
      * Logika untuk mencari folder induk dari config modules (Dashboard, Stats, dsb)
      */
-    private function findListedModels($page) {
-        if(!isset($this->moduleConfig[$page]))
+    private function findListedModels($page, $version, $baseModelPath) {
+        $cleanName = formatRoutePath($page, true);
+        // dd($cleanName);
+
+        if(!isset($this->moduleConfig[$cleanName]))
             return null;
 
-        $models = \explode("|", \str_replace(['/(',')/i'], '', $this->moduleConfig[$page]));
-        // dd($page);
+        $models = \explode("|", \str_replace(['/(',')/i'], '', $this->moduleConfig[$cleanName]));
+        // dd($baseModelPath);
         // dd($models);
 
+        // Scan modelPath
+        $baseDataPath = str_replace('Models/'.$version, 'Data/' . $cleanName, $baseModelPath);
+        // $baseStructsPath = str_replace('Models/'.$version, 'Structs/' . $cleanName, $baseModelPath);
+        // dd($baseDataPath);
         foreach ($models as $model) {
-            $modelPath = $this->basePath . "/Models/" . $model . "Model.php";
-            if (file_exists($modelPath)) {
+            $dataPath = $baseDataPath . $model . "Data.php";
+            // dd($dataPath);
+            // $structPath = $baseStructsPath . $model . "Struct.php";
+            // if (file_exists($dataPath) && file_exists($structPath)) {
+            if (file_exists($dataPath)) {
                 return $model;
             }
         }
@@ -110,10 +155,10 @@ class RecursiveModelLoader {
     /**
      * Logika untuk menentukan folder induk (Dashboard, Stats, dsb)
      */
-    private function determineParentFolder($name) {
+    private function determineParentFolder($name, $baseModelPath) {
         foreach ($this->moduleConfig as $folder => $pattern) {
             if (preg_match($pattern, $name)) {
-                $modelPath = $this->basePath . "/Models/" . $folder;
+                $modelPath = $baseModelPath . $folder;
                 if (is_dir($modelPath))
                     return $folder;
             }

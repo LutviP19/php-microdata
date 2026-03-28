@@ -32,11 +32,11 @@ if(!isset($modelName) || !isset($model) || !isset($modelPath)) {
 
 // Validate Struct and Refine $_REQUEST to their native data type
 if (is_json_request() && file_exists($structPath)) {
-    $_REQUEST = App::validateStruct($structPath, $model);
+    $_REQUEST = App::validateStruct($structPath);
 }
 
 // Parse $dataModel and construct to standart JSON specs response
-$dataModel = App::loadModel($modelPath, $model);
+$dataModel = App::loadModel($modelPath);
 $data = $dataModel['data'] ?? [];
 $status = $dataModel['status'] ?? 200;
 $message = $dataModel['message'] ?? '';

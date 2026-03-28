@@ -49,7 +49,9 @@ $loader = new \App\Core\Support\RecursiveModelLoader($models);
 // Cek router.php (Main Route)
 if (isset($router[$page])) {
     $manualPath = $router[$page]; // e.g., 'Admin/User'
-    $resolved = $loader->resolve(str_replace('/', '-', strtolower($manualPath)));
+    // dd($manualPath);
+    // dd(formatRoutePath($manualPath));
+    $resolved = $loader->resolve(formatRoutePath($manualPath));
 }
 // dd($resolved, true);
 // dd($page);
@@ -87,7 +89,7 @@ if ($resolved && file_exists($resolved['modelPath'])) {
     }
 } else {
     // Handle 404 - API JSON Only
-    $model = $router[$page];
+    $model = $router[$page] ?? $page;
     $modelPath = "/app/Models/" . $model . "Model.php";
     $loader->notFoundHandler($model, $modelPath, true);
 }

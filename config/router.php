@@ -16,5 +16,7 @@ $router = [
     'auth' => 'Auth',
     'roles' => 'Auth',
     'home' => 'Dashboard',
-    'dashboard' => 'Dashboard',
+
+    // Version 1
+    'dashboard' => 'v1/Dashboard',
 ];

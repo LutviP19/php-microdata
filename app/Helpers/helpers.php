@@ -377,6 +377,58 @@ if (!function_exists('decompress_payload')) {
 }
 
 /**
+ * Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
+ * reserve "v1-dashboard" menjadi "Dashboard/v1"
+ */
+function formatRoutePath(string $path, bool $reserve = false): string {
+    // 1. Pecah string
+    $parts = explode( $reserve ? '-' : '/', $path);
+
+    if (count($parts) < 2) {
+        return strtolower($path); // Fallback jika tidak ada separator
+    }
+
+    // 2. Ubah bagian pertama (v1) menjadi lowercase
+    $version = strtolower($parts[0]);
+
+    // 3. Ubah bagian kedua (dashboard) menjadi Capitalize (Dashboard)
+    // Menggunakan ucwords agar mendukung kebab-case jika ada (misal: user-profile)
+    $module = ucwords($parts[1]);
+
+    // 4. Gabungkan kembali
+    if($reserve) {
+        return $module . '/' . $version;
+    } else {
+        return $version . '-' . $module;
+    }
+}
+
+/**
+ * Mengubah path file menjadi format Namespace PHP
+ */
+function pathToNamespace(string $path): string {
+    // 1. Hilangkan ekstensi .php
+    $path = str_replace('.php', '', $path);
+
+    // 2. Pecah berdasarkan slash (baik / maupun \)
+    $segments = explode('/', str_replace('\\', '/', $path));
+
+    // 3. Format setiap segmen (Kapitalisasi)
+    $formattedSegments = array_map(function($segment) {
+        // Jika segmen adalah versi (misal: v1), ubah jadi V1
+        if (preg_match('/^v\d+$/i', $segment)) {
+            return strtoupper($segment);
+        }
+        
+        // Ubah jadi PascalCase (dashboard -> Dashboard)
+        return ucwords($segment);
+    }, $segments);
+
+    // 4. Gabungkan kembali dengan Backslash
+    return implode('\\', $formattedSegments);
+}
+
+/**
  * Sistem log sederhana dengan level kategori.
  */
 if (!function_exists('write_log')) {

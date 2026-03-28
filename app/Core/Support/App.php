@@ -60,12 +60,12 @@ class App
      * @param $structPath relative path to Struct
      * @param $model ModelName
      */
-    public static function validateStruct($structPath, $model)
+    public static function validateStruct($structPath)
     {
-        $structName = str_replace('.php', '', basename($structPath));
+        // $structName = str_replace('.php', '', basename($structPath));
         $requestMethod = $_SERVER['REQUEST_METHOD'];
-
-        $structNameSpace = '\\App\\Structs\\'.$model.'\\'.$structName;
+        $structNameSpace = pathToNamespace(str_replace(realpath(config('app.path')), '', $structPath));
+        // dd($structNameSpace);
 
         switch ($requestMethod) {
             case 'POST':
@@ -207,18 +207,16 @@ class App
     /**
      * Load Model
      * @param $modelPath relative path to Model
-     * @param $model ModelName
      */
-    public static function loadModel($modelPath, $model)
+    public static function loadModel($modelPath)
     {
         // dd($_REQUEST);
-        $modelName = str_replace('.php', '', basename($modelPath));
         $requestMethod = $_SERVER['REQUEST_METHOD'];
         $dataModel = [];
-        // dd($modelName);
 
         // Create a new instance from $className
-        $className = '\\App\\Models\\'.$modelName;
+        $className = pathToNamespace(str_replace(realpath(config('app.path')), '', $modelPath));
+        // dd($className);
         $modelClass = new $className();
 
         // Check $modelClass is has default validMethods
