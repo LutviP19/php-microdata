@@ -531,12 +531,15 @@ function checkSession()
 {
     try {
 
+        // dd($_SERVER['REMOTE_ADDR']);
+
         // // Load Gate
         // if(isset($_SESSION['user_id']) && isset($_SESSION['current_team_id'])) {
         //     \App\Core\Auth\Gate::loadAbilities($_SESSION['user_id'], $_SESSION['current_team_id']);
         // }
         
-        if (\App\Core\Support\Session::get('IPaddress') !== $_SERVER['REMOTE_ADDR']) {
+        $ignoredLocal = ["::1"];
+        if (\App\Core\Support\Session::get('IPaddress') !== $_SERVER['REMOTE_ADDR'] && !in_array($_SERVER['REMOTE_ADDR'], $ignoredLocal)) {
             throw new Exception('IP Address mixmatch (possible session hijacking attempt).');
         }
 

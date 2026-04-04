@@ -29,6 +29,11 @@ Test - Log:
 php ./cron/test.php >> ./cron_log.txt
 
 
+RUN - With Frankenphp
+---------------------
+frankenphp run 
+
+
 RUN - Worker (terminal 1):
 -------------------------
 php worker.php start

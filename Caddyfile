@@ -1,0 +1,32 @@
+{
+    auto_https off
+}
+
+http://localhost:8000 {
+	log
+
+	#encode zstd br gzip
+
+	root ./public/
+
+
+    # Your normal PHP handling
+	php_server {
+        #hot_reload  config/**/*.php app/**/*{.php,.js} cron/**/*.php  static/**/*.php public/**/*{.css,.js}
+        
+		try_files {path} index.php
+	}
+
+    # Allow CORS if HTMX requests come from different subdomains
+    header {
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, X-Api-Key, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
+        Access-Control-Allow-Origin "*"
+    }
+
+    # Handle CORS preflight (OPTIONS) requests
+    @options {
+        method OPTIONS
+    }
+    respond @options 204
+}

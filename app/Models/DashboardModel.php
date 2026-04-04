@@ -131,6 +131,7 @@ class DashboardModel extends DashboardData
         $dataDashboard = $cache->remember('dashboard_result_c', function() use ($request, $mainData) {
             $page = $request['page'] ?? 1;
             $limit = $request['limit'] ?? 10;
+            $table = $this->table;
             // $mainData->table = 'salaries';
             // Query dasar
             // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
