@@ -49,8 +49,10 @@ RUN - with composer:
 --------------------
 composer start:all 
 
-composer phpcron:serve
 composer frankenphp:serve
+
+composer phpcron:start
+composer phpcron:stop
 
 
 Fixing 

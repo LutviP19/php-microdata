@@ -28,7 +28,8 @@
         }
     },
     "scripts": {
-        "phpcron:serve": "/usr/bin/frankenphp php-cli worker.php start",
+        "phpcron:start": "/usr/bin/frankenphp php-cli worker.php start",
+        "phpcron:stop": "/usr/bin/frankenphp php-cli worker.php stop",
         "frankenphp:serve": "/usr/bin/frankenphp run --config ./Caddyfile",
         "start:all": [
             "@phpcron:serve",
