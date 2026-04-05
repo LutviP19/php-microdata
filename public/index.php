@@ -51,7 +51,7 @@ if (isset($router[$page])) {
     $manualPath = $router[$page]; // e.g., 'Admin/User'
     // dd($manualPath);
     // dd(formatRoutePath($manualPath));
-    $resolved = $loader->resolve(formatRoutePath($manualPath));
+    $resolved = $loader->resolve(formatRoutePath($manualPath)); // Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
 }
 // dd($resolved, true);
 // dd($page);
@@ -60,7 +60,7 @@ if (isset($router[$page])) {
 if (!$resolved) {
     $resolved = $loader->resolve($page);
 }
-// dd($resolved, true);
+dd($resolved, true);
 
 if ($resolved && file_exists($resolved['modelPath'])) {
 

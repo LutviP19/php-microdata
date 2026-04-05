@@ -30,7 +30,7 @@ class RecursiveModelLoader {
             $version = strtolower($parts[0]);            // v1
             $module = $parts[1];             // dashboard
             
-            // Cek validasi format v[angka]
+            // Cek validasi format versi v[angka]
             if (!preg_match('/^v[0-9]+$/i', $version)) {
                 return null; // Format salah
             }
@@ -46,6 +46,7 @@ class RecursiveModelLoader {
         }
         // dd($page);
         // dd($version);
+        // dd($baseModelPath);
         // dd($cleanName);
         
         // 1. Identifikasi Model (Models biasanya di root folder Models)
@@ -76,8 +77,8 @@ class RecursiveModelLoader {
         // 2. Identifikasi Parent Folder (e.g., Dashboard) 
         // Kita ambil dari kata pertama sebelum camelCase atau mapping manual
         // Untuk case Anda: StatistcStruct berada di folder 'Dashboard'
-        $parentFolder = $this->determineParentFolder($cleanName, $baseModelPath);
-        $parentFolder = $parentFolder . ($version ? '/' . $version : '');
+        $parentFolder = $this->determineParentFolder($cleanName, $baseModelPath, $version);
+        $parentFolder = $parentFolder . ($version ? '/' . $version : '/');
         // dd($parentFolder);
 
         // 3. Tentukan Nama Struct dan Data
@@ -124,7 +125,7 @@ class RecursiveModelLoader {
      * Logika untuk mencari folder induk dari config modules (Dashboard, Stats, dsb)
      */
     private function findListedModels($page, $version, $baseModelPath) {
-        $cleanName = formatRoutePath($page, true);
+        $cleanName = formatRoutePath($page, true); // reserve "v1-dashboard" menjadi "Dashboard/v1"
         // dd($cleanName);
 
         if(!isset($this->moduleConfig[$cleanName]))
@@ -155,9 +156,13 @@ class RecursiveModelLoader {
     /**
      * Logika untuk menentukan folder induk (Dashboard, Stats, dsb)
      */
-    private function determineParentFolder($name, $baseModelPath) {
+    private function determineParentFolder($name, $baseModelPath, $version = null) {
         foreach ($this->moduleConfig as $folder => $pattern) {
-            if (preg_match($pattern, $name)) {
+            if($version) {
+                $pattern = $this->moduleConfig[$version][$name];
+            }
+
+            if (is_string(($pattern)) && preg_match($pattern, $name)) {
                 $modelPath = $baseModelPath . $folder;
                 if (is_dir($modelPath))
                     return $folder;
