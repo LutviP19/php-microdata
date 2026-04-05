@@ -26,6 +26,9 @@ if (($currentTime - $lastRun) >= $interval) {
     
     // Perbarui waktu terakhir dijalankan
     file_put_contents($lastRunFile, $currentTime);
+
+    // Sample real Task Clean temporary files
+    include BASEPATH . '/cron/cleanTmp.php';
     
     echo "Sukses: " . $message;
 } else {

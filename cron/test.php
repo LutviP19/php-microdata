@@ -96,35 +96,4 @@ echo "Processing took: {$time} seconds", PHP_EOL;
 
 
 // Webcrawler Concurrent process
-echo "[" . date('Y-m-d H:i:s') . "] Run PHP-FFI Go Webcrawler Concurrent process..." . PHP_EOL;
-$ffi4 = FFI::cdef("
-    char* crawler(char* filePath);
-    void FreeString(char* ptr);
-    ",
-    BASEPATH_FFI . '/lib/crawler.so',
-);
-
-$start = microtime(true);
-
-// Use realpath to avoid "File Not Found" during concurrent execution
-$path = BASEPATH_FFI . "/urls.txt";
-
-if (!$path) {
-    die("PHP Error: urls.txt does not exist in " . getcwd());
-}
-
-// Pass the absolute path to Go
-$ptr = $ffi4->crawler($path);
-$raw_input = FFI::string($ptr);
-$result = parse_crawler_logs(clean_newlines($raw_input));
-
-// Use the exact name defined in cdef
-$ffi4->FreeString($ptr);
-
-$end = microtime(true);
-$time = $end - $start;
-
-echo "PHP-FFI Go Webcrawler result:" . PHP_EOL;
-echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
-echo "It took {$time} seconds to finished." . PHP_EOL;
-echo "[" . date('Y-m-d H:i:s') . "] End Webcrawler..." . PHP_EOL;
+include BASEPATH . '/cron/crawler.php';
