@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cron Simulator Dashboard</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
+    <script defer src="<?= asset('js/alpinejs-cdn.min.js'); ?>"></script>
+    <script src="<?= asset('js/htmx.min.js'); ?>"></script>
 
     <style>
         [x-cloak] { display: none !important; }
