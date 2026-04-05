@@ -60,7 +60,7 @@ if (isset($router[$page])) {
 if (!$resolved) {
     $resolved = $loader->resolve($page);
 }
-dd($resolved, true);
+// dd($resolved, true);
 
 if ($resolved && file_exists($resolved['modelPath'])) {
 
