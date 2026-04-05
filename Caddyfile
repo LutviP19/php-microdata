@@ -1,11 +1,19 @@
+
 {
+    # Global options
+    frankenphp {
+        num_threads 3  # Sets the number of PHP threads to 3
+    }
+
+    # Development Only
     auto_https off
 }
+
 
 http://localhost:8000 {
 	log
 
-	#encode zstd br gzip
+	encode zstd br gzip
 
 	root ./public/
 

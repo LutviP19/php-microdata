@@ -32,9 +32,13 @@ php ./cron/test.php >> ./cron_log.txt
 Check Version: 
 frankenphp php-cli -v
 
+Validate Config:
+frankenphp validate
+
 RUN - With Frankenphp
 ---------------------
-frankenphp run 
+frankenphp run
+
 
 
 RUN - Worker (terminal 1):
@@ -48,11 +52,8 @@ frankenphp php-cli worker.php stop
 RUN - with composer:
 --------------------
 composer start:all 
+composer stop:all 
 
-composer frankenphp:serve
-
-composer phpcron:start
-composer phpcron:stop
 
 
 Fixing 
