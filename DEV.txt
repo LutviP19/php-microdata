@@ -29,6 +29,9 @@ Test - Log:
 php ./cron/test.php >> ./cron_log.txt
 
 
+Check Version: 
+frankenphp php-cli -v
+
 RUN - With Frankenphp
 ---------------------
 frankenphp run 
@@ -37,6 +40,17 @@ frankenphp run
 RUN - Worker (terminal 1):
 -------------------------
 php worker.php start
+
+frankenphp php-cli worker.php start
+frankenphp php-cli worker.php stop
+
+
+RUN - with composer:
+--------------------
+composer start:all 
+
+composer phpcron:serve
+composer frankenphp:serve
 
 
 Fixing 

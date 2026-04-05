@@ -3,6 +3,7 @@
 *.pid
 *.cache
 *.zip
+*.ini
 *DS*
 NOTES.txt
 SNIP.txt

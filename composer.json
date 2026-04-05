@@ -26,5 +26,14 @@
         "allow-plugins": {
             "php-http/discovery": true
         }
+    },
+    "scripts": {
+        "phpcron:serve": "/usr/bin/frankenphp php-cli worker.php start",
+        "frankenphp:serve": "/usr/bin/frankenphp run --config ./Caddyfile",
+        "start:all": [
+            "@phpcron:serve",
+            "@frankenphp:serve"
+            
+        ]
     }
 }
