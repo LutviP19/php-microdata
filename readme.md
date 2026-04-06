@@ -16,8 +16,11 @@
 ### PHP - Golang Collaboration (with FFI andor FrankenPHP)
 ### Strict security only valid credentials can access the service
 ### Model First App with Struct Validations (Focus to Build Microservice)
+### Scalable with versioning modules
 ### Run Scheduler system only with PHP
 ### Ready for PHP Apps As Standalone Binaries or As Docker Image
-### Scalable with versioning modules
 ### Support metrics for monitoring system like Prometheus or Traefik
 
+## Few Shot
+### PHP and Go collaboration can be achieved primarily through PHP's FFI (Foreign Function Interface) or by embedding PHP within Go using FrankenPHP, with the latter being the modern, supported approach.
+### FrankenPHP, a modern PHP app server written in Go, provides a more robust integration path by allowing developers to write PHP extensions directly in Go without writing C code.
