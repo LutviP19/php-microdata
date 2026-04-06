@@ -30,10 +30,18 @@ php ./cron/test.php >> ./cron_log.txt
 
 
 Check Version: 
-frankenphp php-cli -v
+frankenphp version
 
-Validate Config:
+Validate Config(Caddyfile):
 frankenphp validate
+
+Add Extensions(Linux-Ubuntu)
+----------------------------
+sudo apt update
+sudo apt install php-zts-pdo php-zts-pdo-mysql php-zts-pdo-sqlite
+sudo apt install php-zts-ffi
+sudo apt install php-zts-redis
+
 
 RUN - With Frankenphp
 ---------------------
