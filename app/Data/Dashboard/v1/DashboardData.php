@@ -7,7 +7,7 @@
 namespace App\Data\Dashboard\v1;
 
 
-use App\Structs\Dashboard\DashboardStruct;
+use App\Structs\Dashboard\v1\DashboardStruct;
 use PDO; // new PDO object
 use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
