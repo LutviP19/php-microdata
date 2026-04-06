@@ -3,6 +3,7 @@ Add Library:
 ------------
 composer require phpstreamserver/scheduler
 
+
 Build Directory structure :
 ---------------------------
 mkdir ./cron && 
@@ -29,6 +30,11 @@ Test - Log:
 php ./cron/test.php >> ./cron_log.txt
 
 
+FrankenPHP:
+# Install FrankenPHP on Linux or macOS
+curl https://frankenphp.dev/install.sh | sh
+-----------
+
 Check Version: 
 frankenphp version
 
@@ -43,13 +49,13 @@ sudo apt install php-zts-ffi
 sudo apt install php-zts-redis
 
 
-RUN - With Frankenphp
+RUN - With Frankenphp (terminal 1)
+http://localhost:8000
 ---------------------
 frankenphp run
 
 
-
-RUN - Worker (terminal 1):
+RUN - Worker (terminal 2):
 -------------------------
 php worker.php start
 
@@ -70,12 +76,13 @@ PHP Warning:  cli_set_process_title(): cli_set_process_title had an error: Not i
 vendor/phpstreamserver/core/src/Internal/MasterProcess.php - line 163
 Replace : \cli_set_process_title TO @cli_set_process_title
 
-
-RUN - Web (terminal 2):
+Optional without FrankenPHP
+RUN - Web (new terminal):
 ----------------------
 php -S localhost:8000  -t public/
 
-php -S 127.0.0.1:8000  -t public/
+OR Pulish to network:
+------------------
 php -S 0.0.0.0:8000  -t public/
 
 
@@ -83,16 +90,16 @@ Update composer :
 -----------------
 composer dump-autoload -o
 
+// Cleaner
+php cron/cleanTmp.php
+
 
 GIT Clone from branch :
 -----------------------
 git clone -b <branch_name> --single-branch <repository_url>
 
-
+// Force adding file
 git add -f app/Structs/Dashboard/DashboardStruct.php
-
-
-
 
 
 Build Core Directory structure :
@@ -113,20 +120,61 @@ mkdir -p ./views/error
 --------------
 write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');
 
+
 // Test-Curl JSON :
 -------------------
 curl --request GET \
-  --url 'http://localhost:8000/router.php?page=dashboard' \
+  --url http://localhost:8000/dashboard \
+  --header 'Accept: application/json' \
   --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: zjwTis+UxjPt2VhvlqSQoTw1CZuaR0LC8a654X1ofVc=' \
   --data '{
 	"title" : "JSON data <script>document.print</script>",
 	"tag_html" : {
 		"div" : "<div onclick='\''submitError()'\''>Submit</div>"
 	},
-	"float": 1.090,
-	"integer": 20
+	"page": "1",
+  	"offset": "0",
+	"limit": 10000
 }'
 
+// POST - Validation errors
+curl --request POST \
+  --url http://localhost:8000/dashboard \
+  --header 'Accept: application/json' \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: zjwTis+UxjPt2VhvlqSQoTw1CZuaR0LC8a654X1ofVc=' \
+  --data '{
+	"title" : "JSON data <script>document.print</script>",
+	"tag_html" : {
+		"div" : "<div onclick='\''submitError()'\''>Submit</div>"
+	},
+	"age": "18",
+	"username": "lutvi",
+	"email": "lutvi-demo.local",
+	"website": "http://demo.local:8000/dashboard/"
+}'
+
+// POST - Valid Stuct
+curl --request POST \
+  --url http://localhost:8000/dashboard \
+  --header 'Accept: application/json' \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: zjwTis+UxjPt2VhvlqSQoTw1CZuaR0LC8a654X1ofVc=' \
+  --data '{
+	"title" : "JSON data <script>document.print</script>",
+	"tag_html" : {
+		"div" : "<div onclick='\''submitError()'\''>Submit</div>"
+	},
+	"age": "18",
+	"username": "lutvi",
+	"email": "lutvi@demo.local",
+	"website": "http://demo.local:8000/dashboard/"
+}'
+
+
+ON-Development:
+---------------
 
 crawler.go
 ===========
@@ -145,7 +193,6 @@ php cron/test.php >> ./storage/logs/test.txt
 
 php cron/crawler.php >> ./storage/logs/crawler-out.txt
 php cron/crawler.php > ./storage/logs/crawler-out.txt
-
 
 
 Meilisearch:
@@ -198,6 +245,4 @@ php cron/searchBulkData.php
 // Benchmark
 ab -c 128 -n 10000 -k http://localhost:8000/health 2>&1
 
-// Cleaner
-php cron/cleanTmp.php
 
