@@ -195,6 +195,20 @@ php cron/crawler.php >> ./storage/logs/crawler-out.txt
 php cron/crawler.php > ./storage/logs/crawler-out.txt
 
 
+mq.go (Queue FFI)
+=================
+cd ffi/source/mq
+go mod init mq
+go mod tidy
+go build -o ../../lib/mq.so -buildmode=c-shared ./mq.go
+
+PHP-Testing
+-----------
+Consumer		: php cron/queue-consumer.php
+Send Testing	: php cron/queue.php
+
+
+
 Meilisearch:
 ------------
 php cron/meiliserach.php

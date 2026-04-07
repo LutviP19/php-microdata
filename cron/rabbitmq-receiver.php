@@ -19,6 +19,9 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 
+$queue_name = 'hello'; // default
+$queue_name = 'crawler_queue'; // custom ffi
+
 $connection = new AMQPStreamConnection(env('MB_HOST', 'localhost'), env('MB_PORT', 5672), env('MB_USERNAME', 'guest'), env('MB_PASSWORD', 'guest'));
 $channel = $connection->channel();
 

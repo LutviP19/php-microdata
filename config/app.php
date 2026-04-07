@@ -127,4 +127,18 @@ return [
 
     ],
 
+    /**
+     * Message Broker Credentials.
+     */
+    'default_mb' => env('MB_CONNECTION', 'rabbitmq'),
+
+    'broker' => [
+        'rabbitmq' => [
+            'host' => env('MB_HOST', '127.0.0.1'),
+            'port' => env('MB_PORT', '5672'),
+            'username' => env('MB_USERNAME', 'guest'),
+            'password' => env('MB_PASSWORD', 'guest'),
+            'queue_name' => env('MB_QUEUE_NAME', 'backend_php-queue'),
+        ],
+    ],
 ];
