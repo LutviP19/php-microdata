@@ -13,16 +13,6 @@ class ListenerRegistry {
      */
     public static function listen(string $eventName, callable $callback) {
         self::$listeners[$eventName][] = $callback;
-
-        // // Contoh Mendaftarkan listener
-        // \App\Core\Events\ListenerRegistry::listen('crawler.finished', function($data) {
-        //     $userId = $data['_metadata']['user_id']; // null jika anonim
-        //     $url = $data['url']; // dari payload asli
-            
-        //     if ($userId) {
-        //         // Logika kirim notifikasi ke dashboard user tersebut
-        //     }
-        // });
     }
 
     public static function getListeners(string $eventName) {
@@ -56,7 +46,17 @@ class ListenerRegistry {
         foreach ($listeners as $callback) {
             try {
                 // Panggil fungsi listener (bisa berupa Closure, Function, atau [Class, Method])
-                call_user_func($callback, $payload);
+                // call_user_func($callback, $payload);
+
+                // CEK VALIDASI CALLBACK
+                if (is_callable($callback)) {
+                    // Ini akan menjalankan:
+                    // 1. function($data) { ... } (Closure)
+                    // 2. [$instance, 'handle'] (Class Method)
+                    call_user_func($callback, $payload);
+                } else {
+                    dd("Listener for {$eventName} is not callable.");
+                }
                 
                 echo "[✔] Success: Listener for '{$eventName}' executed.\n";
             } catch (\Exception $e) {

@@ -8,6 +8,10 @@
 
 namespace App\Core\Support;
 
+use App\Core\Events\ListenerRegistry;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+
 /**
  * App Container.
  */
@@ -267,6 +271,83 @@ class App
         }
 
         return $dataModel;
+    }
+
+    public static function bootListeners()
+    {
+        // Tentukan path ke folder Listeners
+        $path = BASEPATH . '/app/Listeners';
+        self::loadListeners($path);
+    }
+
+    /**
+     * Auto Scan folder Listeners dan melakukan require_once.
+     * * @param string $path
+     */
+    protected static function loadListeners($path)
+    {
+        if (!is_dir($path)) return;
+
+        $directory = new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS);
+        $iterator = new \RecursiveIteratorIterator($directory);
+        $collectedListeners = [];
+
+        foreach ($iterator as $file) {
+            if ($file->getExtension() === 'php') {
+                // require_once $file->getRealPath();
+
+                // Ambil path relatif dari folder Listeners
+                // Contoh: "Order/SendInvoice.php"
+                $relative = $iterator->getSubPathname();
+
+                // Konversi path menjadi format Namespace
+                // Kita hapus .php dan ubah "/" atau "\" menjadi "\"
+                $namespacePath = str_replace(
+                    ['.php', '/', DIRECTORY_SEPARATOR], 
+                    ['', '\\', '\\'], 
+                    $relative
+                );
+
+                // Full Class Name
+                // Hasil: App\Listeners\Order\ProcessPayment
+                $className = 'App\\Listeners\\' . $namespacePath;
+
+                // Debug: Uncomment baris di bawah jika masih gagal untuk melihat class apa yang dicari
+                // echo "Checking class: " . $className . PHP_EOL;
+
+                if (class_exists($className)) {
+                    $reflection = new \ReflectionClass($className);
+                    
+                    if ($reflection->implementsInterface('App\Core\Events\ListenerInterface')) {
+                        $instance = new $className();
+                        
+                        $event    = $instance->event ?? null;
+                        $priority = $instance->priority ?? 0;
+
+                        if ($event) {
+                            $collectedListeners[$event][] = [
+                                'priority' => $priority,
+                                'callback' => [$instance, 'handle']
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Registrasi ke Registry dengan urutan ASC
+        // dd($collectedListeners, true);
+        foreach ($collectedListeners as $eventName => $listeners) {
+            // ASC: Priority 1 tampil sebelum Priority 10
+            usort($listeners, function($a, $b) {
+                return $a['priority'] <=> $b['priority'];
+            });
+
+            // dd($listeners, true);
+            foreach ($listeners as $item) {
+                ListenerRegistry::listen($eventName, $item['callback']);
+            }
+        }
     }
 
     // public function getUserAbilities($userId, $groupId) 

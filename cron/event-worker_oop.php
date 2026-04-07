@@ -13,14 +13,15 @@ declare(strict_types=1);
  */
 require_once 'bootstrap.php';
 
+use App\Core\Support\App;
 use App\Core\Events\EventWorker;
 use App\Core\Events\ListenerRegistry;
 use App\Core\Database\Connection;
 
-// 1. Setup Database
+// Setup PDO Database
 $db = Connection::make();
 
-// 2. Setup Config Redis
+// Setup Config Redis
 $redisConfig = [
     'host'     => config('redis.default.host'),
     'port'     => config('redis.default.port'),
@@ -28,7 +29,10 @@ $redisConfig = [
     'password' => config('redis.default.password'),
 ];
 
-// 3. Registrasi Listener (Bisa dipindah ke file app/Events/listeners.php)
+// Scan semua listener secara otomatis
+App::bootListeners();
+
+// Registrasi Listener (Bisa dipindah ke file app/Events/listeners.php)
 ListenerRegistry::listen('user.registered', function($data) {
     echo "Sending welcome email to: " . $data['email'] . PHP_EOL;
 });
@@ -37,7 +41,7 @@ ListenerRegistry::listen('crawler.finished', function($data) {
     echo "Crawler finished for URL: " . $data['url'] . PHP_EOL;
 });
 
-// 4. Jalankan Library
+//  Jalankan EventWorker
 // $worker = new EventWorker($db, $redisConfig);
 $worker = new EventWorker();
 $worker->run();

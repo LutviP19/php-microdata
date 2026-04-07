@@ -221,6 +221,17 @@ php cron/event-listener.php
 php cron/event-dispact.php
 
 
+App - Auto Scan Listeners
+-------------------------
+// Auto Scan Listeners
+php worker-event.php
+
+// Dispatch Events
+php cron/event-dispatch_test.php
+
+
+
+
 
 
 

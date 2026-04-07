@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 require_once 'bootstrap.php';
 
+use App\Core\Support\App;
 use App\Core\Events\EventWorker;
 use App\Core\Events\ListenerRegistry;
 use App\Core\Support\RabbitFFI;
@@ -30,10 +31,13 @@ $redisConfig = [
     'password' => config('redis.default.password'),
 ];
 
+// Scan semua listener secara otomatis
+App::bootListeners();
+
 /**
  * Registrasi Listener: Kirim ke RabbitMQ
  */
-ListenerRegistry::listen('order.created', function($data) {
+ListenerRegistry::listen('order.notif', function($data) {
     try {
         // 1. Inisialisasi Library RabbitMQ FFI
         $mq = new RabbitFFI();
@@ -56,6 +60,10 @@ ListenerRegistry::listen('order.created', function($data) {
         echo "[Worker] Gagal meneruskan ke RabbitMQ: " . $e->getMessage() . PHP_EOL;
         throw $e; // Throw agar status di DB berubah jadi 'failed'
     }
+});
+
+ListenerRegistry::listen('crawler.start', function($data) {
+    echo "Crawler finished for URL: " . $data['url_to_crawl'] . PHP_EOL;
 });
 
 /**
