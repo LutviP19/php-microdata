@@ -16,7 +16,7 @@ class RabbitFFI {
 
     public function __construct($url = null) {
         $default_mb = Config::get('default_mb');
-        $defaultUrl = "amqp://".Config::get("broker.{$default_mb }.username").":".Config::get("broker.{$default_mb }.password")."@".Config::get("broker.{$default_mb }.host").":".Config::get("broker.{$default_mb }.port")."/";
+        $defaultUrl = Config::get("broker.{$default_mb}.scheme")."://".Config::get("broker.{$default_mb}.username").":".Config::get("broker.{$default_mb}.password")."@".Config::get("broker.{$default_mb}.host").":".Config::get("broker.{$default_mb}.port")."/";
         $this->url = $url ?: $defaultUrl;
         // dd($this->url);
 
@@ -41,7 +41,14 @@ class RabbitFFI {
         // 2. Validasi Skema (Harus amqp atau amqps)
         $scheme = parse_url($url, PHP_URL_SCHEME);
         if (!in_array($scheme, ['amqp', 'amqps'])) {
-            throw new \Exception("Skema URL tidak didukung: {$scheme}. Gunakan 'amqp://' atau 'amqps://'.");
+            $messageErr = "Skema URL tidak didukung: {$scheme}. Gunakan 'amqp://' atau 'amqps://'.";
+            if (config('app.debug')) {
+                \write_log([
+                    'url' => $url,
+                    'message' => $messageErr                    
+                ], 'App\Core\Support\RabbitFFI.validateAmqpUrl', 'error', 'error_RabbitFFI.log');
+            }
+            throw new \Exception($messageErr);
         }
 
         // 3. Validasi Komponen Penting (Host)
@@ -55,12 +62,26 @@ class RabbitFFI {
         $pattern = '/^amqps?:\/\/.+:.+@.+/i';
         if (!preg_match($pattern, $url)) {
             // Berikan peringatan jika kredensial kosong pada URL non-default
-            $message = "RabbitFFI Warning: URL AMQP mungkin tidak memiliki kredensial lengkap.";
-            throw new \Exception($message);
+            $messageErr = "RabbitFFI Warning: URL AMQP mungkin tidak memiliki kredensial lengkap.";
+            if (config('app.debug')) {
+                \write_log([
+                    'url' => $url,
+                    'message' => $messageErr                    
+                ], 'App\Core\Support\RabbitFFI.validateAmqpUrl', 'error', 'error_RabbitFFI.log');
+            }
+
+            throw new \Exception($messageErr);
         }
     }
 
     private function loadFFI() {
+
+        $libPath = realpath(BASEPATH_FFI . '/lib/mq.so');
+    
+        if (!file_exists($libPath)) {
+            throw new \Exception("Library Shared Object tidak ditemukan di: " . $libPath);
+        }
+
         // Definisikan signature fungsi C dari Go
         $header = "
             char* Publish(char* url, char* queueName, char* body);
@@ -69,9 +90,21 @@ class RabbitFFI {
         ";
         
         try {
-            $this->ffi = FFI::cdef($header, BASEPATH . '/ffi/lib/mq.so');
+            $this->ffi = FFI::cdef($header, $libPath);
         } catch (Exception $e) {
-            throw new Exception("Gagal memuat Shared Object: " . $e->getMessage());
+
+            $message = "Gagal memuat Shared Object: " . $e->getMessage();
+            if (config('app.debug')) {
+                \write_log([
+                    'libPath' => $libPath,
+                    'message' => $message,
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    // 'trace' => $e->getTraceAsString(),
+                ], 'App\Core\Support\RabbitFFI.loadFFI', 'error', 'error_RabbitFFI.log');
+            }
+
+            throw new Exception($message);
         }
     }
 
@@ -85,7 +118,16 @@ class RabbitFFI {
             $errorMsg = FFI::string($err);
             // Jangan lupa free memory yang dialokasikan C.CString di Go
             $this->ffi->free($err);
-            throw new Exception("RabbitMQ Error: " . $errorMsg);
+
+            $messageErr = "RabbitMQ Error: " . $errorMsg;
+            if (config('app.debug')) {
+                \write_log([
+                    'payload' => $payload,
+                    'message' => $messageErr                    
+                ], 'App\Core\Support\RabbitFFI.send', 'error', 'error_RabbitFFI.log');
+            }
+
+            throw new \Exception($messageErr);
         }
 
         return true;
@@ -98,7 +140,15 @@ class RabbitFFI {
         $str = FFI::string($result);
         // Kita asumsikan jika string mulai dengan ERROR: itu adalah kegagalan koneksi
         if (strpos($str, 'ERROR:') === 0) {
-            throw new Exception($str);
+
+            if (config('app.debug')) {
+                \write_log([
+                    'queue' => $queue,
+                    'message' => $str                    
+                ], 'App\Core\Support\RabbitFFI.receive', 'error', 'error_RabbitFFI.log');
+            }
+
+            throw new \Exception($str);
         }
         return $str;
     }    

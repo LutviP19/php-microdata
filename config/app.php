@@ -134,6 +134,7 @@ return [
 
     'broker' => [
         'rabbitmq' => [
+            'scheme' => env('MB_SCHEME', 'amqps'),
             'host' => env('MB_HOST', '127.0.0.1'),
             'port' => env('MB_PORT', '5672'),
             'username' => env('MB_USERNAME', 'guest'),
