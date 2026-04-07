@@ -208,6 +208,22 @@ Consumer		: php cron/queue-consumer.php
 Send Testing	: php cron/queue.php
 
 
+Event - Listener:
+=================
+// Migarte table
+storage/database/migrations/mysql/event_queue.sql
+
+// Consume Queue
+php cron/queue-consumer.php
+
+// Run Listener and Dispact Event on separated terminals
+php cron/event-listener.php
+php cron/event-dispact.php
+
+
+
+
+
 
 Meilisearch:
 ------------
