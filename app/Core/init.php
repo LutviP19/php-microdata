@@ -8,6 +8,10 @@ if (!defined('BASEPATH')) {
     define('BASEPATH', __DIR__ . '/../..');
 }
 
+if (!defined('BASEPATH_FFI')) {
+    define('BASEPATH_FFI', BASEPATH . '/ffi');
+}
+
 /**
  * Require the composer autoload File.
  */

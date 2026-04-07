@@ -11,6 +11,10 @@ if (!defined('BASEPATH')) {
     define('BASEPATH', __DIR__ . "/../..");
 }
 
+if (!defined('BASEPATH_FFI')) {
+    define('BASEPATH_FFI', BASEPATH . '/ffi');
+}
+
 
 /**
  * Sanitasi JSON berdasarkan tipe data.
@@ -24,7 +28,7 @@ if (!function_exists('sanitizeJson')) {
         $ffi = FFI::cdef("
             char* SanitizeJSON(char* input);
             void free(void* ptr);
-        ", BASEPATH . "/ffi/lib/sanitize.so");
+        ", BASEPATH_FFI . "/lib/sanitize.so");
 
         $cResult = $ffi->SanitizeJSON($input);
         
@@ -143,7 +147,7 @@ if (!function_exists('validateStructData')) {
             $ffi = FFI::cdef("
                 char* ValidateDynamic(char* input);
                 void free(void* ptr);
-            ", BASEPATH . "/ffi/lib/dynamic_validate.so");
+            ", BASEPATH_FFI . "/lib/dynamic_validate.so");
         }
 
         // Wrap data and rules into one JSON object
