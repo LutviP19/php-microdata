@@ -26,12 +26,6 @@ class Gate
 
         self::$abilities = $cache->remember($cacheKey, function() use ($userId, $groupId) {
             $db = new Model();
-            // $sql = "SELECT DISTINCT p.slug 
-            //         FROM user_roles ur
-            //         JOIN role_permissions rp ON ur.role_id = rp.role_id
-            //         JOIN permissions p ON rp.permission_id = p.id
-            //         WHERE ur.user_id = ? AND (ur.group_id = ? OR ur.group_id IS NULL)";
-
             $sql = "SELECT permission_slug AS slug FROM v_user_permissions 
                     WHERE user_id = ? AND group_id = ?";
             

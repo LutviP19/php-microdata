@@ -22,25 +22,11 @@ $isAllowAccess = true;
 // -------------------------
 
 // // --- Test Auth Gate
-// // $isAllowAccess = false;
-// // Set Perrmissions
+// // Set Perrmissions 1: Admin, 2: Manager, 3: Staff 
 // \App\Core\Auth\Gate::loadAbilities(1, 1);
+// \App\Core\Auth\Gate::loadAbilities(2, 2);
 // $permission = 'asset-delete';
-// $isAllowAccess = \App\Core\Auth\Gate::authorize($permission);
-// if (!$isAllowAccess) {
-//     if(is_json_request()) {
-//         $message = "You don't have access[$permission]";
-//         $errors = [
-//             'auth' => 'Forbidden to access: ' . $permission
-//         ];
-//         json_response([], 403, $message, $errors);
-//     } else {
-//         $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
-//         http_response_code($isHtmx ? 200 : 403);
-//         include BASEPATH . "/views/error/403.php";
-//         exit();
-//     }
-// }
+// \App\Core\Auth\Gate::authorize($permission);
 // // ===========================================
 
 // Load Router and Mapping Models

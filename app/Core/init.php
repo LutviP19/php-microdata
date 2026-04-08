@@ -113,7 +113,7 @@ if (session_status() == PHP_SESSION_NONE) {
 // Auth Session
 if(isset($_COOKIE['PHPFFISESSID'])){
     // // Test Invalid
-    $_SESSION['IPaddress'] = '192.168.0.101';
+    // $_SESSION['IPaddress'] = '192.168.0.101';
 
     if(!checkSession()) {
         if (is_json_request()) {
