@@ -4,6 +4,7 @@
 *.cache
 *.zip
 *.ini
+*.lock
 *DS*
 NOTES.txt
 SNIP.txt
