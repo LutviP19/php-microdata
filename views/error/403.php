@@ -1,4 +1,4 @@
-<?php if(!$isAllowAccess): ?>
+<?php if(!$isHtmx): ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -53,7 +53,7 @@
     </div>
 </div>
 
-<?php if(!$isAllowAccess): ?>
+<?php if(!$isHtmx): ?>
 </body>
 </html>
 <?php endif; ?>

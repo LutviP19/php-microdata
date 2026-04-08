@@ -28,7 +28,7 @@ return [
         'logdir' => BASEPATH . '/storage/logs/',
         'key' => env('APP_KEY', 'base64:AA2L6m2LEf0WzxHpVuHxkLZEd7vsm6TWDGUUAjmYGnk='),
         'hash_key' => env('HASH_KEY', 'base64:RUHnrVLvGQXm8SLvFv2zI+YQH8KNGOhbiy1gGAqGFt0='),
-        'encrpytion_id' => env('APP_ENC_ID', false),
+        'encrpytion_id' => env('APP_ENC_ID', false),        
         'queue_driver' => env('QUEUE_DRIVER', 'redis'),
     ],
 
@@ -37,6 +37,7 @@ return [
      */
     'api' => [
         'key' => env('API_KEY', 'base64:FxfDQdiN9IguAgG5NSfESiNryDdAQf9aBiZKLIklNoE='),
+        'whitelist_ips' => null, // null||[]: no filter, (Array)IP/CIDR: ['127.0.0.1', '192.168.1.0/24', '10.0.0.0/8']
     ],
 
     /**

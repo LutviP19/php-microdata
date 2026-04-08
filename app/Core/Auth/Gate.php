@@ -70,8 +70,8 @@ class Gate
                 ];
                 json_response([], 403, $message, $errors);
             } else {
-                $isAllowAccess = false;
-                http_response_code(403);
+                $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
+                http_response_code($isHtmx ? 200 : 403);
                 include BASEPATH . "/views/error/403.php";
                 exit();
             }

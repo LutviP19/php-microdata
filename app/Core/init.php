@@ -64,14 +64,14 @@ App::register('config', require BASEPATH . '/config/app.php');
 // Jalankan fungsi CORS
 handle_cors();
 
+// Filter IP - API Only
+if (is_json_request()) {
+    check_ip_access(clientIP());
+}
+
 // Validasi API Key
 if (!validateApiKey()) {
-    header('Content-Type: application/json', true, 401);
-    echo json_encode([
-        'statusCode'  => 401,
-        'message' => 'Unauthorized: Invalid API Key'
-    ]);
-    exit();
+    json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
 }
 
 // INI Set Session
@@ -113,14 +113,14 @@ if (session_status() == PHP_SESSION_NONE) {
 // Auth Session
 if(isset($_COOKIE['PHPFFISESSID'])){
     // // Test Invalid
-    // $_SESSION['IPaddress'] = '192.168.0.101';
+    $_SESSION['IPaddress'] = '192.168.0.101';
 
     if(!checkSession()) {
         if (is_json_request()) {
             json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
         } else {
-            $isAllowAccess = false;
-            http_response_code(403);
+            $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
+            http_response_code($isHtmx ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
         die;

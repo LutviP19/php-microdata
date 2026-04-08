@@ -203,35 +203,6 @@ if (!function_exists('parseStructToRules')) {
     }
 }
 
-/**
- * Get client IP
- *
- * @return string
- */
-function clientIP()
-{
-    // return (new \App\Core\Security\Middleware\EnsureIpIsValid)->ip();
-
-    // Get real visitor IP behind CDN such as Cloudflare
-    if (isset($_SERVER["HTTP_CF_CONNECTING_IP"])) {
-        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
-        $_SERVER['HTTP_CLIENT_IP'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
-    }
-
-    $client = @$_SERVER['HTTP_CLIENT_IP'];
-    $forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
-    $remote = $_SERVER['REMOTE_ADDR'];
-
-    if (filter_var($client, FILTER_VALIDATE_IP)) {
-        $ip = $client;
-    } elseif (filter_var($forward, FILTER_VALIDATE_IP)) {
-        $ip = $forward;
-    } else {
-        $ip = $remote;
-    }
-
-    return $ip == '::1' ? '127.0.0.1' : $ip;
-}
 
 /**
  * setHeaders function, to add header response
@@ -468,8 +439,8 @@ function handle_cors() {
         if (is_json_request()) {
             json_response([], 403, 'Forbidden', ['auth' => 'CORS Policy: Origin not allowed']);
         } else {
-            $isAllowAccess = $isHtmx;
-            http_response_code(200);
+            $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
+            http_response_code($isHtmx ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
         exit;
@@ -770,3 +741,132 @@ function cleanTmpFiles($tmpDir, $daysOld = 3)
         throw new Exception($message);
     }
 }
+
+/**
+ * Get client IP
+ *
+ * @return string
+ */
+function clientIP()
+{
+    // Get real visitor IP behind CDN such as Cloudflare
+    if (!empty($_SERVER["HTTP_CF_CONNECTING_IP"])) {
+        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+        $_SERVER['HTTP_CLIENT_IP'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+
+    // Nginx/Caddy
+    if (!empty($_SERVER["HTTP_X_REAL_IP"])) {
+        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_X_REAL_IP"];
+        $_SERVER['HTTP_CLIENT_IP'] = $_SERVER["HTTP_X_REAL_IP"];
+    }
+
+    $client = @$_SERVER['HTTP_CLIENT_IP'];
+    $forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
+    $remote = $_SERVER['REMOTE_ADDR'];
+
+    if (filter_var($client, FILTER_VALIDATE_IP)) {
+        $ip = $client;
+    } elseif (filter_var($forward, FILTER_VALIDATE_IP)) {
+        // X-Forwarded-For bisa berisi banyak IP (comma separated), ambil yang pertama
+        $ips = explode(',', $forward);
+        $ip = trim($ips[0]);
+    } else {
+        $ip = $remote;
+    }
+
+    return $ip == '::1' ? '127.0.0.1' : $ip;
+}
+
+/**
+ * Memvalidasi apakah string adalah IP Address yang valid.
+ * @param string $ip
+ * @param string $type (both, ipv4, ipv6)
+ * @return bool
+ */
+function is_valid_ip($ip, $type = 'both') {
+    $flag = FILTER_FLAG_NONE;
+    
+    if ($type === 'ipv4') $flag = FILTER_FLAG_IPV4;
+    if ($type === 'ipv6') $flag = FILTER_FLAG_IPV6;
+
+    return (bool) filter_var($ip, FILTER_VALIDATE_IP, $flag);
+}
+
+
+/**
+ * Memeriksa IP terhadap daftar yang berisi IP tunggal maupun Range CIDR.
+ * @param string $ip IP yang akan dicek
+ * @param array $list Daftar IP/CIDR (misal: ['127.0.0.1', '10.0.0.0/8'])
+ * @return bool
+ */
+function check_ip_access($ip, array $list = null) {
+    $list = $list ?? config('api.whitelist_ips');
+
+    if (empty($list)) {
+        return;
+    }
+
+    $isAllowed = false;
+
+    // Pengecekan IP
+    foreach ($list as $allowed) {
+        if (ip_in_range($ip, $allowed)) {
+            $isAllowed = true;
+            break; // Hentikan pencarian jika sudah cocok
+        }
+    }
+
+    // dd($isAllowed);
+    if (!$isAllowed) {
+        if (is_json_request()) {
+            json_response([], 403, 'Forbidden', ['auth' => 'Your IP address is not whitelisted.']);
+        } else {
+            $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
+            http_response_code($isHtmx ? 200 : 403);
+            include BASEPATH . "/views/error/403.php";
+        }
+        exit;
+    }
+}
+
+/**
+ * Mengecek apakah sebuah IP berada dalam range CIDR (misal: 192.168.1.0/24)
+ * @param string $ip
+ * @param string $range
+ * @return bool
+ */
+function ip_in_range($ip, $range) {
+    if (strpos($range, '/') === false) {
+        return $ip === $range;
+    }
+
+    list($subnet, $bits) = explode('/', $range);
+    
+    $ip_long = ip2long($ip);
+    $subnet_long = ip2long($subnet);
+    $mask = -1 << (32 - $bits);
+    $subnet_long &= $mask;
+
+    return ($ip_long & $mask) === $subnet_long;
+
+    // Contoh Penggunaan:
+    // var_dump(ip_in_range('192.168.1.50', '192.168.1.0/24')); // true
+}
+
+/**
+ * Mengecek apakah IP saat ini ada dalam daftar whitelist.
+ * @param string $currentIp
+ * @param array $whitelist
+ * @return bool
+ */
+function is_ip_whitelisted($currentIp, array $whitelist) {
+    return in_array($currentIp, $whitelist, true);
+
+    // Contoh Penggunaan:
+    // $allowed = ['127.0.0.1', '192.168.1.1'];
+    // if (!is_ip_whitelisted($_SERVER['REMOTE_ADDR'], $allowed)) die('Access Denied');
+}
+
+
+
