@@ -128,10 +128,9 @@ class DashboardModel extends DashboardData
         }, 300);
 
         // Ambil data paginate result dari cache selama 5 menit
-        $dataDashboard = $cache->remember('dashboard_result_c', function() use ($request, $mainData) {
-            $page = $request['page'] ?? 1;
-            $limit = $request['limit'] ?? 10;
-            $table = $this->table;
+        $page = $request['page'] ?? 1;
+        $limit = $request['limit'] ?? 10;
+        $dataDashboard = $cache->remember('dashboard_result_'.$page, function() use ($page, $limit, $mainData) {            
             // $mainData->table = 'salaries';
             // Query dasar
             // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
