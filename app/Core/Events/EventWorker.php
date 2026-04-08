@@ -19,8 +19,8 @@ class EventWorker
 {
     protected $db;
     protected $redis = null;
-    protected $table = 'event_queue';
-    protected $queueKey = 'event_queue_list';
+    protected $table = 'event_queue'; // Tabel MySQL
+    protected $queueKey = 'event_queue_list'; // Redis KEY
     protected $sleepTime = 500000; // 0.5 detik
     protected $lastCleanupTime;
     protected $cleanupInterval = 3600; // Jalankan cleaner setiap 1 jam (3600 detik)
@@ -29,6 +29,8 @@ class EventWorker
     protected $logBuffer = [];
     protected $batchSize = 50; // Kirim ke DB setiap 50 log
     protected $lastBatchFlush;
+    protected $timePerListener = 5; // Berikan waktu eksekusi 5 detik per listener (bisa disesuaikan)
+    protected $baseTimeout = 30;    // Timeout dasar minimal
 
     public function __construct(PDO $db = null, array $redisConfig = [])
     {
@@ -110,40 +112,83 @@ class EventWorker
         }
     }
 
-    public function run()
+    public function run($once = false)
     {
-        echo "[*] Event Worker started. Waiting for events..." . PHP_EOL;
+        echo "[*] Event Worker started (" . ($once ? "Once Mode" : "Daemon Mode") . ")..." . PHP_EOL;
+
+        // 1. Hitung total listeners untuk menentukan timeout yang aman
+        // Kita ambil dari Registry yang sudah di-load oleh App::boot()
+        $allListeners = \App\Core\Events\ListenerRegistry::getAllListeners();
+        $totalListenerCount = 0;
+        foreach ($allListeners as $eventGroup) {
+            $totalListenerCount += count($eventGroup);
+        }
+
+        // Hitung timeout: (jumlah listener * estimasi waktu) + buffer dasar
+        $dynamicTimeout = ($totalListenerCount * $this->timePerListener) + $this->baseTimeout;
+
+        // Set limit waktu eksekusi PHP (0 jika daemon agar tidak mati, atau X detik jika once)
+        if ($once) {
+            set_time_limit($dynamicTimeout);
+            echo "[*] Mode: Once | Dynamic Timeout: {$dynamicTimeout}s" . PHP_EOL;
+        } else {
+            set_time_limit(0); // Daemon harus berjalan selamanya
+            echo "[*] Mode: Daemon | Timeout: Unlimited" . PHP_EOL;
+        }
 
         // Jalankan cleanup pertama kali saat start
         $this->cleanUp();
 
-        while (true) {
+        do {
             $itemProcessed = false;
 
-            // Cek Cleanup berkala
-            if ((time() - $this->lastCleanupTime) > $this->cleanupInterval) {
+            // Reset timeout setiap kali loop mulai agar tidak timeout di tengah jalan (untuk Daemon)
+            if (!$once) {
+                set_time_limit($this->baseTimeout); 
+            }
+
+            // --- MAINTENANCE LOGIC ---
+            // Cek Cleanup berkala (hanya relevan di Daemon Mode)
+            if (!$once && (time() - $this->lastCleanupTime) > $this->cleanupInterval) {
                 $this->cleanUp();
             }
 
-            // Cek Force Flush: Jika ada log di buffer tapi sudah lewat 30 detik tidak ada aktivitas
+            // Cek Force Flush Batch Log
             if (!empty($this->logBuffer) && (time() - $this->lastBatchFlush) > 30) {
-                echo "[B] Periodic flush triggered..." . PHP_EOL;
                 $this->flushLogs();
             }
 
-            // 1. Coba Redis Terlebih Dahulu
-            if (config('app.queue_driver') === 'redis') {
-                if ($this->redis) {                    
-                    $itemProcessed = $this->processRedis();
-                }
+            // --- PROCESSING LOGIC ---
+            // 1. Coba Redis
+            if (config('app.queue_driver') === 'redis' && $this->redis) {
+                $itemProcessed = $this->processRedis();
             }
 
-            // 2. Fallback ke MySQL jika Redis kosong atau gagal
+            // 2. Fallback ke MySQL
             if (!$itemProcessed) {
                 $itemProcessed = $this->processDatabase();
             }
 
-            if (!$itemProcessed) { usleep($this->sleepTime); }
+            // --- EXIT & SLEEP LOGIC ---
+            if ($once) {
+                // Jika dalam mode 'once', kita berhenti jika tidak ada item lagi yang diproses
+                if (!$itemProcessed) {
+                    echo "[*] No more events to process. Shutting down..." . PHP_EOL;
+                    break; 
+                }
+            } else {
+                // Jika dalam mode 'daemon', tidur sebentar jika tidak ada kerjaan
+                if (!$itemProcessed) {
+                    usleep($this->sleepTime);
+                }
+            }
+
+        } while (!$once || $itemProcessed);
+
+        // TERAKHIR: Pastikan semua log yang tersisa di buffer terkirim sebelum script mati
+        if (!empty($this->logBuffer)) {
+            echo "[B] Finalizing logs before exit..." . PHP_EOL;
+            $this->flushLogs();
         }
     }
 
@@ -167,7 +212,6 @@ class EventWorker
                         $this->addToBatch($event, 'completed', $executionTime);
                     }
                     return true;
-
                 } catch (Exception $e) {
                     if ($this->logToDatabase) {
                         $executionTime = round(microtime(true) - $startTime, 4);

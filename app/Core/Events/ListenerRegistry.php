@@ -19,6 +19,12 @@ class ListenerRegistry {
         return self::$listeners[$eventName] ?? [];
     }
 
+    // menghitung jumlah listener
+    public static function getAllListeners()
+    {
+        return self::$listeners;
+    }
+
     /**
      * Mengeksekusi semua listener yang terdaftar untuk sebuah event
      * @param string $eventName Nama event (misal: 'crawler.finished')

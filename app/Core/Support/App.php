@@ -294,7 +294,7 @@ class App
 
         foreach ($iterator as $file) {
             if ($file->getExtension() === 'php') {
-                // require_once $file->getRealPath();
+                require_once $file->getRealPath();
 
                 // Ambil path relatif dari folder Listeners
                 // Contoh: "Order/SendInvoice.php"

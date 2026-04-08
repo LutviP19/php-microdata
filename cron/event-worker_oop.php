@@ -42,6 +42,55 @@ ListenerRegistry::listen('crawler.finished', function($data) {
 });
 
 //  Jalankan EventWorker
+$once = true; // Mode Worker
+$lockPath = BASEPATH . '/worker.lock';
+
+// Mencegah Zombie Process
+if ($once) {
+    $lockFile = fopen($lockPath, 'c');
+    
+    if (!$lockFile || !flock($lockFile, LOCK_EX | LOCK_NB)) {
+        echo "[!] Worker is already running. Skipping this execution." . PHP_EOL;
+        if ($lockFile) fclose($lockFile);
+        exit(0); 
+    }
+    
+    // Pastikan file dikosongkan sebelum diisi PID baru
+    ftruncate($lockFile, 0);
+    
+    // Konversi ke string agar tidak error di PHP 8+
+    $pid = (string) getmypid();
+    fwrite($lockFile, $pid);
+    
+    // Pastikan data tertulis ke disk
+    fflush($lockFile);
+}
+
 // $worker = new EventWorker($db, $redisConfig);
 $worker = new EventWorker();
-$worker->run();
+
+// // Set nama tabel kustom jika perlu
+// $worker->setTable('event_queue_b');
+
+// // Contoh: Simpan data selama 7 hari dan bersihkan setiap 12 jam
+// // (Opsional, jika Anda menambahkan properti ini di class)
+// $worker->retentionDays = 7;
+
+// // Waktu eksekusi x detik per listener default 5 detik (bisa disesuaikan)
+// $worker->timePerListener = 3;
+
+// // Timeout dasar minimal default 30 detik (Naikan/Turunkan sesuai kebutuhan)
+// $worker->baseTimeout = 10;
+
+$worker->run($once);
+
+// Mencegah Zombie Process
+if($once && $lockFile) {
+    flock($lockFile, LOCK_UN);
+    fclose($lockFile);
+
+    // Opsional: Hapus file jika ingin folder tetap bersih
+    if (file_exists($lockPath)) unlink($lockPath);
+    
+    echo "[*] Lock released and worker finished." . PHP_EOL;
+}

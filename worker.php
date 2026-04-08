@@ -72,6 +72,30 @@ $server->addWorker(
             echo "Return code: $return_code" . PHP_EOL;
         },
     ),
+    new PeriodicProcess(
+        name: 'Periodic process 3',
+        schedule: '*/1 * * * *',
+        onStart: function (PeriodicProcess $worker): void {
+            // process execute event worker
+
+            // Logger
+            $worker->logger->info('Scheduler 3 is running', ['at' => date('d-m-Y H:i:s')]);
+            $worker->logger->info('Scheduler 3', ['pid' => \posix_getpid()]);
+
+            // Execute the command (Linux/macOS) or (Windows)
+            $source_path = BASEPATH . '/worker-event.php';
+            
+            // // append the output directly to the log file (opsi 1)
+            // $logFile = logs_path('events_log.txt');
+            // system("php $source_path >> $logFile", $return_code);
+
+            // or display the output directly to the console||browser (opsi 2)
+            $last_line = system("php $source_path", $return_code);
+            echo "Last line of output: $last_line" . PHP_EOL;
+
+            echo "Return code: $return_code" . PHP_EOL;
+        },
+    ),
 );
 
 exit($server->run());
