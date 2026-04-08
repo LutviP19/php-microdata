@@ -407,6 +407,8 @@ function handle_cors() {
     // 1. Ambil Origin. Jika tidak ada, coba Referer (tapi Origin lebih prioritas untuk CORS)
     // $currentOrigin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
     $currentOrigin = get_request_origin();
+    // Cek apakah ini request dari HTMX
+    $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
     
     // Jika request dari domain yang sama (bukan cross-origin), browser sering tidak kirim Origin.
     // Kita tetap izinkan lanjut tanpa set header CORS khusus.
@@ -418,6 +420,10 @@ function handle_cors() {
         ? array_map('trim', explode(',', $envOrigins)) 
         : ['*'];
 
+    // if ($isHtmx) { 
+    //     dd($allowedOrigins);
+    // }
+
     // 3. Bersihkan Host untuk pengecekan (hapus http:// dan :port)
     $cleanHost = parse_url($currentOrigin, PHP_URL_HOST);
 
@@ -427,7 +433,7 @@ function handle_cors() {
         $isAllowed = true;
     } else {
         // Cek apakah host (localhost) ada di daftar whitelist
-        if (in_array($cleanHost, $allowedOrigins)) {
+        if (in_array($cleanHost, $allowedOrigins) || in_array($currentOrigin, $allowedOrigins)) {
             $isAllowed = true;
         }
     }
@@ -443,10 +449,30 @@ function handle_cors() {
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-API-KEY, hx-request, hx-target, hx-current-url, hx-trigger, hx-trigger-name");
 
     // 6. Handle "Preflight" OPTIONS request
-    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-        // Browser butuh status 200 atau 204 untuk preflight
-        http_response_code(204); 
-        exit();
+    // PENTING: Untuk Caddy, kita harus menghentikan script SEGERA pada OPTIONS
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        if ($isAllowed) {
+            // Browser butuh status 200 atau 204 untuk preflight
+            http_response_code(204);
+            header("Content-Length: 0");
+            header("Content-Type: text/plain");
+            exit;
+        } else {
+            http_response_code(403);
+            exit;
+        }
+    }
+
+    // dd($isAllowed);
+    if (!$isAllowed) {
+        if (is_json_request()) {
+            json_response([], 403, 'Forbidden', ['auth' => 'CORS Policy: Origin not allowed']);
+        } else {
+            $isAllowAccess = $isHtmx;
+            http_response_code(200);
+            include BASEPATH . "/views/error/403.php";
+        }
+        exit;
     }
 }
 

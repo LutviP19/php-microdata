@@ -5,6 +5,11 @@
         num_threads 3  # Sets the number of PHP threads to 3
     }
 
+    servers {
+        # Allow all Local Network IP
+        trusted_proxies static 0.0.0.0
+    }
+
     # Development Only
     auto_https off
 }
@@ -27,9 +32,22 @@ http://localhost:8000 {
 
     # Allow CORS if HTMX requests come from different subdomains
     header {
+        # Access-Control-Allow-Origin "*"
+
+        # Mengambil nilai dari env ALLOWED_ORIGINS
+        # Jika tidak ada di env, default ke '*'
+        Access-Control-Allow-Origin {$ALLOWED_ORIGINS:demo.app.com}
+
         Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, X-Api-Key, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
-        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Credentials "true"
+
+        # Memastikan browser tahu bahwa header ini bisa berubah tergantung origin
+        Vary Origin
+        
+        # 'defer' memastikan header ini ditambahkan di akhir proses, 
+        # menimpa header yang mungkin diset secara otomatis oleh PHP
+        # defer
     }
 
     # Handle CORS preflight (OPTIONS) requests
