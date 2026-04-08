@@ -232,6 +232,22 @@ php cron/event-dispatch_test.php
 
 
 
+Framework - Performance Testing
+===============================
+cp k6-test.js ~/tmp/k6-test.js
+k6 run ~/tmp/k6-test.js
+
+// Debuging Run once
+k6 run --vus 1 --iterations 1 ~/tmp/k6-test.js
+
+
+RESULTS: TEST.txt
+
+
+
+
+
+
 
 
 

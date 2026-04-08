@@ -4,6 +4,8 @@
 
 #### How to run: please read DEV.txt
 
+#### Testing Results: please read TEST.txt
+
 ##### Requirements: PHP 8.4+, Golang go1.26.1, OS: Linux/Mac
 
 ### Youtube Video - Basic Source
