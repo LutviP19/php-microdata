@@ -21,6 +21,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 $queue_name = 'hello'; // default
 $queue_name = 'crawler_queue'; // custom ffi
+$queue_name = 'payment_queue'; // bootListeners
 
 $connection = new AMQPStreamConnection(env('MB_HOST', 'localhost'), env('MB_PORT', 5672), env('MB_USERNAME', 'guest'), env('MB_PASSWORD', 'guest'));
 $channel = $connection->channel();

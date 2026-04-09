@@ -224,42 +224,55 @@ php cron/event-dispact.php
 
 App - Auto Scan Listeners
 -------------------------
-// Auto Scan Listeners
+// Auto Scan Listeners and waiting for events (daemon)
 php worker-event.php
 
-// Dispatch Events
+// Dispatch Events (run once)
 php cron/event-dispatch_test.php
+
+// Listen and Consume RabbitMQ
+php cron/rabbitmq-receiver.php
 
 
 
 Framework - Performance Testing
 ===============================
-cp k6-test.js ~/tmp/k6-test.js
-k6 run ~/tmp/k6-test.js
+mkdir -p $HOME/tmp
+cp $PWD/test/k6-test.js $HOME/tmp/k6-test.js
+k6 run $HOME/tmp/k6-test.js
 
 // Debuging Run once
-k6 run --vus 1 --iterations 1 ~/tmp/k6-test.js
+k6 run --vus 1 --iterations 1 $HOME/tmp/k6-test.js
 
 
-RESULTS: TEST.txt
------------------
-k6 run ~/tmp/k6-test.js > TEST.txt 2>&1
+RESULTS: ./test/TEST.txt
+------------------------
+k6 run $HOME/tmp/k6-test.js > $PWD/test/TEST.txt 2>&1
 
 APPEND RESULTS:
 ---------------
-k6 run ~/tmp/k6-test.js >> TEST.txt 2>&1
+k6 run $HOMEtmp/k6-test.js >> $PWD/test/TEST.txt 2>&1
 
 
-SHOW OUTPUT:
-------------
-k6 run ~/tmp/k6-test.js | tee TEST.txt
+SHOW OUTPUT (verbose):
+----------------------
+k6 run $HOME/tmp/k6-test.js | tee $PWD/test/TEST.txt
 
 Format to JSON:
 ---------------
-k6 run --summary-export=TEST_SUMMARY.json ~/tmp/k6-test.js
+// Debuging Run once
+k6 run --vus 1 --iterations 1 --summary-export=$HOME/tmp/TEST_SUMMARY.json $HOME/tmp/k6-test.js
+
+// Debuging Run full testing
+k6 run --summary-export=$HOME/tmp/TEST_SUMMARY.json $HOME/tmp/k6-test.js
+
+// Copy TEST_SUMMARY.json to project
+cp $HOME/tmp/TEST_SUMMARY.json $PWD/test/TEST_SUMMARY.json
 
 
-
+Log BOTH
+--------
+k6 run --summary-export=$PWD/test/TEST_SUMMARY.json $HOME/tmp/k6-test.js > $PWD/test/TEST.txt 2>&1
 
 
 
