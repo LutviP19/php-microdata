@@ -46,14 +46,15 @@ set_exception_handler(function (Throwable $exception) {
         $status = 500;
         $message = 'An internal error occurred. Please try again later.';
         json_response([], $status, $message);
+        exit;
+    } else {
+        // Present a user-friendly view/response
+        // http_response_code(500);
+        // echo "<h1>An internal error occurred. Please try again later.</h1>";
+        // // In a production environment, avoid echoing the raw message
+        include BASEPATH . "/views/error/500.php";
+        die();
     }
-    
-    // Present a user-friendly view/response
-    // http_response_code(500);
-    // echo "<h1>An internal error occurred. Please try again later.</h1>";
-    // // In a production environment, avoid echoing the raw message
-    include BASEPATH . "/views/error/500.php";
-    die();
 });
 
 // Mendaftarkan konfigurasi ke aplikasi.

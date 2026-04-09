@@ -299,7 +299,6 @@ if (!function_exists('handle_response_error')) {
     }
 }
 
-
 /**
  * Mengirimkan respons JSON yang standar dan menghentikan eksekusi script.
  */
@@ -333,6 +332,77 @@ if (!function_exists('json_response')) {
 
         echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         exit();
+    }
+}
+
+
+/**
+ * Mengirimkan respons JSON standar (Support Streaming & Legacy Error Handler)
+ */
+if (!function_exists('json_response_stream')) {
+    function json_response_stream($status = 200, $message = '', $data, $pagination = [], $extraData = []) {
+
+        // PAKSA PHP melakukan kompresi di level output buffer
+        // Ini lebih stabil daripada ob_gzhandler untuk streaming
+        if (!connection_aborted()) {
+            ini_set('zlib.output_compression', 'On');
+        }
+        
+        header('Content-Type: application/json');
+        header('X-Content-Type-Options: nosniff');
+        http_response_code($status);
+
+        // Aktifkan streaming
+        set_time_limit(0);
+        if (ob_get_level()) ob_end_clean();
+
+        // 1. Root JSON
+        echo '{';
+        echo '"statusCode":' . $status . ',';
+        echo '"message":"' . addslashes($message) . '",';
+        
+        // 2. Buka object "data"
+        echo '"data":{';
+        
+        // 3. Masukkan Extra Data (request, table, title, dll)
+        if (!empty($extraData)) {
+            foreach ($extraData as $key => $value) {
+                echo '"' . $key . '":' . json_encode($value, JSON_UNESCAPED_SLASHES) . ',';
+            }
+        }
+
+        // 4. Buka "pagination_data"
+        echo '"pagination_data":{';
+        echo '"data":[';
+
+        // 5. Stream data utama (Generator)
+        $first = true;
+        $counter = 0;
+        foreach ($data as $item) {
+            if (!$first) echo ',';
+            echo json_encode($item, JSON_UNESCAPED_SLASHES);
+            $first = false;
+
+            // Dorong data ke Caddy setiap 100 baris
+            if (++$counter % 100 === 0) {
+                flush(); 
+            } 
+            if (connection_aborted()) break;
+        }
+
+        // 6. Tutup array data utama
+        echo '],'; 
+
+        // 7. Masukkan object "meta"
+        echo '"meta":' . json_encode($pagination, JSON_UNESCAPED_SLASHES);
+
+        // 8. Tutup semua wrapper (pagination_data -> data -> root)
+        echo '}'; // tutup pagination_data
+        echo '}'; // tutup data
+        echo '}'; // tutup root
+
+        flush();
+        exit;
     }
 }
 

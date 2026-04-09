@@ -18,7 +18,14 @@
 http://localhost:8000 {
 	log
 
-	encode zstd br gzip
+	# encode zstd br gzip
+    
+    # Active Compression
+    # Caddy akan memilih otomatis: zstd (terbaik), br (brotli), atau gzip
+    encode zstd br gzip {
+        # Penting untuk streaming: kompresi tetap jalan meskipun data dikirim per baris
+        minimum_length 1
+    }
 
 	root ./public/
 

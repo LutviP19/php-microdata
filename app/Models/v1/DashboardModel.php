@@ -129,14 +129,26 @@ class DashboardModel extends DashboardData
 
         // Ambil data paginate result dari cache selama 5 menit
         $page = $request['page'] ?? 1;
-        $limit = $request['limit'] ?? 10;
-        $dataDashboard = $cache->remember('dashboard_result_'.$page, function() use ($page, $limit, $mainData) {            
-            // $mainData->table = 'salaries';
-            // Query dasar
-            // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
-            $query = "SELECT * FROM ".$this->table." ORDER BY hire_date DESC";
-            return $mainData->paginate($query, [], $page, $limit);
-        }, 300);
+        $limit = $request['limit'] ?? 10; // total data perpage
+
+        // Set limit agar bisa auto Stream
+        $mainData->limitToStream = 100;
+
+        // $mainData->table = 'salaries';
+        // Query dasar
+        // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
+        $query = "SELECT * FROM ".$this->table." ORDER BY hire_date DESC";
+
+        $dataDashboard = null;
+        // Cek limit agar otomatis masuk ke Mode Stream
+        if($limit <= $mainData->limitToStream) {
+            $dataDashboard = $cache->remember('dashboard_datax_'.$page.$limit, function() use ($query, $page, $limit, $mainData) {
+                return $mainData->paginate($query, [], $page, $limit);
+            }, 300);
+        } else {
+            $dataDashboard = $mainData->paginate($query, [], $page, $limit);
+        }
+        // dd($dataDashboard, true);
 
         $modelA = [
             // 'result' => $result,
@@ -144,7 +156,7 @@ class DashboardModel extends DashboardData
             'table' => $this->table,
             'title' => $request['title'] ?? 'Testing model',
             'stats_data' => $dataStats ?: null,
-            'cache_data' => $dataDashboard ?: null,
+            'pagination_data' => $dataDashboard, // Ini mode cache
 
             // // Sample Errors - Default 417
             // 'errors' => [
@@ -154,14 +166,34 @@ class DashboardModel extends DashboardData
             // ]
         ];
 
-        $data = [            
+        $data = [
             'data' => $modelA,
             'status' => $status ?? 200,
             'message' => $message ?? 'testing index',
         ];
-
         // $data = array_merge($data, $dataDashboard);
 
+
+        // Output Stream
+        if($limit > $mainData->limitToStream) {
+            // Jika sukses (Normal atau Streaming)
+            $realData = $dataDashboard['data'];
+            $paginationMeta = $dataDashboard['meta'];
+
+            // Jangan gunakan handle_response_error jika ia tidak support Generator
+            // Gunakan json_response yang kita buat sebelumnya
+            unset($modelA['pagination_data']);
+            return json_response_stream(
+                $data['status'], 
+                $data['message'],
+                $realData, 
+                $paginationMeta,
+                $modelA
+            );
+        }
+
+
+        // Return normal 
         return handle_response_error($data, $modelA);
     }
 

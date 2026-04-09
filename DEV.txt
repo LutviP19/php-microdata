@@ -242,7 +242,21 @@ k6 run --vus 1 --iterations 1 ~/tmp/k6-test.js
 
 
 RESULTS: TEST.txt
+-----------------
+k6 run ~/tmp/k6-test.js > TEST.txt 2>&1
 
+APPEND RESULTS:
+---------------
+k6 run ~/tmp/k6-test.js >> TEST.txt 2>&1
+
+
+SHOW OUTPUT:
+------------
+k6 run ~/tmp/k6-test.js | tee TEST.txt
+
+Format to JSON:
+---------------
+k6 run --summary-export=TEST_SUMMARY.json ~/tmp/k6-test.js
 
 
 

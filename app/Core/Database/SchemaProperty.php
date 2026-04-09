@@ -1,6 +1,8 @@
 <?php 
 /**
- *  @author LutviP19 <lutvip19@gmail.com>
+ * Default SchemaProperty for Structs
+ * @package PHP-Microdata
+ * @author LutviP19 <lutvip19@gmail.com>
  */
 
 

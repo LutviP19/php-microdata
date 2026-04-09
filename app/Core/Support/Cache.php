@@ -95,9 +95,11 @@ class Cache
         if(!empty($data)) {
 
             //  Only cache if total data not 0
-            if((isset($data['total']) && $data['total'] === 0) || (isset($data['data']['total']) && $data['data']['total'] === 0)) {
-                // dd($data["total"]);
-                return;
+            if (is_array($data)) {
+                $total = $data['total'] ?? $data['data']['total'] ?? null;
+                if ($total === 0) {
+                    return;
+                }
             }
         
             $serialized = serialize($data);

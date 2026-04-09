@@ -21,15 +21,15 @@ class EmployeeData extends DashboardData {
 
     public function __construct(PDO $pdo = null)
     {
-        // // Global Set Custom connection
-        // $driver = 'mysql';
-        // $dbname = 'employees';
-        // $host = '127.0.0.1';
-        // $port = '3306';
-        // $username = 'root';
-        // $password = '';
-        // $options = [];
-        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
+        // Global Set Custom connection
+        $driver = 'mysql';
+        $dbname = 'employees';
+        $host = '127.0.0.1';
+        $port = '3306';
+        $username = 'root';
+        $password = '';
+        $options = [];
+        $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
         parent::__construct($pdo);

@@ -1,6 +1,7 @@
 <?php 
 /**
  * Model class
+ * @package Backend-PHP
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
@@ -43,6 +44,9 @@ class Model
      */
     protected $table;
 
+    protected $limitToStream = 50; // limit maks untuk menggunakan stream
+    protected $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
+
     public function __construct(PDO $pdo = null)
     {
         // if we have a different db connection.
@@ -68,25 +72,35 @@ class Model
      * @param bool $lastInsertId
      * @return mixed
      */
-    public function execQuery($query, array $params, $lastInsertId = false, $fetch = false, $fetchAll = false)
+    public function execQuery($query, array $params, $lastInsertId = false, $fetch = false, $fetchAll = false, $stream = false)
     {
         $this->setParams($params);
         $exec = $this->setSQL($query)->query();
-        // write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');
 
-        if ($exec && $lastInsertId) {
+        if (!$exec) return false;
+
+        if ($lastInsertId) {
             return $this->getPDO()->lastInsertId();
         }
 
-        if ($exec && $fetch) {
+        if ($fetch) {
             return $exec->fetch();
         }
 
-        if ($exec && $fetchAll) {
+        // --- FITUR BARU: STREAMING ---
+        if ($stream) {
+            return (function() use ($exec) {
+                while ($row = $exec->fetch()) {
+                    yield $row;
+                }
+            })();
+        }
+
+        if ($fetchAll) {
             return $exec->fetchAll();
         }
 
-        return $exec ? true : false;
+        return true;
     }
 
     /**
@@ -126,9 +140,12 @@ class Model
     {
         $this->pdo = $pdo;
 
-        // // Add this line so that all query results automatically become an Associative Array
+        // // EXTRA SETUP
         // if ($this->pdo) {
+        //     // Add this line so that all query results automatically become an Associative Array
         //     $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        //     // Disabled Buffer to decrease usage of RAM
+        //     $this->pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
         // }
     }
 
@@ -226,36 +243,49 @@ class Model
      */
     public function paginate($query, array $params = [], $page = 1, $limit = 10)
     {
-        // Calculate Total Data (for info pagination)
-        $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
-        $total = $this->execQuery($countQuery, $params, false, true);
-
-        // Parsing data (Supports Objects and Arrays)
-        if ($total) {
-            $totalRows = is_object($total) ? (int)$total->total_count : (int)$total['total_count'];
-        }
-
         // Offset Calculation
         $page = (int)$page > 0 ? (int)$page : 1;
         $offset = ($page - 1) * $limit;
 
+        // Cache data
+        $cache = new \App\Core\Support\Cache();
+        $slugParams = !empty($params) ? implode("_", array_keys($params)) : 'default';
+        $paginationMeta = $cache->remember('paginate_count_'.$this->table.'_'.$page.$limit.'_'.$slugParams, function() use ($query, $params, $page, $limit, $offset) {
+
+            // Calculate Total Data (for info pagination)
+            $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
+            $total = $this->execQuery($countQuery, $params, false, true);
+
+            // Parsing data (Supports Objects and Arrays)
+            if ($total) {
+                $totalRows = is_object($total) ? (int)$total->total_count : (int)$total['total_count'];
+            }
+
+            // Metadata calculations
+            $lastPage = ceil($totalRows / $limit);
+            
+            return [
+                'total' => $totalRows,
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'limit' => $limit,
+                'from' => $offset + 1,
+                'to' => min($offset + $limit, $totalRows)
+            ];
+        }, $this->timeCachedCount);
+        // dd($paginationMeta, true);
+
         // Add LIMIT and OFFSET in Query
         $paginatedQuery = $query . " LIMIT $limit OFFSET $offset";
 
-        // Data Query Execution
-        $data = $this->execQuery($paginatedQuery, $params, false, false, true);
+        // Eksekusi Data dengan Mode STREAM otomatis sesuai limitToStream
+        $shouldStream = ($limit > $this->limitToStream);
+        $dataGenerator = $this->execQuery($paginatedQuery, $params, false, false, !$shouldStream, $shouldStream);
 
-        // Metadata calculations
-        $lastPage = ceil($totalRows / $limit);
-
+        // Kembalikan metadata DAN generator datanya
         return [
-            'data'         => $data,
-            'total'        => $totalRows,
-            'current_page' => $page,
-            'last_page'    => $lastPage,
-            'limit'        => $limit,
-            'from'         => $offset + 1,
-            'to'           => min($offset + $limit, $totalRows)
+            'data' => $dataGenerator,
+            'meta' => $paginationMeta
         ];
     }
 
