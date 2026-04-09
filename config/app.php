@@ -29,6 +29,7 @@ return [
         'key' => env('APP_KEY', 'base64:AA2L6m2LEf0WzxHpVuHxkLZEd7vsm6TWDGUUAjmYGnk='),
         'hash_key' => env('HASH_KEY', 'base64:RUHnrVLvGQXm8SLvFv2zI+YQH8KNGOhbiy1gGAqGFt0='),
         'encrpytion_id' => env('APP_ENC_ID', false),        
+        'cache_driver' => env('CACHE_DRIVER', 'file'),
         'queue_driver' => env('QUEUE_DRIVER', 'redis'),
     ],
 

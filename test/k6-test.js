@@ -25,7 +25,7 @@ export default function () {
         tag_html: {div: '<div onclick=\'submitError()\'>Submit</div>'},
         page: '1',
         offset: '0',
-        limit: 1000, // Change Limit to real apps paging system (1000 just for stess testing, usually between 10 - 100)
+        limit: 55, // Change Limit to real apps paging system (1000 just for stress testing, usually between 10 - 100)
         float: 1.091,
         age: '18',
         username: 'lutvi',

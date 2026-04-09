@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Cache class
+ * Cache class 
+ * Supported drivers: file(default) and redis
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
@@ -24,7 +25,7 @@ class Cache
         $this->redisClient = null;
         
         // Lazy Initialization of Redis (Only if set as CACHE_DRIVER)
-        if(env('CACHE_DRIVER') === 'redis') {
+        if(Config::get('app.cache_driver') === 'redis') {
             try {
                 $this->redisClient = new PredisClient([
                     'host' => Config::get('redis.cache.host'),
@@ -63,7 +64,6 @@ class Cache
      */
     public function get($key) 
     {
-        // Strategy 1: Redis
         if ($this->redisClient) {
             try {
                 $data = $this->redisClient->get($key);
