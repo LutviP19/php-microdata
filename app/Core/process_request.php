@@ -47,5 +47,6 @@ if (is_json_request()) {
     json_response($data, $status, $message, $errors);
     // dd('JSON');
 } else {
+    // dd($data);
     extract($data);
 }

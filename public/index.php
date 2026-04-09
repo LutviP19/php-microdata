@@ -13,6 +13,7 @@ require_once BASEPATH .'/app/Core/init.php';
 // Mengambil path dari URL (misal: /dashboard)
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 // dd($requestPath);
+$lastSegment = basename($requestPath);
 $urlSegments = explode('/', trim($requestPath, '/'));
 $page = ($urlSegments[0] !== '') ? $urlSegments[0] : 'dashboard';
 // dd($page);
@@ -33,24 +34,31 @@ $isAllowAccess = true;
 include BASEPATH . "/config/router.php";
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
 
-// Cek router.php (Main Route)
+// Cek router.php (Main Route to Models)
 if (isset($router[$page])) {
-    $manualPath = $router[$page]; // e.g., 'Admin/User'
-    // dd($manualPath);
-    // dd(formatRoutePath($manualPath));
-    $resolved = $loader->resolve(formatRoutePath($manualPath)); // Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
+    $normalPath = $router[$page];
+    $resolved = $loader->resolve(formatRoutePath($normalPath)); // Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
+} else {
+    $customPath = $router[$requestPath];
+    if (is_numeric($lastSegment)) {
+        $fixReqPath = str_replace("/{$lastSegment}", "", $requestPath);
+        $customPath = $router[$fixReqPath];
+    }
+
+    if ($customPath && ($resolved = $loader->resolve(formatRoutePath($customPath)))) {
+        $resolved['page'] = ltrim($requestPath, '/');
+    }
 }
 // dd($resolved, true);
 // dd($page);
 
-// Jika tidak ketemu resolve otomatis
+// Jika tidak resolve fallback ke default $page
 if (!$resolved) {
     $resolved = $loader->resolve($page);
 }
 // dd($resolved, true);
 
 if ($resolved && file_exists($resolved['modelPath'])) {
-
     // Load Model Utama
     $modelPath = $resolved['modelPath'];
     $modelName = $resolved['modelName'];
@@ -62,8 +70,9 @@ if ($resolved && file_exists($resolved['modelPath'])) {
 
     if ($model && file_exists($modelPath)) {
         // Parameter ID untuk edit/detail
-        if (isset($urlSegments[1]) && is_numeric($urlSegments[1])) {
-            $_GET['id'] = (int) $urlSegments[1];
+        // if (isset($urlSegments[1]) && is_numeric($urlSegments[1])) {
+        if (is_numeric($lastSegment)) {
+            $_GET['id'] = (int) $lastSegment;
         }
         // dd($_GET);
 

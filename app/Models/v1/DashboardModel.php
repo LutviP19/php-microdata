@@ -67,7 +67,7 @@ class DashboardModel extends DashboardData
             // 'result' => $result,
             'request' => $request,
             'table' => $this->table,
-            'title' => $request['title'] ?? 'Testing model',
+            'title' => $request['title'] ?? 'Testing model v1',
             'stats_data' => $dataStats ?: null,
             'pagination_data' => $dataDashboard, // Ini mode cache
         ];
@@ -75,7 +75,7 @@ class DashboardModel extends DashboardData
         $data = [
             'data' => $modelA,
             'status' => $status ?? 200,
-            'message' => $message ?? 'testing index',
+            'message' => $message ?? 'testing index v1',
         ];
         // $data = array_merge($data, $dataDashboard);
 

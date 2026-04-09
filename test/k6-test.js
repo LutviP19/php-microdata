@@ -19,7 +19,7 @@ export const options = {
 // };
 
 export default function () {
-    const url = 'http://localhost:8000/dashboard'; // Change to your endpoint
+    const url = 'http://localhost:8000/api/v1/dashboard'; // Change to your endpoint
     const payload = JSON.stringify({
         title: 'JSON data <script>document.print</script>',
         tag_html: {div: '<div onclick=\'submitError()\'>Submit</div>'},

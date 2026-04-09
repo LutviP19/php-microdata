@@ -15,8 +15,8 @@ $models = include "models.php";
 $router = [
     'auth' => 'Auth',
     'roles' => 'Auth',
-    'home' => 'Dashboard',
+    'dashboard' => 'Dashboard',
 
     // Version 1
-    'dashboard' => 'v1/Dashboard',
+    '/api/v1/dashboard' => 'v1/Dashboard',
 ];
