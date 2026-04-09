@@ -74,8 +74,8 @@ class Model
      */
     public function execQuery($query, array $params, $lastInsertId = false, $fetch = false, $fetchAll = false, $stream = false)
     {
-        $this->setParams($params);
-        $exec = $this->setSQL($query)->query();
+        $this->setParams($params);        
+        $exec = $this->setSQL($query)->query();        
 
         if (!$exec) return false;
 
@@ -87,7 +87,7 @@ class Model
             return $exec->fetch();
         }
 
-        // --- FITUR BARU: STREAMING ---
+        // --- FITUR BARU: STREAMING ---        
         if ($stream) {
             return (function() use ($exec) {
                 while ($row = $exec->fetch()) {
@@ -243,14 +243,26 @@ class Model
      */
     public function paginate($query, array $params = [], $page = 1, $limit = 10)
     {
+        // dd($this->table);
         // Offset Calculation
         $page = (int)$page > 0 ? (int)$page : 1;
         $offset = ($page - 1) * $limit;
 
+        // Add LIMIT and OFFSET in Query
+        $paginatedQuery = $query . " LIMIT $limit OFFSET $offset";
+
+        // Eksekusi Data dengan Mode STREAM otomatis sesuai limitToStream
+        $shouldStream = ($limit > $this->limitToStream);
+        $dataGenerator = $this->execQuery($paginatedQuery, $params, false, false, !$shouldStream, $shouldStream);
+        // dd($shouldStream, true);
+
+
         // Cache data
         $cache = new \App\Core\Support\Cache();
-        $slugParams = !empty($params) ? implode("_", array_keys($params)) : 'default';
-        $paginationMeta = $cache->remember('paginate_count_'.$this->table.'_'.$page.$limit.'_'.$slugParams, function() use ($query, $params, $page, $limit, $offset) {
+        ksort($params);
+        $paramSignature = !empty($params) ? md5(json_encode($params)) : 'default';
+        $cacheKeyId = "paginate_count:{$this->table}:p{$page}:l{$limit}:{$paramSignature}";
+        $paginationMeta = $cache->remember($cacheKeyId, function() use ($query, $params, $page, $limit, $offset) {
 
             // Calculate Total Data (for info pagination)
             $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
@@ -274,13 +286,6 @@ class Model
             ];
         }, $this->timeCachedCount);
         // dd($paginationMeta, true);
-
-        // Add LIMIT and OFFSET in Query
-        $paginatedQuery = $query . " LIMIT $limit OFFSET $offset";
-
-        // Eksekusi Data dengan Mode STREAM otomatis sesuai limitToStream
-        $shouldStream = ($limit > $this->limitToStream);
-        $dataGenerator = $this->execQuery($paginatedQuery, $params, false, false, !$shouldStream, $shouldStream);
 
         // Kembalikan metadata DAN generator datanya
         return [

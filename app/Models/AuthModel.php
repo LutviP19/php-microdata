@@ -120,22 +120,43 @@ class AuthModel extends AuthData
         // Cache data
         $cache = new \App\Core\Support\Cache();
 
-        // Ambil data stats dari cache selama 5 menit
-        $dataStats = $cache->remember('auth_index', function() use ($statsData) {
-            return $statsData->getAllData();
-            // return $statsData->getPermissions(1,1);
-        }, 300);
 
-        // Ambil data paginate result dari cache selama 5 menit
-        $dataAuth = $cache->remember('auth_result_a', function() use ($request, $mainData) {
-            $page = $request['page'] ?? 1;
-            $limit = $request['limit'] ?? 10;
-            // $mainData->table = 'salaries';
-            // Query dasar
-            // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
-            $query = "SELECT * FROM ".$this->table." ORDER BY updated_at DESC";
-            return $mainData->paginate($query, [], $page, $limit);
-        }, 300);
+        // Ambil data untuk paginate result
+        $page = $request['page'] ?? 1;
+        $limit = $request['limit'] ?? 10; // total data perpage
+
+
+        // // Ambil data stats dari cache selama 5 menit
+        // $dataStats = $cache->remember('auth_index', function() use ($statsData) {
+        //     return $statsData->getAllData();
+        //     // return $statsData->getPermissions(1,1);
+        // }, 300);
+
+
+        // $mainData->table = 'salaries';
+        // Query dasar
+        // $query = "SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY created_at DESC";
+        $query = "SELECT * FROM ".$this->table." ORDER BY updated_at DESC";
+
+        
+        // Set limit agar bisa auto Stream
+        $mainData->limitToStream = 2;
+        $dataAuth = null;
+        // Cek limit agar otomatis masuk ke Mode Stream
+        if($limit <= $mainData->limitToStream) {            
+            // Pastikan query dibersihkan dari spasi berlebih agar hash tetap konsisten
+            $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+            $queryString = md5($cleanQuery);
+            $cacheKeyId = "auth_data:{$this->table}:" . $queryString . ":p{$page}:l{$limit}";
+            
+            // Ambil data paginate result dari cache selama 5 menit
+            $dataAuth = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
+                return $mainData->paginate($query, [], $page, $limit);
+            }, 300);
+        } else {
+            $dataAuth = $mainData->paginate($query, [], $page, $limit);
+        }
+        // dd($dataAuth, true);
 
         $modelA = [
             // 'result' => $result,
@@ -143,7 +164,7 @@ class AuthModel extends AuthData
             'table' => $this->table,
             'title' => $request['title'] ?? 'Testing model',
             'stats_data' => $dataStats ?: null,
-            'cache_data' => $dataAuth ?: null,
+            'pagination_data' => $dataAuth, // Ini mode cache
 
             // // Sample Errors - Default 417
             // 'errors' => [
@@ -158,9 +179,28 @@ class AuthModel extends AuthData
             'status' => $status ?? 200,
             'message' => $message ?? 'testing index',
         ];
-
         // $data = array_merge($data, $dataAuth);
 
+        // Output Stream
+        if($limit > $mainData->limitToStream) {
+            // Jika sukses (Normal atau Streaming)
+            $realData = $dataAuth['data'];
+            $paginationMeta = $dataAuth['meta'];
+
+            // Jangan gunakan handle_response_error jika ia tidak support Generator
+            // Gunakan json_response yang kita buat sebelumnya
+            unset($modelA['pagination_data']);
+            return json_response_stream(
+                $data['status'], 
+                $data['message'],
+                $realData, 
+                $paginationMeta,
+                $modelA
+            );
+        }
+
+
+        // Return normal 
         return handle_response_error($data, $modelA);
     }
 

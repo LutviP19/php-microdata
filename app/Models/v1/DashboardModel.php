@@ -142,7 +142,12 @@ class DashboardModel extends DashboardData
         $dataDashboard = null;
         // Cek limit agar otomatis masuk ke Mode Stream
         if($limit <= $mainData->limitToStream) {
-            $dataDashboard = $cache->remember('dashboard_datax_'.$page.$limit, function() use ($query, $page, $limit, $mainData) {
+            // Pastikan query dibersihkan dari spasi berlebih agar hash tetap konsisten
+            $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+            $queryString = md5($cleanQuery);
+            $cacheKeyId = "dashboard_data:{$this->table}:" . $queryString . ":p{$page}:l{$limit}";
+
+            $dataDashboard = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
                 return $mainData->paginate($query, [], $page, $limit);
             }, 300);
         } else {
