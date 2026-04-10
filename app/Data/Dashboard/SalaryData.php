@@ -8,7 +8,6 @@ namespace App\Data\Dashboard;
 
 
 use PDO; // new PDO object
-// use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
 class SalaryData extends DashboardData {
 
@@ -20,17 +19,7 @@ class SalaryData extends DashboardData {
     protected static $tableM = "salaries";
 
     public function __construct(PDO $pdo = null)
-    {
-        // // Global Set Custom connection
-        // $driver = 'mysql';
-        // $dbname = 'test';
-        // $host = '127.0.0.1';
-        // $port = '3306';
-        // $username = 'rooty';
-        // $password = 'cccc';
-        // $options = [];
-        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
-        
+    {        
         // Default connection
         parent::__construct($pdo);
 
@@ -43,7 +32,6 @@ class SalaryData extends DashboardData {
     }
 
     public function getAllData($id = null, $selectCols = '*') {
-        // $selectCols = $cols ?? '*';
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE emp_no = ? LIMIT 1 ": " LIMIT 10";

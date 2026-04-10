@@ -33,17 +33,12 @@ class EmployeeData extends DashboardData {
         
         // Default connection
         parent::__construct($pdo);
-
-        
-        // // Set Custom PDO connection
-        // $this->pdo = $pdo;
         
         // Set default table
         $this->table = self::$tableM;
     }
 
     public function getAllData($id = null, $selectCols = '*') {
-        // $selectCols = $cols ?? '*';
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE emp_no = ? LIMIT 1 ": " LIMIT 10";

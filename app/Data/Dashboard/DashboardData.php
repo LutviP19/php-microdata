@@ -18,21 +18,10 @@ class DashboardData extends DashboardStruct {
      *
      * @var string
      */
-    // protected static $tableM = "users";
     protected static $tableM = "employees";
 
     public function __construct(PDO $pdo = null)
-    {
-        // // Global Set Custom connection
-        // $driver = 'mysql';
-        // $dbname = 'test';
-        // $host = '127.0.0.1';
-        // $port = '3306';
-        // $username = 'rooty';
-        // $password = 'cccc';
-        // $options = [];
-        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
-        
+    {        
         // Default connection
         $conn = $pdo ?: Connection::make();
         parent::__construct($conn);
@@ -45,8 +34,7 @@ class DashboardData extends DashboardStruct {
         $this->table = self::$tableM;
     }
 
-    public function getAllData($id = null, $selectCols = '*') {
-        // $selectCols = $cols ?? '*';
+    public function getAllData($id = null, $selectCols = '*') { 
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10";

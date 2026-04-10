@@ -66,13 +66,6 @@ class AuthStruct extends BaseModel {
     public function __construct(PDO $pdo = null)
     {
         // // Global Set Custom connection
-        // $driver = 'mysql';
-        // $dbname = 'test';
-        // $host = '127.0.0.1';
-        // $port = '3306';
-        // $username = 'rooty';
-        // $password = 'cccc';
-        // $options = [];
         // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection

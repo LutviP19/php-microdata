@@ -33,17 +33,12 @@ class StatsData extends DashboardData {
         
         // Default connection
         parent::__construct($pdo);
-
-        
-        // // Set Custom PDO connection
-        // $this->pdo = $pdo;
         
         // Set default table
         $this->table = self::$tableM;
     }
 
-    public function getAllData($id = null, $selectCols = '*') {
-        // $selectCols = $cols ?? '*';
+    public function getAllData($id = null, $selectCols = '*') { 
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10";

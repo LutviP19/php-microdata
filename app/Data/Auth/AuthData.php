@@ -22,16 +22,6 @@ class AuthData extends AuthStruct {
 
     public function __construct(PDO $pdo = null)
     {
-        // // Global Set Custom connection
-        // $driver = 'mysql';
-        // $dbname = 'test';
-        // $host = '127.0.0.1';
-        // $port = '3306';
-        // $username = 'rooty';
-        // $password = 'cccc';
-        // $options = [];
-        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
-        
         // Default connection
         $conn = $pdo ?: Connection::make();
         parent::__construct($conn);
@@ -52,11 +42,9 @@ class AuthData extends AuthStruct {
      * @return void
      */
     public function getAllData($id = null, $selectCols = '*') {
-        // $selectCols = $cols ?? '*';
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10";
-        // $result = self::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
         $result = $this->execQuery($sql, $id, false, !empty($id), empty($id));
         // dd($result, true);
         return $result;
@@ -82,27 +70,18 @@ class AuthData extends AuthStruct {
      */
     public function syncPermissions(array $data) {
         foreach ($data as $item) {
-            // SQL ini aman dijalankan berulang kali (Idempotent)
             $sql = "INSERT INTO `permissions` (`id`, `name`, `slug`, `created_at`) 
                     VALUES (?, ?, ?, NOW())
                     ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `slug` = VALUES(`slug`)";
             
             $this->execQuery($sql, [$item['id'], $item['name'], $item['slug']]);
         }
-
-        // // Cara Pakai:
-        // $this->syncPermissions([
-        //     ['id' => 1, 'name' => 'Create Asset', 'slug' => 'asset-create'],
-        //     ['id' => 2, 'name' => 'View Asset', 'slug' => 'asset-view'],
-        // ]);
     }
 
     /**
      * Mendapatkan semua permission user di group tertentu
      */
     public function getPermissions($userId, $groupId) {
-        // $db = new AuthStruct();
-        // $db = $this;
         $sql = "SELECT permission_slug 
                 FROM v_user_permissions 
                 WHERE user_id = ? 
