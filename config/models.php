@@ -1,5 +1,9 @@
-<?php
-// file: config/models.php
+<?php 
+
+/**
+ * Modules mapping
+ * file: config/models.php
+ */
 
 return [
     // Path (Namespace) for Data and Structs

@@ -26,7 +26,7 @@ $_REQUEST = array_merge($_REQUEST, $_POST, $_GET);
 // dd($_REQUEST, true);
 
 // Check var $modelName
-if(!isset($modelName) || !isset($model) || !isset($modelPath)) {
+if(!$modelName || !$model || !$modelPath) {
     throw new Exception("var modelName not set.");
 }
 
@@ -45,7 +45,6 @@ $errors = $dataModel['errors'] ?? [];
 // Output Handler
 if (is_json_request()) {
     json_response($data, $status, $message, $errors);
-    // dd('JSON');
 } else {
     // dd($data);
     extract($data);

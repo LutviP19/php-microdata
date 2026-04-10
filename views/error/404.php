@@ -1,13 +1,11 @@
-<?php if(!$isPageExists): ?>
+<?php if(!$isPageExists || !isHtmx()): ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Not Found</title>
-    
+    <title>404 - Page Not Found</title>    
     <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
-
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased">
 <?php endif; ?>
@@ -43,7 +41,7 @@
         <p class="text-red-400">HTTP/1.1 404 Not Found</p>
     </div>
 </div>
-<?php if(!$isPageExists): ?>
+<?php if(!$isPageExists || !isHtmx()): ?>
 </body>
 </html>
 <?php endif; ?>

@@ -2,7 +2,7 @@
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  */
-// static-router.php
+// file: config/static-router.php
 // simple routing untuk execute file static php
 // You can also run FFi ​​code if needed with single php script
 

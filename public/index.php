@@ -49,8 +49,7 @@ if (isset($router[$page])) {
         $resolved['page'] = ltrim($requestPath, '/');
     }
 }
-// dd($resolved, true);
-// dd($page);
+// dd($resolved, true); //debug: $resolved | $page
 
 // Jika tidak resolve fallback ke default $page
 if (!$resolved) {
@@ -92,22 +91,19 @@ if ($resolved && file_exists($resolved['modelPath'])) {
 
 
 // Load HTMX View
-// Cek apakah ini request dari HTMX
-$isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
-
 // Tentukan apakah ke halaman login
 $isLoginPage = ($page === 'login');
 $isPageExists = $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
 // dd($viewPath);
 
 // Handle 404 - Non HTMX
-if(!$isHtmx && !$isPageExists) {
-    http_response_code(404);
+if(!isHtmx() && !$isPageExists) {
+    http_response_code(isHtmx() ? 200 : 404);
     include BASEPATH . "/views/error/404.php";
     exit();
 }
 
-if($isHtmx) {
+if(isHtmx()) {
     if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
         include $viewPath;
     } else {
@@ -115,7 +111,7 @@ if($isHtmx) {
             // Render hanya halaman login (tanpa sidebar/nav)
             include BASEPATH . "/views/login.php";
         } else {
-            // http_response_code(404);
+            http_response_code(isHtmx() ? 200 : 404);
             include BASEPATH . "/views/error/404.php";
         }
     }

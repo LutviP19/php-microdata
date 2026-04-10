@@ -44,10 +44,7 @@ class RecursiveModelLoader {
             // Normalisasi slug (e.g., 'dashboard-stats' -> 'DashboardStats')
             $cleanName = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $page)));
         }
-        // dd($page);
-        // dd($version);
-        // dd($baseModelPath);
-        // dd($cleanName);
+        // dd($page); //debug: $page | $version | $baseModelPath | $cleanName
         
         // 1. Identifikasi Model (Models biasanya di root folder Models)
         $findListedModels = $this->findListedModels($page, $version, $baseModelPath);
@@ -65,8 +62,7 @@ class RecursiveModelLoader {
         }
         
         $modelPath = $baseModelPath . $modelName . ".php";
-        // dd($modelName);
-        // dd($modelPath);
+        // dd($modelName); //debug: $modelName | $modelPath
 
         // Jika model tidak ditemukan di root, kita asumsikan $page mungkin mengandung folder
         // Namun sesuai struktur Anda, DashboardModel.php ada di root.
@@ -113,7 +109,7 @@ class RecursiveModelLoader {
         } else {
             if(!$jsonOnly) {
                 $isPageExists = false;
-                http_response_code(404);
+                http_response_code(isHtmx() ? 200 : 404);
                 include config('app.path') . "/views/error/404.php";
                 exit();
             }
@@ -132,12 +128,11 @@ class RecursiveModelLoader {
             return null;
 
         $models = \explode("|", \str_replace(['/(',')/i'], '', $this->moduleConfig[$cleanName]));
-        // dd($baseModelPath);
-        // dd($models);
+        // dd($baseModelPath); //debug: $baseModelPath | $models
 
         // Scan modelPath
         $baseDataPath = str_replace('Models/'.$version, 'Data/' . $cleanName, $baseModelPath);
-        // $baseStructsPath = str_replace('Models/'.$version, 'Structs/' . $cleanName, $baseModelPath);
+        // $baseStructsPath = str_replace('Models/'.$version, 'Structs/' . $cleanName, $baseModelPath); // Scan Structs jika diperlukan
         // dd($baseDataPath);
         foreach ($models as $model) {
             $dataPath = $baseDataPath . $model . "Data.php";

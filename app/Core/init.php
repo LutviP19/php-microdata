@@ -25,20 +25,15 @@ date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Jakarta'));
 
 // Gunakan Throwable untuk menangkap Error.
 set_exception_handler(function (Throwable $exception) {
-    // 1. Ambil detail error
     $message = $exception->getMessage();
     $file = $exception->getFile();
     $line = $exception->getLine();
     $trace = $exception->getTraceAsString(); // Ini untuk mengambil stack trace
 
-    // 2. Format pesan agar mudah dibaca di file log
     $logEntry = "Message: $message\n";
     $logEntry .= "Location: $file on line $line\n";
     // $logEntry .= "Stack Trace:\n$trace\n";
     $logEntry .= str_repeat('-', 50); // Garis pemisah antar log
-
-    // Tulis ke log (menggunakan helper write_log)
-    // write_log("Uncaught exception: " . $exception->getMessage(), 'App.Core', 'error', 'app-error.log');
     write_log($logEntry, 'App.Core', 'error', 'app-error.log');
 
     // Handler JSON Output
@@ -82,14 +77,10 @@ if (session_status() == PHP_SESSION_NONE) {
         ini_set('session.save_handler', env('SESSION_DRIVER', 'files'));
         
         if (env('SESSION_DRIVER') === "redis") {
-            // ini_set('session.save_path', "tcp://" . env('REDIS_HOST') . ":" . env('REDIS_PORT') . "?auth" . env('REDIS_PASSWORD'));
-            // ini_set('session.gc_maxlifetime', (env('SESSION_LIFETIME', 120) * 60)); // Set default to 2 hours
-
             ini_set('session.save_path', "tcp://" . config('redis.default.host') . ":" . config('redis.default.port') . "?auth" . config('redis.default.password'));
             ini_set('session.gc_maxlifetime', (int)(config('session.lifetime') * 60)); // Set default to 2 hours
         } else {
             ini_set('session.save_handler', 'files');
-            // ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
             ini_set('session.save_path', storage_path('framework/sessions'));
         }            
     } catch (\Exception $e) {
@@ -98,7 +89,6 @@ if (session_status() == PHP_SESSION_NONE) {
 
         // Fallback to default driver
         ini_set('session.save_handler', 'files');
-        // ini_set('session.save_path', __DIR__ . '/../../storage/framework/sessions');
         ini_set('session.save_path', storage_path('framework/sessions'));
     }
 
@@ -120,8 +110,7 @@ if(isset($_COOKIE['PHPFFISESSID'])){
         if (is_json_request()) {
             json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
         } else {
-            $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
-            http_response_code($isHtmx ? 200 : 403);
+            http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
         die;

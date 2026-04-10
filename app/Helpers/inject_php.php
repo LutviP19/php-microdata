@@ -235,6 +235,10 @@ function generateAppKey() {
     return 'base64:' . base64_encode($bytes);
 }
 
+function isHtmx() {
+    return isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
+}
+
 /**
  * Match encryption data
  *
@@ -378,8 +382,6 @@ function handle_cors() {
     // 1. Ambil Origin. Jika tidak ada, coba Referer (tapi Origin lebih prioritas untuk CORS)
     // $currentOrigin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'];
     $currentOrigin = get_request_origin();
-    // Cek apakah ini request dari HTMX
-    $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
     
     // Jika request dari domain yang sama (bukan cross-origin), browser sering tidak kirim Origin.
     // Kita tetap izinkan lanjut tanpa set header CORS khusus.
@@ -391,7 +393,7 @@ function handle_cors() {
         ? array_map('trim', explode(',', $envOrigins)) 
         : ['*'];
 
-    // if ($isHtmx) { 
+    // if (isHtmx()) { 
     //     dd($allowedOrigins);
     // }
 
@@ -439,8 +441,7 @@ function handle_cors() {
         if (is_json_request()) {
             json_response([], 403, 'Forbidden', ['auth' => 'CORS Policy: Origin not allowed']);
         } else {
-            $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
-            http_response_code($isHtmx ? 200 : 403);
+            http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
         exit;
@@ -822,8 +823,7 @@ function check_ip_access($ip, array $list = null) {
         if (is_json_request()) {
             json_response([], 403, 'Forbidden', ['auth' => 'Your IP address is not whitelisted.']);
         } else {
-            $isHtmx = isset($_SERVER['HTTP_HX_REQUEST']) && $_SERVER['HTTP_HX_REQUEST'] === 'true';
-            http_response_code($isHtmx ? 200 : 403);
+            http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
         exit;
