@@ -105,12 +105,7 @@ class GoHttpClient
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
             $caller = isset($trace[1]) ? "{$trace[1]['class']}::{$trace[1]['function']}" : 'Global';
             
-            error_log("[GoHttpClient Trace] [$caller] $message");
-            
-            // Jika Anda punya write_log helper:
-            if (function_exists('write_log')) {
-                write_log($message, 'GoHttpClient.Error', 'error', 'http_bridge.log');
-            }
+            write_log("[$caller] $message", 'App\Core\Http\GoHttpClient', 'error', 'error_GoHttpClient.log');
         }
     }
 }
