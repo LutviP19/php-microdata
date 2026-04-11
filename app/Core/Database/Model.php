@@ -258,9 +258,11 @@ class Model
 
 
         // Cache data
-        $cache = new \App\Core\Support\Cache();
+        $cache = new \App\Core\Support\Cache();        
+        $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+        $queryString = md5($cleanQuery);
         ksort($params);
-        $paramSignature = !empty($params) ? md5(json_encode($params)) : 'default';
+        $paramSignature = !empty($params) ? md5(json_encode($params).$queryString) : $queryString;
         $cacheKeyId = "paginate_count:{$this->table}:p{$page}:l{$limit}:{$paramSignature}";
         $paginationMeta = $cache->remember($cacheKeyId, function() use ($query, $params, $page, $limit, $offset) {
 

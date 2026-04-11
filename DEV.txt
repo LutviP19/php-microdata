@@ -52,6 +52,7 @@ sudo apt install php-zts-redis
 RUN - With Frankenphp (terminal 1)
 http://localhost:8000
 ---------------------
+frankenphp stop
 frankenphp run
 
 
