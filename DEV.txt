@@ -277,6 +277,28 @@ k6 run --summary-export=$PWD/test/TEST_SUMMARY.json $HOME/tmp/k6-test.js > $PWD/
 
 
 
+curlgo.go (CURL with Go - FFI)
+==============================
+cd ffi/source/curlgo
+go mod init curlgo
+go mod tidy
+go build -o ../../lib/curlgo.so -buildmode=c-shared ./curlgo.go
+
+PHP-Testing
+-----------
+Curl-Go	 : php cron/curlGo.php
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
