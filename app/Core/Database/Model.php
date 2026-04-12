@@ -244,8 +244,9 @@ class Model
     public function paginate($query, array $params = [], $page = 1, $limit = 10)
     {
         // dd($this->table);
-        // Offset Calculation
+        // Offset Calculation        
         $page = (int)$page > 0 ? (int)$page : 1;
+        $limit = $limit <= 0 ? 1 : (int)$limit;
         $offset = ($page - 1) * $limit;
 
         // Add LIMIT and OFFSET in Query
