@@ -7,31 +7,31 @@ declare(strict_types=1);
 
 // file: cron/curlGo.php
 
+use App\Core\Support\App;
+
 
 /**
  * Require Worker Bootstrap File.
  */
 require_once 'bootstrap.php';
 
+
 try {
     $client = new \App\Core\Http\GoHttpClient();
 
-    // Default Headers
-    $headers = [
-            'User-Agent' => 'PHP-FFI-App',
-            'Content-Type' => 'application/json',
-            'X-API-KEY' => 'sswrSrFtV1VkYz0ikG4dpouo1uEqEvS9cZ3QfwgTxdc=',
-    ];
+    $params = App::externalApi('dashboard_get');
+    // dd($params);
 
-    // 1. Contoh Single Call
-    // $single = $client->get("https://jsonplaceholder.typicode.com/todos/1");
-    $single = $client->request('GET', "http://localhost:8000/api/v1/dashboard", [
-        'headers' => $headers,
-        'body' => json_encode([
-            'page' => 1,
-            'limit' => 2000
-        ])
+    // Hanya kirim Body / Timeout
+    $apiParams = App::externalApi('dashboard_get', [
+        'body' => ['page' => 1, 'limit' => 2000], // Bisa Array|string|JSON
+        'timeout' => 15 // Set atau gunakan default
     ]);
+
+    // dd($apiParams, true);
+    $single = $client->request($apiParams);
+    // dd($single, true);
+    
     if ($single['error']) {
         // Error ini sudah tercatat di http_bridge.log secara otomatis
         echo "Gagal memproses data: " . $res['error'];
@@ -46,35 +46,18 @@ try {
     }
     // exit;
 
+
     // 2. Contoh Parallel Call (Jauh lebih cepat untuk banyak URL)
     $tasks = [
-        [
-            'method' => 'GET',
-            'url' => 'http://localhost:8000/api/v1/dashboard',
-            'headers' => $headers,
-            'body' => json_encode([
-                'page' => 2,
-                'limit' => 10
-            ])
-        ],
-        [
-            'method' => 'GET',
-            'url' => 'http://localhost:8000/api/v1/dashboard',
-            'headers' => $headers,
-            'body' => json_encode([
-                'page' => 3,
-                'limit' => 30
-            ])
-        ],
-        [
-            'method' => 'GET',
-            'url' => 'http://localhost:8000/api/v1/dashboard',
-            'headers' => $headers,
-            'body' => json_encode([
-                'page' => 4,
-                'limit' => 100
-            ])
-        ],
+        App::externalApi('dashboard_get', [
+            'body' => ['page' => 1, 'limit' => 20], // Bisa Array|string|JSON
+        ]),
+        App::externalApi('dashboard_get', [
+            'body' => json_encode(['page' => 3, 'limit' => 5]), // Bisa Array|string|JSON
+        ]),
+        App::externalApi('dashboard_get', [
+            'body' => ['page' => 5, 'limit' => 100], // Bisa Array|string|JSON
+        ]),
     ];
 
     echo "Executing multi-request..." . PHP_EOL;
@@ -87,7 +70,8 @@ try {
             $data = json_decode($res['body'], true);
             // dd($data, true);
             if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
-                echo "Request #$index Sukses: Title adalah " . ($data['data']['title'] ?? 'N/A') . PHP_EOL;
+                // echo "Request #$index Sukses: Title adalah " . ($data['data']['title'] ?? 'N/A') . PHP_EOL;
+                echo "Request #$index Sukses: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
             } else {
                 $statusCode = $data['statusCode'];
                 echo "Request #$index Error: {$statusCode} - " . ($data['message'] ?? 'N/A') . PHP_EOL;
@@ -99,7 +83,6 @@ try {
 } catch (Exception $e) {
     echo "Fatal Error: " . $e->getMessage();
 } finally {
-
-
+    // Close App
     exit;
 }

@@ -11,6 +11,8 @@ namespace App\Core\Support;
 use App\Core\Events\ListenerRegistry;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
+use Throwable;
+use Exception;
 
 /**
  * App Container.
@@ -350,6 +352,65 @@ class App
         }
     }
 
+    /**
+     * Resolve External API Config for GoHttpClient.
+     * * @param string $key Contoh: 'external_api_1'
+     * @param array $dynamicOptions Parameter dinamis seperti ['body' => [...], 'headers' => [...]]
+     * @return array
+     */
+    public static function externalApi(string $key, array $dynamicOptions = []): array
+    {
+        try {
+            // 1. Ambil semua config routing (config/external-api.php)
+            $configs = self::get('routing_external_api');
+
+            if (!$configs) {
+                $messageErr = "App::registy[routing_external_api] was not registered." . PHP_EOL;
+                if (config('app.debug')) {
+                    \write_log([
+                        'key' => $key,
+                        'message' => $messageErr                    
+                    ], 'App\Core\Support\App.externalApi', 'error', 'error_APP_externalApi.log');
+                }
+                throw new \Exception($messageErr);
+            }
+
+            if (!isset($configs[$key])) {
+                $messageErr = "External API configuration with key [$key] was not found." . PHP_EOL;
+                if (config('app.debug')) {
+                    \write_log([
+                        'key' => $key,
+                        'message' => $messageErr                    
+                    ], 'App\Core\Support\App.externalApi', 'error', 'error_APP_externalApi.log');
+                }
+                throw new \Exception($messageErr);
+            }
+
+            $base = $configs[$key];
+
+            // 2. Satukan Headers (Config Base + Dinamis dari argumen)
+            $headers = array_merge(
+                $base['headers'] ?? [],
+                $dynamicOptions['headers'] ?? []
+            );
+
+            // 3. Build Result untuk GoHttpClient
+            return [
+                'method'  => strtoupper($base['method'] ?? 'GET'),
+                'url'     => $base['url'] ?? '',
+                'headers' => $headers,
+                'body'    => isset($dynamicOptions['body']) 
+                             ? (is_array($dynamicOptions['body']) ? json_encode($dynamicOptions['body']) : $dynamicOptions['body']) 
+                             : ($base['body'] ?? ''),
+                'timeout' => $dynamicOptions['timeout'] ?? $base['timeout'] ?? 30
+            ];
+        } catch (Throwable $e) {
+            // Re-throw agar error detail (seperti typo function) muncul di log global
+            throw $e;
+        }
+    }
+
+    // REMOVED CANDIDAT :
     // public function getUserAbilities($userId, $groupId) 
     // {
     //     $cache = new \App\Core\Support\Cache();

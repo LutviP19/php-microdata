@@ -49,3 +49,5 @@ set_exception_handler(function (Throwable $exception) {
 // Mendaftarkan konfigurasi ke aplikasi.
 use App\Core\Support\App;
 App::register('config', require BASEPATH . '/config/app.php');
+App::register('routing_external_api', require BASEPATH . '/config/external-api.php');
+// dd(App::get('routing_external_api'));

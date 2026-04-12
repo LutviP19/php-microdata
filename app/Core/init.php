@@ -56,6 +56,7 @@ set_exception_handler(function (Throwable $exception) {
 use App\Core\Support\App;
 use App\Core\Support\Session;
 App::register('config', require BASEPATH . '/config/app.php');
+App::register('routing_external_api', require BASEPATH . '/config/external-api.php');
 
 // Jalankan fungsi CORS
 handle_cors();

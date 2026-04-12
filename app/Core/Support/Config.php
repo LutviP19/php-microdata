@@ -8,6 +8,9 @@
  
 namespace App\Core\Support;
 
+use Throwable;
+use Exception;
+
 /**
  * Config values from config directory.
  */
@@ -19,17 +22,23 @@ class Config
      * @param string $key
      * @return mixed
      */
-    public static function get($key)
+    public static function get($key, $config = null)
     {
-        $config = App::get('config');
-        $keys = explode('.', $key);
-        foreach ($keys as $key) {
-            if (isset($config[$key])) {
-                $config = $config[$key];
-            } else {
-                return false;
+        try {
+            $config = $config ?? App::get('config');
+            $keys = explode('.', $key);
+            foreach ($keys as $key) {
+                if (isset($config[$key])) {
+                    $config = $config[$key];
+                } else {
+                    return false;
+                }
             }
+
+            return $config;
+        } catch (Throwable $e) {
+            // Re-throw agar error detail (seperti typo function) muncul di log global
+            throw $e;
         }
-        return $config;
     }
 }

@@ -38,16 +38,17 @@ class GoHttpClient
     /**
      * Wrapper dengan Error Trace
      */
-    public function request(string $method, string $url, array $options = []): array
+    public function request(array $options = [], $method = null, $url = null): array
     {
         try {
             $payload = json_encode([
-                'method'  => strtoupper($method),
-                'url'     => $url,
+                'method'  => strtoupper($method) ?? $options['method'],
+                'url'     => $url ?? $options['url'],
                 'headers' => $options['headers'] ?? [],
                 'body'    => $options['body'] ?? '',
                 'timeout' => $options['timeout'] ?? 30,
             ]);
+            // dd($payload);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception("JSON Encode Error: " . json_last_error_msg());
