@@ -18,30 +18,29 @@ $limit = $request['limit'] ?? 50; // total data perpage
 
 // Set table
 $table = 'employees';
-// $mainData::$tableM = $table;
-// dd($mainData->table);
+$mainData->table($table);
 
 // Set limit agar bisa auto Stream
-// $mainData->limitToStream = 100;
-$dataDashboard = null;
+$mainData->limitToStream = 100;
 
 // Query Utama
+$dataEmployees = null;
 $query = "SELECT * FROM ".$table." ORDER BY hire_date DESC";
 
 // Cek limit agar otomatis masuk ke Mode Stream
-if($limit > 50) {
-    $dataDashboard = $mainData->paginate($query, [], $page, $limit);
+if($limit > $mainData->limitToStream) {
+    $dataEmployees = $mainData->paginate($query, [], $page, $limit);
 
     // Stream - Output
-    json_response_stream(200, 'testing-stream', $dataDashboard['data'], $dataDashboard['meta']);
+    json_response_stream(200, 'testing-stream', $dataEmployees['data'], $dataEmployees['meta']);
 } else {            
     $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
     $queryString = md5($cleanQuery);
-    $cacheKeyId = "dashboard_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
+    $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataDashboard = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
+    $dataEmployees = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
         return $mainData->paginate($query, [], $page, $limit);
     }, 300);
 }
-dd($dataDashboard, true);
-// echo "<pre>".json_encode($dataDashboard, JSON_PRETTY_PRINT)."</pre>";
+dd($dataEmployees, true);
+// echo "<pre>".json_encode($dataEmployees, JSON_PRETTY_PRINT)."</pre>";

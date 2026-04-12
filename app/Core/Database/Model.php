@@ -44,8 +44,8 @@ class Model
      */
     protected $table;
 
-    protected $limitToStream = 50; // limit maks untuk menggunakan stream
-    protected $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
+    public $limitToStream = 50; // limit maks untuk menggunakan stream
+    public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
 
     public function __construct(PDO $pdo = null)
     {

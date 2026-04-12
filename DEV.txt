@@ -3,6 +3,11 @@ Add Library:
 ------------
 composer require phpstreamserver/scheduler
 
+Sample Data (DB: employees):
+https://dev.mysql.com/doc/employee/en/employees-installation.html
+------------
+https://github.com/datacharmer/test_db
+
 
 Build Directory structure :
 ---------------------------
