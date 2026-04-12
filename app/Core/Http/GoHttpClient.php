@@ -89,9 +89,11 @@ class GoHttpClient
         }
 
         $json = FFI::string($ptr);
-        $this->ffi->free($ptr); 
+        $this->ffi->free($ptr);
         
-        $data = json_decode($json, true);
+        // Gunakan flag bitwise untuk keamanan extra pada data besar
+        $data = json_decode($json, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new Exception("JSON Decode Error: " . json_last_error_msg());
         }

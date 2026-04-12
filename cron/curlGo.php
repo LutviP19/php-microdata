@@ -24,7 +24,7 @@ try {
 
     // Hanya kirim Body / Timeout
     $apiParams = App::externalApi('dashboard_get', [
-        'body' => ['page' => 1, 'limit' => 2000], // Bisa Array|string|JSON
+        'body' => ['page' => 1, 'limit' => 1000], // Bisa Array|string|JSON
         'timeout' => 15 // Set atau gunakan default
     ]);
 
@@ -36,7 +36,8 @@ try {
         // Error ini sudah tercatat di http_bridge.log secara otomatis
         echo "Gagal memproses data: " . $res['error'];
     } else {
-        $data = json_decode($single['body'], true);
+        $data = json_decode($single['body'], true)[0];
+        // dd($data, true);
         if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
             echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
         } else {
@@ -50,25 +51,33 @@ try {
     // 2. Contoh Parallel Call (Jauh lebih cepat untuk banyak URL)
     $tasks = [
         App::externalApi('dashboard_get', [
-            'body' => ['page' => 1, 'limit' => 20], // Bisa Array|string|JSON
+            'body' => ['page' => 1, 'limit' => 20000], // Bisa Array|string|JSON
         ]),
         App::externalApi('dashboard_get', [
-            'body' => json_encode(['page' => 3, 'limit' => 5]), // Bisa Array|string|JSON
+            'body' => json_encode(['page' => 3, 'limit' => 5000]), // Bisa Array|string|JSON
         ]),
         App::externalApi('dashboard_get', [
-            'body' => ['page' => 5, 'limit' => 100], // Bisa Array|string|JSON
+            'body' => ['page' => 2, 'limit' => 100000], // Bisa Array|string|JSON
         ]),
     ];
 
     echo "Executing multi-request..." . PHP_EOL;
     $results = $client->multiRequest($tasks);
+    // dd($results);
 
     foreach ($results as $index => $res) {
         if (!empty($res['error'])) {
             echo "Request #$index Gagal: " . $res['error'] . PHP_EOL;
-        } else {
+        } else {            
             $data = json_decode($res['body'], true);
-            // dd($data, true);
+            
+            // Validasi format GO STREAMING FILTER
+            if(is_array($data) && isset($data[0])) {
+                $data = $data[0];
+            }            
+            // $status = $data['statusCode'];
+            // dd($status);
+            
             if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
                 // echo "Request #$index Sukses: Title adalah " . ($data['data']['title'] ?? 'N/A') . PHP_EOL;
                 echo "Request #$index Sukses: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
@@ -76,7 +85,6 @@ try {
                 $statusCode = $data['statusCode'];
                 echo "Request #$index Error: {$statusCode} - " . ($data['message'] ?? 'N/A') . PHP_EOL;
             }
-            
         }
     }
 
