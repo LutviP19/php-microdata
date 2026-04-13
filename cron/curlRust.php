@@ -7,13 +7,14 @@ declare(strict_types=1);
 
 // file: cron/curlRust.php
 
-use App\Core\Support\App;
-
-
 /**
  * Require Worker Bootstrap File.
  */
 require_once 'bootstrap.php';
+
+
+use App\Core\Support\App;
+
 
 $start = microtime(true);
 

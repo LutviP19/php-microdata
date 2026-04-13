@@ -291,7 +291,7 @@ go build -o ../../lib/curlgo.so -buildmode=c-shared ./curlgo.go
 
 PHP-Testing
 -----------
-Curl-Go	 : php cron/curlGo.php
+Curl-Go : php cron/curlGo.php
 
 
 
@@ -304,11 +304,20 @@ cp target/release/librust_curl_ffi.so ../../lib/librust_curl_ffi.so
 
 PHP-Testing
 -----------
-Curl-Rust	 : php cron/curlRust.php
+Curl-Rust : php cron/curlRust.php
 
 
 
+DataEngine(Filter) - Rust (FFI)
+cargo clean (menghapus semua cache build)
+==================
+cd ffi/source/data_engine
+cargo build --release
+cp target/release/libdata_engine.so ../../lib/libdata_engine.so
 
+PHP-Testing
+-----------
+Data Filter-Rust : php cron/DataEngine.php
 
 
 
