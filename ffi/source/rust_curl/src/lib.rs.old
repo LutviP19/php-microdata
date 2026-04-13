@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use reqwest::blocking::Client;
 use std::time::Duration;
-use rayon::prelude::*;
 
 #[derive(Deserialize)]
 struct RequestConfig {
@@ -27,7 +26,7 @@ struct ResponseData {
     error: String,
 }
 
-// Helper untuk mengubah data ke C-String (Pointer)
+// Helper untuk mengubah Result menjadi C-String
 fn create_c_string_response<T: Serialize>(data: &T) -> *mut c_char {
     let json = serde_json::to_string(data).unwrap_or_else(|_| "{}".to_string());
     CString::new(json).unwrap().into_raw()
@@ -53,7 +52,8 @@ pub extern "C" fn ExecuteMultiRequest(json_input: *const c_char) -> *mut c_char 
         Err(_) => return create_c_string_response(&vec![ResponseData { status: 0, body: "".to_string(), error: "Invalid JSON Input".to_string() }]),
     };
 
-    // Parallel processing menggunakan Rayon (Sangat cepat untuk jutaan data)
+    // Menggunakan Rayon untuk paralelisme sejati (seperti goroutines tapi lebih CPU-efficient)
+    use rayon::prelude::*;
     let results: Vec<ResponseData> = config.requests
         .into_par_iter()
         .map(perform_request)
@@ -68,13 +68,17 @@ fn perform_request(cfg: RequestConfig) -> ResponseData {
         .build()
         .unwrap_or_default();
 
-    let method = match cfg.method.to_uppercase().as_str() {
-        "POST" => reqwest::Method::POST,
-        "PUT" => reqwest::Method::PUT,
-        "DELETE" => reqwest::Method::DELETE,
-        "PATCH" => reqwest::Method::PATCH,
-        _ => reqwest::Method::GET,
-    };
+    // let method = match cfg.method.to_uppercase().as_str() {
+    //     "POST" => reqwest::Method::POST,
+    //     "PUT" => reqwest::Method::PUT,
+    //     "DELETE" => reqwest::Method::DELETE,
+    //     "PATCH" => reqwest::Method::PATCH,
+    //     _ => reqwest::Method::GET,
+    // };
+
+    // Cara alternatif yang mendukung semua metode secara dinamis
+    let method = reqwest::Method::from_bytes(cfg.method.to_uppercase().as_bytes())
+        .unwrap_or(reqwest::Method::GET);
 
     let mut rb = client.request(method, &cfg.url);
     for (k, v) in cfg.headers {
@@ -87,28 +91,28 @@ fn perform_request(cfg: RequestConfig) -> ResponseData {
 
     match rb.send() {
         Ok(resp) => {
-            let mut final_status = resp.status().as_u16();
-            let mut filtered_results: Vec<serde_json::Value> = Vec::new();
+            let status = resp.status().as_u16();
             
-            // Streaming reader untuk efisiensi memori
+            let mut filtered_results: Vec<serde_json::Value> = Vec::new();
             let reader = std::io::BufReader::new(resp);
+            
+            // Membuat stream deserializer
             let stream = serde_json::Deserializer::from_reader(reader).into_iter::<serde_json::Value>();
 
+            // Looping yang benar untuk iterator Result
             for item in stream {
                 match item {
                     Ok(val) => {
-                        // Ambil statusCode dari body jika tersedia
-                        if let Some(body_status) = val.get("statusCode").and_then(|s| s.as_u64()) {
-                            final_status = body_status as u16;
-                        }
+                        // Di sini Anda bisa menambahkan logika filter
+                        // Misal: if val["status"] == "active" { ... }
                         filtered_results.push(val);
                     }
-                    Err(_) => break,
+                    Err(_) => break, // Berhenti jika ada JSON yang tidak valid di tengah stream
                 }
             }
 
             ResponseData {
-                status: final_status,
+                status,
                 body: serde_json::to_string(&filtered_results).unwrap_or_else(|_| "[]".to_string()),
                 error: "".to_string(),
             }
@@ -121,6 +125,7 @@ fn perform_request(cfg: RequestConfig) -> ResponseData {
     }
 }
 
+// Fungsi wajib untuk membebaskan memori di sisi C
 #[no_mangle]
 pub extern "C" fn free_rust_string(ptr: *mut c_char) {
     if ptr.is_null() { return; }
