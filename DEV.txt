@@ -312,12 +312,18 @@ DataEngine(Filter) - Rust (FFI)
 cargo clean (menghapus semua cache build)
 ==================
 cd ffi/source/data_engine
+cargo test
 cargo build --release
 cp target/release/libdata_engine.so ../../lib/libdata_engine.so
 
 PHP-Testing
 -----------
 Data Filter-Rust : php cron/DataEngine.php
+
+
+
+
+
 
 
 

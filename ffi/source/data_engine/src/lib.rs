@@ -86,3 +86,32 @@ pub extern "C" fn free_rust_string(ptr: *mut c_char) {
         unsafe { let _ = CString::from_raw(ptr); }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_filter_logic() {
+        // Simulasi data JSON
+        let json_data = r#"[
+            {"id": 1, "name": "Laptop", "price": 5000},
+            {"id": 2, "name": "Mouse", "price": 100}
+        ]"#;
+        
+        // Kita panggil fungsi internal secara langsung
+        let key = std::ffi::CString::new("price").unwrap();
+        let val = std::ffi::CString::new("5000").unwrap();
+        let mode = std::ffi::CString::new("equals").unwrap();
+        let raw = std::ffi::CString::new(json_data).unwrap();
+
+        let result_ptr = process_data_scalable(raw.as_ptr(), key.as_ptr(), val.as_ptr(), mode.as_ptr());
+        
+        let result_str = unsafe { std::ffi::CStr::from_ptr(result_ptr) }.to_str().unwrap();
+        assert!(result_str.contains("Laptop"));
+        assert!(!result_str.contains("Mouse"));
+        
+        // Bersihkan memori
+        free_rust_string(result_ptr);
+    }
+}
