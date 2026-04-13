@@ -1,4 +1,9 @@
 <?php
+/**
+ * GoHttpClient for FFI
+ * @package PHP-Microdata
+ * @author LutviP19 <lutvip19@gmail.com>
+ */
 
 namespace App\Core\Http;
 

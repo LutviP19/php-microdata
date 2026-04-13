@@ -295,6 +295,16 @@ Curl-Go	 : php cron/curlGo.php
 
 
 
+Curl - Rust (FFI)
+cargo clean (menghapus semua cache build)
+==================
+cd ffi/source/rust_curl
+cargo build --release
+cp target/release/librust_curl_ffi.so ../../lib/librust_curl_ffi.so
+
+PHP-Testing
+-----------
+Curl-Rust	 : php cron/curlRust.php
 
 
 
@@ -306,7 +316,9 @@ Curl-Go	 : php cron/curlGo.php
 
 
 
-
+######################################################
+######################################################
+######################################################
 
 Meilisearch:
 ------------

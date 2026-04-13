@@ -5,7 +5,7 @@ declare(strict_types=1);
  *  @author Lutvip19 <lutvip19@gmail.com>
  */
 
-// file: cron/curlGo.php
+// file: cron/curlRust.php
 
 use App\Core\Support\App;
 
@@ -18,7 +18,7 @@ require_once 'bootstrap.php';
 $start = microtime(true);
 
 try {
-    $client = new \App\Core\Http\GoHttpClient();
+    $client = new \App\Core\Http\RustHttpClient();
 
     $params = App::externalApi('dashboard_get');
     // dd($params);

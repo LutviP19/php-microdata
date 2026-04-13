@@ -3,5 +3,5 @@
 **/*.rs.bk
 *DS*
 Thumbs.db
-/target/
+**/target/
 !.gitignore

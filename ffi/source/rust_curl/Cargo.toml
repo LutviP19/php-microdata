@@ -1,0 +1,30 @@
+[package]
+name = "rust_curl_ffi"
+version = "1.0.0"
+edition = "2021"
+authors = ["LutviP19"]
+description = "High-performance HTTP Bridge for PHP-FFI"
+
+[lib]
+# Nama ini akan menghasilkan file rust_curl_ffi.so
+name = "rust_curl_ffi"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Menggunakan rustls agar tidak bergantung pada OpenSSL sistem (lebih portabel)
+reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+# Serde dengan fitur derive untuk kecepatan eksekusi tinggi
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Rayon untuk manajemen thread pool yang jauh lebih efisien daripada thread standar
+rayon = "1.7"
+
+# --- PROFIL OPTIMASI AGRESIF ---
+# Konfigurasi ini hanya aktif saat Anda menjalankan: cargo build --release
+
+[profile.release]
+opt-level = 3           # Optimasi level maksimal untuk kecepatan eksekusi
+lto = "fat"             # Link Time Optimization "fat" untuk analisa antar crate yang mendalam
+codegen-units = 1       # Memaksa satu unit kompilasi agar optimasi global lebih maksimal
+panic = "abort"         # Menghapus overhead 'unwinding', memperkecil ukuran binary
+strip = true            # Menghapus simbol debug secara otomatis agar file .so lebih ringan
