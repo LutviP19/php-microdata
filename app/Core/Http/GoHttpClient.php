@@ -23,8 +23,9 @@ class GoHttpClient
         $this->libPath = $libPath ?? realpath(BASEPATH_FFI . '/lib/curlgo.so');
 
         if (!file_exists($this->libPath)) {
-            $this->logError("Shared Library (.so) not found at: " . $this->libPath);
-            throw new RuntimeException("HTTP Bridge Library missing.");
+            $errMessage = "Shared Library (.so) not found at: " . $this->libPath;
+            $this->logError($errMessage);
+            throw new RuntimeException($errMessage);
         }
 
         try {
@@ -109,7 +110,6 @@ class GoHttpClient
     private function logError(string $message)
     {
         if ($this->debug) {
-            // Gunakan fungsi log internal Anda atau error_log bawaan
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
             $caller = isset($trace[1]) ? "{$trace[1]['class']}::{$trace[1]['function']}" : 'Global';
             

@@ -34,8 +34,8 @@ try {
     // dd($single, true);
     
     if ($single['error']) {
-        // Error ini sudah tercatat di http_bridge.log secara otomatis
-        echo "Gagal memproses data: " . $res['error'];
+        // Error ini sudah tercatat di log secara otomatis
+        echo "Gagal memproses data: " . $single['error'];
     } else {
         $data = json_decode($single['body'], true)[0];
         // dd($data, true);
