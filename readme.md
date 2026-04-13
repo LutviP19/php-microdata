@@ -8,6 +8,8 @@
 
 ##### Requirements: PHP 8.4+, Golang go1.26.1, OS: Linux/Mac
 
+##### Database sample: [employees](https://github.com/datacharmer/test_db)
+
 ### Youtube Video - Basic Source
 [![Video](https://img.youtube.com/vi/rmiG0al8nWE/0.jpg)](https://youtu.be/rmiG0al8nWE)
 
