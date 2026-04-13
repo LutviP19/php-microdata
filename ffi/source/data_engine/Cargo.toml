@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rayon = "1.7" # Untuk pemrosesan paralel
+once_cell = "1.18"
 
 [profile.release]
 opt-level = 3
