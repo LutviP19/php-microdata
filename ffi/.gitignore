@@ -1,2 +1,7 @@
 *.dev
+*.lock
+**/*.rs.bk
+*DS*
+Thumbs.db
+/target/
 !.gitignore
