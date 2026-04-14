@@ -6,7 +6,7 @@
 
 #### Testing Results: please read ./test/TEST.txt or ./test/TEST_SUMMARY.json
 
-##### Requirements: PHP 8.4+, Golang go1.26.1, OS: Linux/Mac
+##### Requirements: PHP 8.5+, Golang go1.26.1, OS: Linux/Mac
 
 ##### Database sample: [employees](https://github.com/datacharmer/test_db)
 
