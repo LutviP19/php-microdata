@@ -10,7 +10,7 @@ class DataEngine
     private $ffi;
     private $libPath;
 
-    public function __construct(string $libPath = null)
+    public function __construct(?string $libPath = null)
     {
         // Gunakan konstanta BASEPATH_FFI jika tersedia, atau fallback ke direktori saat ini
         $defaultPath = defined('BASEPATH_FFI') ? BASEPATH_FFI . '/lib/libdata_engine.so' : __DIR__ . '/lib/libdata_engine.so';
@@ -22,6 +22,7 @@ class DataEngine
 
         // Definisi C harus sesuai persis dengan signature di Rust (src/lib.rs)
         $this->ffi = FFI::cdef("
+            char* get_item_at(int index);
             int get_storage_count();
             char* debug_first_item();
             int load_data(const char* json_raw);
@@ -46,7 +47,33 @@ class DataEngine
      */
     public function getCount(): int
     {
-        return (int) $this->ffi->get_storage_count();
+        try {
+            $ptr = $this->ffi->get_storage_count();
+            if ($ptr !== null) 
+                return (int) $ptr;
+        } catch (\Throwable $e) {
+            return "Error FFI: " . $e->getMessage() . PHP_EOL;
+        }
+    }    
+
+    // streamAll (Generator)
+    public function streamAll(): \Generator
+    {
+        $count = $this->getCount();
+
+        for ($i = 0; $i < $count; $i++) {
+            $ptr = $this->ffi->get_item_at($i);
+            
+            if ($ptr !== null) {
+                $jsonLine = FFI::string($ptr);
+                $this->ffi->free_rust_string($ptr); // Langsung bebas!
+
+                yield json_decode($jsonLine, true);
+                
+                // Opsional: bersihkan memori PHP per baris
+                unset($jsonLine);
+            }
+        }
     }
 
     /**

@@ -79,6 +79,17 @@ static GLOBAL_DATA: Lazy<Mutex<Vec<Value>>> = Lazy::new(|| Mutex::new(Vec::new()
 // ==========================================
 
 #[no_mangle]
+pub extern "C" fn get_item_at(index: i32) -> *mut c_char {
+    if let Ok(storage) = GLOBAL_DATA.lock() {
+        if let Some(item) = storage.get(index as usize) {
+            let json = serde_json::to_string(item).unwrap_or_else(|_| "{}".to_string());
+            return CString::new(json).unwrap().into_raw();
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
 pub extern "C" fn process_data_scalable(
     json_raw: *const c_char,
     filter_key: *const c_char,
@@ -113,7 +124,11 @@ pub extern "C" fn debug_first_item() -> *mut c_char {
 
 #[no_mangle]
 pub extern "C" fn get_storage_count() -> i32 {
-    GLOBAL_DATA.lock().unwrap().len() as i32
+    if let Ok(storage) = GLOBAL_DATA.lock() {
+        storage.len() as i32
+    } else {
+        0
+    }
 }
 
 #[no_mangle]
@@ -125,18 +140,26 @@ pub extern "C" fn load_data(json_raw: *const c_char) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn append_data(json_chunk: *const c_char) -> i32 {
-    let raw_str = unsafe { CStr::from_ptr(json_chunk) }.to_str().unwrap_or("[]");
-    let mut chunk_data: Vec<Value> = serde_json::from_str(raw_str).unwrap_or_else(|_| vec![]);
+    let c_str = unsafe { CStr::from_ptr(json_chunk) };
+    let json_str = c_str.to_str().unwrap_or("[]");
     
-    let mut storage = GLOBAL_DATA.lock().unwrap();
-    storage.append(&mut chunk_data); // Menambahkan data ke storage yang sudah ada
-    storage.len() as i32
+    // Deserialize chunk yang dikirim PHP
+    let new_data: Vec<Value> = serde_json::from_str(json_str).unwrap_or_default();
+    // let count = new_data.len();
+
+    if let Ok(mut storage) = GLOBAL_DATA.lock() {
+        storage.extend(new_data);
+        storage.len() as i32
+    } else {
+        0
+    }
 }
 
 #[no_mangle]
 pub extern "C" fn clear_data() {
-    let mut storage = GLOBAL_DATA.lock().unwrap();
-    storage.clear();
+    if let Ok(mut storage) = GLOBAL_DATA.lock() {
+        storage.clear();
+    }
 }
 
 #[no_mangle]

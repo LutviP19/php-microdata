@@ -30,11 +30,15 @@ class Connection
                 $port     = Config::get("database.{$driver}.port");
                 $username = Config::get("database.{$driver}.username");
                 $password = Config::get("database.{$driver}.password");
-                $options  = Config::get("database.{$driver}.options");
-                // dd("{$driver}:host={$host};port={$port};dbname={$name}");
+                $options  = Config::get("database.{$driver}.options");                
 
+                $dsn = "{$driver}:host={$host};port={$port};dbname={$dbname}";
+                if($driver === 'mysql')
+                    $dsn = "{$driver}:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+
+                // dd($dsn);
                 $pdo = new PDO(
-                    "{$driver}:host={$host};port={$port};dbname={$dbname}",
+                    $dsn,
                     $username,
                     $password,
                     $options
@@ -42,10 +46,12 @@ class Connection
 
             } else {
                 $databaseFile = Config::get("database.{$driver}.dbname");
-                // dd("sqlite:{$databaseFile}");
-
                 $pdo = new PDO("sqlite:{$databaseFile}");
-                // $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Set error mode for better error handling
+
+                // Set error mode for better error handling
+                if (config('app.debug')) {
+                    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); 
+                }
             }
             // dd($pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
 
@@ -65,27 +71,31 @@ class Connection
     {
         try {
             $driver = $driver ?: Config::get('default_db');
-            $options  = $options ?: Config::get("database.{$driver}.options");
-            // dd($username);
-
+            $options  = array_merge($options, Config::get("database.{$driver}.options"));
+            // dd($options);
 
             if ($driver !== 'sqlite') {
-                // dd("{$driver}:host={$host};port={$port};dbname={$dbname}");
-                // dd(['username' => $username, 'password' => $password, 'options' => $options]);
+                
+                $dsn = "{$driver}:host={$host};port={$port};dbname={$dbname}";
+                if($driver === 'mysql')
+                    $dsn = "{$driver}:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
 
+                // dd($dsn);
                 $pdo = new PDO(
-                    "{$driver}:host={$host};port={$port};dbname={$dbname}",
+                    $dsn,
                     $username,
                     $password,
                     $options
-                );            
+                );
 
             } else {
                 $databaseFile = database_path($dbname);
-                // dd("sqlite:{$databaseFile}");
-
                 $pdo = new PDO("sqlite:{$databaseFile}");
-                // $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Set error mode for better error handling
+
+                // Set error mode for better error handling
+                if (config('app.debug')) {
+                    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); 
+                }
             }
             // dd($pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
         
@@ -93,8 +103,8 @@ class Connection
 
         } catch (PDOException $e) {
             // die($e->getMessage());
-            if(env('APP_ENV') !== 'local') {
-                if(env('APP_DEBUG'))
+            if(config('app.env') === 'production') {
+                if(config('app.debug'))
                 \write_log($e->getMessage(), 'App\Core\Database\Connection', 'error', 'error_DB.log');
                 
                 json_response([], 403, 'Auth errors', ['auth' => 'Invalid credentials.']);

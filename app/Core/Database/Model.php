@@ -23,12 +23,20 @@ class Model
      */
     private static $instance = null;
 
+    // /**
+    //  * PDO connection.
+    //  *
+    //  * @var PDO
+    //  */
+    // private $pdo = null;
+
     /**
-     * PDO connection.
-     *
-     * @var PDO
+     * Deklarasikan properti secara eksplisit untuk menghindari 
+     * error Dynamic Property di PHP 8.2+
      */
-    private $pdo = null;
+    protected ?\PDO $pdo;
+
+    protected ?string $sql = null;
 
     /**
      * Parameters for prepared statements.
@@ -44,10 +52,14 @@ class Model
      */
     protected $table;
 
+    // CHUNK-FFI
+    protected $rustEngine;
+    public $structClass;
+
     public $limitToStream = 50; // limit maks untuk menggunakan stream
     public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?\PDO $pdo = null)
     {
         // if we have a different db connection.
         $conn = $pdo ?: Connection::make();
@@ -72,35 +84,102 @@ class Model
      * @param bool $lastInsertId
      * @return mixed
      */
-    public function execQuery($query, array $params, $lastInsertId = false, $fetch = false, $fetchAll = false, $stream = false)
+    public function execQuery($query, array $params, $lastInsertId = false, $fetch = false, $fetchAll = false, $stream = false, $chunk = false)
     {
-        $this->setParams($params);        
-        $exec = $this->setSQL($query)->query();        
+        $this->setParams($params);
+        $exec = $this->setSQL($query)->query();
 
         if (!$exec) return false;
 
-        if ($lastInsertId) {
-            return $this->getPDO()->lastInsertId();
-        }
+        // --- FITUR BARU: CHUNK-FFI
+        // dd($chunk);
+        // 1001 adalah nilai integer absolut untuk MYSQL_ATTR_USE_BUFFERED_QUERY
+        // Ambil nilai atribut untuk flag CHUNK-FFI
+        $rawAttr = $this->pdo->getAttribute(1001);
+        // Logika deteksi: jika rawAttr adalah 0 atau false, berarti Unbuffered AKTIF
+        $isUnbuffered = ($rawAttr === false || $rawAttr === 0);
+        if ($isUnbuffered && $fetchAll && $chunk) {
+            // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
+            $exec->setFetchMode(\PDO::FETCH_ASSOC);
 
-        if ($fetch) {
-            return $exec->fetch();
-        }
+            // dd('FITUR BARU: CHUNK-FFI');
+            return $this->handleFFIChunking($exec);
+        } else {
 
-        // --- FITUR BARU: STREAMING ---        
-        if ($stream) {
-            return (function() use ($exec) {
-                while ($row = $exec->fetch()) {
-                    yield $row;
-                }
-            })();
-        }
+            if ($lastInsertId) {
+                return $this->getPDO()->lastInsertId();
+            }
 
-        if ($fetchAll) {
-            return $exec->fetchAll();
+            if ($fetch) {
+                return $exec->fetch();
+            }
+
+            // --- FITUR BARU: STREAMING ---        
+            if ($stream) {
+                return (function() use ($exec) {
+                    while ($row = $exec->fetch()) {
+                        yield $row;
+                    }
+                })();
+            }
+
+            if ($fetchAll) {
+                return $exec->fetchAll();
+            }
         }
 
         return true;
+    }
+
+
+    private function handleFFIChunking(\PDOStatement $exec): mixed
+    {
+        // Ambil aturan casting secara dinamis berdasarkan class struct yang sedang digunakan
+        // Asumsi: $this->structClass menyimpan nama class seperti 'App\Structs\ProductStruct'
+        $castRules = getCastRules($this->structClass ?? \App\Structs\DefaultStruct::class);
+        // dd($this->structClass);
+        // dd($castRules);
+
+        $this->rustEngine = (new \App\Core\FFI\DataEngine());
+        $this->rustEngine->clear();
+
+        $chunkSize = 50000;
+        $currentChunk = [];
+        try {
+            while ($row = $exec->fetch()) {
+                
+                // --- DYNAMIC CASTING ---
+                foreach ($castRules as $column => $type) {
+                    if (isset($row[$column])) {
+                        $row[$column] = match($type) {
+                            'int'   => (int) $row[$column],
+                            'float' => (float) $row[$column],
+                            'bool'  => (bool) $row[$column],
+                            default => (string) $row[$column],
+                        };
+                    }
+                }
+
+                $currentChunk[] = $row;
+
+                if (count($currentChunk) >= $chunkSize) {
+                    $this->rustEngine->appendChunk($currentChunk);
+                    $currentChunk = [];
+                }
+            }
+
+            if (!empty($currentChunk)) {
+                $this->rustEngine->appendChunk($currentChunk);
+                unset($currentChunk);
+            }
+        } catch (\Throwable $e) {
+            die("Dynamic FFI Chunking Error: " . $e->getMessage());
+            return false;
+        } finally {
+            $exec->closeCursor();
+            // dd($this->rustEngine->debugFirstItem());
+            return $this->rustEngine->streamAll();
+        }
     }
 
     /**
@@ -139,14 +218,6 @@ class Model
     protected function setPDO($pdo = null)
     {
         $this->pdo = $pdo;
-
-        // // EXTRA SETUP
-        // if ($this->pdo) {
-        //     // Add this line so that all query results automatically become an Associative Array
-        //     $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        //     // Disabled Buffer to decrease usage of RAM
-        //     $this->pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-        // }
     }
 
     /**
@@ -199,10 +270,15 @@ class Model
      * @param string $sql
      * @return App\Core\Database\Model
      */
-    protected function setSQL($sql)
-    {
-        $this->sql = $sql;
+    // protected function setSQL($sql)
+    // {
+    //     $this->sql = $sql;
 
+    //     return $this;
+    // }
+    protected function setSQL(string $query): self
+    {
+        $this->sql = $query;
         return $this;
     }
 
@@ -244,7 +320,7 @@ class Model
     public function paginate($query, array $params = [], $page = 1, $limit = 10)
     {
         // dd($this->table);
-        // Offset Calculation        
+        // Offset Calculation
         $page = (int)$page > 0 ? (int)$page : 1;
         $limit = $limit <= 0 ? 1 : (int)$limit;
         $offset = ($page - 1) * $limit;
