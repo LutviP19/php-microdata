@@ -12,6 +12,9 @@ if (!defined('BASEPATH_FFI')) {
     define('BASEPATH_FFI', BASEPATH . '/ffi');
 }
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 /**
  * Require the composer autoload File.
  */

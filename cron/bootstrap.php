@@ -15,6 +15,8 @@ if (!defined('BASEPATH_FFI')) {
     define('BASEPATH_FFI', __DIR__ . '/../ffi');
 }
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 /**
  * Require the composer autoload File.
