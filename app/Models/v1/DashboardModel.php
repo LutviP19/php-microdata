@@ -14,7 +14,7 @@ use App\Core\Database\Connection;
 
 class DashboardModel extends DashboardData
 {
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // Use Default connection
         $conn = $pdo ?: Connection::make();
@@ -39,8 +39,9 @@ class DashboardModel extends DashboardData
         $limit = $request['limit'] ?? 10; // total data perpage
 
         // Ambil data stats dari cache selama 5 menit
+        // dd();
         $dataStats = $cache->remember('dashboard_index', function() use ($statsData) {
-            return $statsData->getAllData();
+            return $statsData->getAllDataSalaries();
         }, 300);
 
 

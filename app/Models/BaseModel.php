@@ -24,9 +24,9 @@ class BaseModel extends Model
 
     protected $primaryKey = 'id';
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
         // Set PDO connection

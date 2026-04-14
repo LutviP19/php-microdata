@@ -20,7 +20,7 @@ class AuthData extends AuthStruct {
      */
     protected static $tableM = "users";
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // Default connection
         $conn = $pdo ?: Connection::make();

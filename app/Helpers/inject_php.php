@@ -203,6 +203,31 @@ if (!function_exists('parseStructToRules')) {
     }
 }
 
+function getCastRules(string $structClass): array 
+{
+    $reflection = new \ReflectionClass($structClass);
+    $casts = [];
+
+    foreach ($reflection->getProperties() as $property) {
+        $attributes = $property->getAttributes(\App\Core\Database\SchemaProperty::class);
+        if (empty($attributes)) continue;
+
+        $attr = $attributes[0]->newInstance();
+        $propName = $property->getName();
+
+        // Tentukan tipe casting berdasarkan attribute
+        if ($attr->numeric) {
+            // Cek apakah ada desimal (misal via custom rule atau logic lain)
+            $casts[$propName] = (str_contains($attr->custom ?? '', 'float')) ? 'float' : 'int';
+        } elseif ($attr->boolean) {
+            $casts[$propName] = 'bool';
+        } else {
+            $casts[$propName] = 'string';
+        }
+    }
+    return $casts;
+}
+
 
 /**
  * setHeaders function, to add header response
@@ -801,7 +826,7 @@ function is_valid_ip($ip, $type = 'both') {
  * @param array $list Daftar IP/CIDR (misal: ['127.0.0.1', '10.0.0.0/8'])
  * @return bool
  */
-function check_ip_access($ip, array $list = null) {
+function check_ip_access($ip, array $list = []) {
     $list = $list ?? config('api.whitelist_ips');
 
     if (empty($list)) {

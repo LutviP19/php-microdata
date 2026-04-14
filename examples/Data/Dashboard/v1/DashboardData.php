@@ -21,7 +21,7 @@ class DashboardData extends DashboardStruct {
     // protected static $tableM = "users";
     protected static $tableM = "employees";
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // // Global Set Custom connection
         // $driver = 'mysql';
@@ -34,7 +34,7 @@ class DashboardData extends DashboardStruct {
         // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
         
@@ -42,7 +42,7 @@ class DashboardData extends DashboardStruct {
         $this->pdo = $conn;
 
         // Set default table
-        $this->table = self::$tableM;
+        $this->table = static::$tableM;
     }
 
     public function getAllData($id = null, $selectCols = '*') {

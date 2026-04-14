@@ -15,7 +15,7 @@ use App\Core\Database\Connection;
 class AuthModel extends AuthData
 {
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // Use Default connection
         $conn = $pdo ?: Connection::make();

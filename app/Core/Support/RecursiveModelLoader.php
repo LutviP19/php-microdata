@@ -9,8 +9,9 @@ namespace App\Core\Support;
 class RecursiveModelLoader {
     protected $basePath;
     protected $moduleConfig;
+    protected $dataMapping;
 
-    public function __construct($config = []) {
+    public function __construct(private array $config = []) {
         $this->basePath = realpath(config('app.path') . "/app");
         // Load konfigurasi modul        
         $this->moduleConfig = $config['modules'] ?? [];

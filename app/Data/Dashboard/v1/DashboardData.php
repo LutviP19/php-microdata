@@ -21,7 +21,7 @@ class DashboardData extends DashboardStruct {
     // protected static $tableM = "users";
     protected static $tableM = "employees";
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // Default connection
         $conn = $pdo ?: Connection::make();
