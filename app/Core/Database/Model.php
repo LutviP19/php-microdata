@@ -56,13 +56,13 @@ class Model
     protected $rustEngine;
     public $structClass;
 
-    public $limitToStream = 50; // limit maks untuk menggunakan stream
+    public $limitToStream = 50; // limit maks untuk otomatis menggunakan mode stream
     public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
 
-    public function __construct(?\PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // if we have a different db connection.
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
 
         $this->setPDO($conn);
     }

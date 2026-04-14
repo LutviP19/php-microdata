@@ -24,12 +24,14 @@ class DashboardData extends DashboardStruct {
     public function __construct(?PDO $pdo = null)
     {
         // Default connection
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
+        $conn = $pdo;
         parent::__construct($conn);
 
         
-        // Set PDO connection
-        $this->pdo = $conn;
+        // // Set PDO connection
+        // $this->pdo = $conn;
+        $this->setPDO($conn);
 
         // Set default table
         $this->table = self::$tableM;

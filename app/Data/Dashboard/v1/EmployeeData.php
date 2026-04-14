@@ -36,6 +36,8 @@ class EmployeeData extends DashboardData {
         
         // Set default table
         $this->table = self::$tableM;
+
+        // $this->limitToStream = 1000;
     }
 
     public function getAllData($id = null, $selectCols = '*') {

@@ -17,11 +17,11 @@ class DashboardModel extends DashboardData
     public function __construct(?PDO $pdo = null)
     {
         // Use Default connection
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
-        // Set PDO connection
-        $this->pdo = $conn;
+        // // Set PDO connection
+        // $this->pdo = $conn;
     }
 
     public function index(?array $request = [])
@@ -30,6 +30,78 @@ class DashboardModel extends DashboardData
         $conn = null;
         $mainData = new EmployeeData($conn);
         $statsData = new StatsData($conn);
+
+
+        // // Middleware - Rate limiter
+        // $identifier = 'Dashboard-Index-'.\clientIP();
+        // $perSeconds = 6000;
+        // $mainData->setRatelimiter($identifier, $perSeconds, 3);
+
+        // // Test execQuery
+        // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
+        // $data = $mainData::table($this->table)->execQuery($sql, [], false, false, true);
+        // dd($data);
+
+        // // Testing Regenerate SessioId
+        // $oldSessionId = session_id();
+        // $headers = bp_session_regenerate_id($oldSessionId);
+        // setHeaders($headers);
+
+        // Test Session
+        // Session::set('jwtId', generateUlid());
+        // dd(Session::get('jwtId'));
+
+
+        // // Test Set Custom connection
+        // $driver = 'mysql';
+        // $dbname = 'backend_php';
+        // $host = '127.0.0.1';
+        // $port = '3306';
+        // $username = 'root';
+        // $password = '';
+        // $options = [];
+        // $this->setPDO(null);
+        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);        
+        // $this->setPDO($pdo);
+        // $this->pdo = $pdo;
+        // $this->table = "assets";
+        // $selectCols = $cols ?? '*';
+        // $sql = 'SELECT '.$selectCols.' FROM '.$this->table.' WHERE id = ? LIMIT 1';
+        // $result = $this->execQuery($sql, [$id ?? 1], false, true, false);
+        // dd($result, true);
+
+        // dd($request, true);
+        // dd(config('app.url'), true);
+
+
+        // // Test - Pagination
+        // $page = $request['page'] ?? 1;
+        // $limit = $request['limit'] ?? 10;
+        // // $mainData->table = 'assets';
+        // // Query dasar
+        // $query = "SELECT * FROM ".$this->table." ORDER BY hire_date DESC";
+        // // Panggil fungsi paginate
+        // // $mainData->limitToStream = 1000;
+        // $result = $mainData->paginate($query, [], $page, $limit);
+        // dd($result, true);
+
+        // // Test - Pagination 2
+        // $page = $request['page'] ?? 1;
+        // $limit = $request['limit'] ?? 10;
+        // // $statsData->table = 'assets';
+        // // Query dasar
+        // $query = "SELECT * FROM ".$statsData->table." ORDER BY to_date DESC";
+        // // Panggil fungsi paginate
+        // $result = $statsData->paginate($query, [], $page, $limit);
+        // dd($result, true);
+        
+        
+        // // Cache Query
+        // $page = $request['page'] ?? 1;
+        // $key = 'cache_index_'.$page;
+        // $sql = 'SELECT * FROM '.$this->table.' LIMIT 10';
+        // $cacheData = $mainData->getCachedData($key, $sql, [], 600);
+        // dd($cacheData, true);
 
         // Cache data
         $cache = new \App\Core\Support\Cache();

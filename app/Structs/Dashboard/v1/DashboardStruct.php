@@ -32,10 +32,10 @@ class DashboardStruct extends BaseModel {
         // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
         
-        // Set PDO connection
-        $this->pdo = $conn;
+        // // Set PDO connection
+        // $this->pdo = $conn;
     }
 }
