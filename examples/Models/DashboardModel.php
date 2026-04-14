@@ -15,7 +15,7 @@ use App\Core\Database\Connection;
 class DashboardModel extends DashboardData
 {
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // // Global Set Custom connection
         // $driver = 'mysql';

@@ -63,7 +63,7 @@ class AuthStruct extends BaseModel {
     #[SchemaProperty(description: 'User Profile URL', omitempty: true, custom: 'url')]
     public string $default_url;
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // // Global Set Custom connection
         // $driver = 'mysql';

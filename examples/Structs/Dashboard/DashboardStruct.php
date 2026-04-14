@@ -26,7 +26,7 @@ class DashboardStruct extends BaseModel {
     #[SchemaProperty(description: 'Website URL', custom: 'url')]
     public string $website;
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // // Global Set Custom connection
         // $driver = 'mysql';

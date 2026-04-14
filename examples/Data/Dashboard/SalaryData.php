@@ -19,7 +19,7 @@ class SalaryData extends DashboardData {
      */
     protected static $tableM = "salaries";
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
         // // Global Set Custom connection
         // $driver = 'mysql';
