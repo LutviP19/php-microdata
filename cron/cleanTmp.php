@@ -56,8 +56,8 @@ cleanTmpFiles($tmpDir, 1);
 
 // Clean Session
 $tmpDir = storage_path('/framework/sessions');
-cleanTmpFiles($tmpDir, 1);
+cleanTmpFiles($tmpDir, 0);
 
 // Clean Cache
 $tmpDir = storage_path('/framework/cache');
-cleanTmpFiles($tmpDir, 1);
+cleanTmpFiles($tmpDir, 0);

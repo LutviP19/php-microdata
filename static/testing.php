@@ -130,6 +130,12 @@ if($limit >= $maxLimitToRender) {
         // Re-throw agar error detail (seperti typo function) muncul di log global
         throw $e;
     } finally {
+        // 2. Hapus referensi variabel besar
+        unset($chunkData, $mainData);
+        
+        // 3. Paksa PHP Engine membuang sampah memori
+        gc_collect_cycles();
+        
         exit;
     }
 } else {
