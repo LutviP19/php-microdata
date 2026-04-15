@@ -2,11 +2,13 @@
 
 ### Build your micro system with PHP8 and FFi support, ready to up and running with FrankenPHP
 
+#### NOTES: Master branch is still in development and maybe unstable for your local system, because i am was upgraded the minimum requirement of PHP to version 8.5, please use this branch to start your development and explore php-microdata features. (Master branch will ready soon and will set as default branch)
+
 #### How to run: please read DEV.txt
 
 #### Testing Results: please read ./test/TEST.txt or ./test/TEST_SUMMARY.json
 
-##### Requirements: PHP 8.4+, Golang go1.26.1, OS: Linux/Mac
+##### Requirements: PHP 8.4+, Golang go1.26.1, Rust rustc 1.94.1 OS: Linux/Mac
 
 ### Youtube Video - Basic Source
 [![Video](https://img.youtube.com/vi/rmiG0al8nWE/0.jpg)](https://youtu.be/rmiG0al8nWE)
