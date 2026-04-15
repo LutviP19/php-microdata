@@ -18,10 +18,20 @@ class SalaryData extends DashboardData {
      */
     protected static $tableM = "salaries";
 
-    public function __construct(?PDO $pdo = null)
-    {        
+    public function __construct(?PDO $pdo = null, array $options = [])
+    {
+        // Global Set Custom connection
+        $driver = 'mysql';
+        $dbname = 'employees';
+        $host = '127.0.0.1';
+        $port = '3306';
+        $username = 'root';
+        $password = '';
+        
+        $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
+        
         // Default connection
-        parent::__construct($pdo);
+        parent::__construct($conn);
 
         
         // // Set Custom PDO connection

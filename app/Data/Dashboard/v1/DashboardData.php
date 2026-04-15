@@ -18,8 +18,8 @@ class DashboardData extends DashboardStruct {
      *
      * @var string
      */
-    // protected static $tableM = "users";
-    protected static $tableM = "employees";
+    protected static $tableM = "users";
+    // protected static $tableM = "employees";
 
     public function __construct(?PDO $pdo = null)
     {
@@ -27,11 +27,6 @@ class DashboardData extends DashboardStruct {
         $conn = $pdo ?? Connection::make();
         $conn = $pdo;
         parent::__construct($conn);
-
-        
-        // // Set PDO connection
-        // $this->pdo = $conn;
-        $this->setPDO($conn);
 
         // Set default table
         $this->table = self::$tableM;
@@ -42,6 +37,7 @@ class DashboardData extends DashboardStruct {
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
         $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10";
         $result = self::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
+        // dd($this->table);
         // dd($result, true);
         return $result;
     }

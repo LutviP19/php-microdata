@@ -13,8 +13,8 @@ $cache = new \App\Core\Support\Cache();
 
 $request = $_GET;
 // Ambil data paginate result dari cache selama 5 menit
-$page = $request['page'] ?? 3;
-$limit = (int) $request['limit'] ?? 50; // total data perpage
+$page = (int) ($request['page'] ?? 3);
+$limit = (int) ($request['limit'] ?? 50); // total data perpage
 
 $id = $request['id'] ?? null;
 

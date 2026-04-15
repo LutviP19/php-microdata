@@ -21,13 +21,10 @@ class AuthModel extends AuthData
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
-        // Set PDO connection
-        $this->pdo = $conn;
-
-        // Middleware - Model for API Only
-        if(!is_json_request() || !expects_json()) {
-            dd('KO');
-        }
+        // // Middleware - Model for API Only
+        // if(!is_json_request() || !expects_json()) {
+        //     dd('KO');
+        // }
     }
 
     public function index(?array $request = [])
@@ -41,8 +38,8 @@ class AuthModel extends AuthData
         $cache = new \App\Core\Support\Cache();
 
         // Ambil data untuk paginate result
-        $page = $request['page'] ?? 1;
-        $limit = $request['limit'] ?? 10; // total data perpage
+        $page = (int) ($request['page'] ?? 1);
+        $limit = (int) ($request['limit'] ?? 10); // total data perpage
 
 
         // Ambil data stats dari cache selama 5 menit

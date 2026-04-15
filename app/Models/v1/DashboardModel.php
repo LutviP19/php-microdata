@@ -19,9 +19,6 @@ class DashboardModel extends DashboardData
         // Use Default connection
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
-
-        // // Set PDO connection
-        // $this->pdo = $conn;
     }
 
     public function index(?array $request = [])
@@ -107,18 +104,22 @@ class DashboardModel extends DashboardData
         $cache = new \App\Core\Support\Cache();
 
         // Ambil data paginate result dari cache selama 5 menit
-        $page = $request['page'] ?? 1;
-        $limit = $request['limit'] ?? 10; // total data perpage
+        $page = (int) ($request['page'] ?? 1);
+        $limit = (int) ($request['limit'] ?? 10); // total data perpage
 
         // Ambil data stats dari cache selama 5 menit
-        // dd();
-        $dataStats = $cache->remember('dashboard_index', function() use ($statsData) {
+        $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
             return $statsData->getAllDataSalaries();
         }, 300);
+        // dd($dataStats);
 
+
+        // Testing Data
+        // dd($this->getAllData(), true); // DashboardData::class
+        // dd($mainData->getAllData(), true); // EmployeeData::class
 
         // Query Utama
-        $query = "SELECT * FROM ".$this->table." ORDER BY hire_date DESC";
+        $query = "SELECT * FROM ".$mainData->table." ORDER BY hire_date DESC";
 
         // Set limit agar bisa auto Stream
         $mainData->limitToStream = 100;
@@ -129,7 +130,7 @@ class DashboardModel extends DashboardData
         } else {            
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
             $queryString = md5($cleanQuery);
-            $cacheKeyId = "dashboard_data:{$this->table}:" . $queryString . ":p{$page}:l{$limit}";
+            $cacheKeyId = "dashboard_data:{$mainData->table}:" . $queryString . ":p{$page}:l{$limit}";
 
             $dataDashboard = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
                 return $mainData->paginate($query, [], $page, $limit);

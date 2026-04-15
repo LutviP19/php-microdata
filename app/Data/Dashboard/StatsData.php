@@ -19,7 +19,7 @@ class StatsData extends DashboardData {
      */
     protected static $tableM = "employees";
 
-    public function __construct(?PDO $pdo = null)
+    public function __construct(?PDO $pdo = null, array $options = [])
     {
         // Global Set Custom connection
         $driver = 'mysql';
@@ -28,11 +28,11 @@ class StatsData extends DashboardData {
         $port = '3306';
         $username = 'root';
         $password = '';
-        $options = [];
-        $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
+        
+        $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
-        parent::__construct($pdo);
+        parent::__construct(conn);
         
         // Set default table
         $this->table = self::$tableM;

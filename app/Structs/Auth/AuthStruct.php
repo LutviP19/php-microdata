@@ -71,8 +71,5 @@ class AuthStruct extends BaseModel {
         // Default connection
         $conn = $pdo ?: Connection::make();
         parent::__construct($conn);
-        
-        // Set PDO connection
-        $this->pdo = $conn;
     }
 }

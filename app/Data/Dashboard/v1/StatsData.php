@@ -30,10 +30,10 @@ class StatsData extends DashboardData {
         $password = '';
 
         // dd($options);
-        $pdo = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
+        $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
-        parent::__construct($pdo);
+        parent::__construct($conn);
         
         // Set default table
         $this->table = static::$tableM;

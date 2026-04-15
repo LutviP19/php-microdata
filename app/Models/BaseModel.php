@@ -28,9 +28,6 @@ class BaseModel extends Model
     {
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
-
-        // Set PDO connection
-        $this->pdo = $conn;
     }
 
     protected function setRatelimiter($identifier, $perSeconds = 120, $limit = 10)

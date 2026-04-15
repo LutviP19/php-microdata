@@ -26,10 +26,6 @@ class AuthData extends AuthStruct {
         $conn = $pdo ?: Connection::make();
         parent::__construct($conn);
 
-        
-        // Set PDO connection
-        $this->pdo = $conn;
-
         // Set default table
         $this->table = self::$tableM;
     }
