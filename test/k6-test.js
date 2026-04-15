@@ -1,35 +1,35 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
-// Simulasi: 50 user langsung hit server sejak detik pertama sampai detik akhir.
+// Simulation: 50 users immediately hit the server from the first second to the last second.
 export const options = {
     vus: 100,           // 50 concurrent users
     duration: '30s',   // for 30 seconds
     // duration: '5m',   // for 5 minutes
 };
 
-// // Simulasi: Trafik Dinamis (comment "options" diatas untuk diterapkan di simulasi testing)
+// // Simulation: Dynamic Traffic (comment "options" above to be applied in simulation testing)
 // export const options = {
 //     stages: [
-//         { duration: '30s', target: 20 }, // Ramp-up: dari 1 ke 20 user dalam 30 detik
-//         { duration: '1m', target: 50 }, // Ramp-up: dari 20 ke 50 user dalam 1 menit
-//         { duration: '3m', target: 50 }, // Stay: bertahan di 50 user selama 3 menit
-//         { duration: '30s', target: 0 },  // Ramp-down: turun perlahan ke 0 (graceful stop)
+//         { duration: '30s', target: 20 }, // Ramp-up: from 1 to 20 users in 30 seconds
+//         { duration: '1m', target: 50 }, // Ramp-up: from 20 to 50 users in 1 minute
+//         { duration: '3m', target: 50 }, // Stay: stay at 50 users for 3 minutes
+//         { duration: '30s', target: 0 },  // Ramp-down: slow down to 0 (graceful stop)
 //     ],
 // };
 
 export default function () {
     const url = 'http://localhost:8000/api/v1/dashboard'; // Change to your endpoint
     const payload = JSON.stringify({
-        title: 'JSON data <script>document.print</script>',
+        title: 'JSON data <script>document.print</script>', // Let's make sanitize refine this
         tag_html: {div: '<div onclick=\'submitError()\'>Submit</div>'},
         page: '1',
         offset: '0',
-        limit: 10000, // Change Limit to real apps paging system (1000 just for stress testing, usually between 10 - 100)
+        limit: 2000, // Change Limit to real apps paging system (1000+ just for stress testing, usually between 10 - 100)
         float: 1.091,
         age: '18',
         username: 'lutvi',
-        email: 'lutvi@demo.local',
+        email: 'lutvi@demo.local', // Change to test invalid email
         website: 'http://demo.local:8000/dashboard/'
     });
 
