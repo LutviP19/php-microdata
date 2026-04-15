@@ -59,20 +59,24 @@ class DataEngine
     // streamAll (Generator)
     public function streamAll(): \Generator
     {
-        $count = $this->getCount();
+        try {
+            $count = $this->getCount();
 
-        for ($i = 0; $i < $count; $i++) {
-            $ptr = $this->ffi->get_item_at($i);
-            
-            if ($ptr !== null) {
-                $jsonLine = FFI::string($ptr);
-                $this->ffi->free_rust_string($ptr); // Langsung bebas!
-
-                yield json_decode($jsonLine, true);
+            for ($i = 0; $i < $count; $i++) {
+                $ptr = $this->ffi->get_item_at($i);
                 
-                // Opsional: bersihkan memori PHP per baris
-                unset($jsonLine);
+                if ($ptr !== null) {
+                    $jsonLine = FFI::string($ptr);
+                    $this->ffi->free_rust_string($ptr); // Langsung bebas!
+
+                    yield json_decode($jsonLine, true);
+                    
+                    // Opsional: bersihkan memori PHP per baris
+                    unset($jsonLine);
+                }
             }
+        } finally {
+            $this->ffi->clear_data();
         }
     }
 

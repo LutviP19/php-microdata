@@ -3,6 +3,11 @@
     # Global options
     frankenphp {
         num_threads 3  # Sets the number of PHP threads to 3
+
+        php_ini {
+            memory_limit 1024M
+            max_execution_time 15
+        }
     }
 
     servers {
