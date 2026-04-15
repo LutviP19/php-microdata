@@ -1,8 +1,23 @@
 <div class="max-w-4xl mx-auto">
     <header class="mb-8">
-        <h1 class="text-3xl font-bold">System Log Monitoring</h1>
-        <p class="text-gray-400 mt-2">Memantau eksekusi task scheduler secara real-time.</p>
+        <h1 class="text-3xl font-bold">System Monitoring</h1>
+        <p class="text-gray-400 mt-2">Memantau status sistem secara real-time.</p>
     </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8" 
+        id="service-status-container"
+        hx-get="<?= url('service-status'); ?>" 
+        hx-trigger="every 5s"
+        hx-swap="innerHTML">
+        
+        <div class="animate-pulse flex space-x-4 bg-gray-800 p-4 rounded-xl border border-gray-700">
+            <div class="rounded-full bg-gray-700 h-10 w-10"></div>
+            <div class="flex-1 space-y-6 py-1">
+                <div class="h-2 bg-gray-700 rounded"></div>
+            </div>
+        </div>
+        <p class="text-gray-500 italic text-sm">Menghubungkan ke layanan...</p>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">

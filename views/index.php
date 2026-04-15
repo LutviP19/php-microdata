@@ -41,7 +41,7 @@
             <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-400 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
-            <span class="text-xl font-bold tracking-wider text-indigo-400 uppercase">Cron<span class="text-white text-sm font-light italic">Job</span></span>
+            <span class="text-xl font-bold tracking-wider text-indigo-400 uppercase">PHP<span class="text-white text-sm font-light italic">Microdata</span></span>
         </div>
 
         <div class="flex items-center space-x-4">
