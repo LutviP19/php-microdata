@@ -18,11 +18,16 @@ class AuthModel extends AuthData
     public function __construct(?PDO $pdo = null)
     {
         // Use Default connection
-        $conn = $pdo ?: Connection::make();
+        $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
         // Set PDO connection
         $this->pdo = $conn;
+
+        // Middleware - Model for API Only
+        if(!is_json_request() || !expects_json()) {
+            dd('KO');
+        }
     }
 
     public function index(?array $request = [])

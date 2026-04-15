@@ -39,7 +39,7 @@ if (isset($router[$page])) {
     $normalPath = $router[$page];
     $resolved = $loader->resolve(formatRoutePath($normalPath)); // Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
 } else {
-    $customPath = $router[$requestPath];
+    $customPath = $router[$requestPath] ?? null;
     if (is_numeric($lastSegment)) {
         $fixReqPath = str_replace("/{$lastSegment}", "", $requestPath);
         $customPath = $router[$fixReqPath];
@@ -77,6 +77,13 @@ if ($resolved && file_exists($resolved['modelPath'])) {
 
         // Jalankan proses request
         $page = $resolved['page'];
+
+        // Middleware Model for API Only
+        if(!is_json_request() || !expects_json()) {
+            if(!file_exists(realpath(BASEPATH . "/views/partial/" . $page . ".php")))
+            $loader->notFoundHandler($page, $modelPath);
+        }
+
         include_once BASEPATH . '/app/Core/process_request.php';
     } else {
         // Handle 404
