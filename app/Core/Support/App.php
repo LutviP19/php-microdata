@@ -198,7 +198,7 @@ class App
         }
 
         // Validation errors
-        if(isset($result['errors'])) {
+        if(isset($result['errors']) && is_json_request() && handle_json_request()) {
             json_response([], 406, 'Validation errors', $result['errors']);
             die();
         }

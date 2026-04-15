@@ -32,7 +32,7 @@ class StatsData extends DashboardData {
         $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         
         // Default connection
-        parent::__construct(conn);
+        parent::__construct($conn);
         
         // Set default table
         $this->table = self::$tableM;
