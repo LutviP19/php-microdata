@@ -20,10 +20,10 @@ class EventDispatcher {
     private $redis = null;
     private $useRedis = false;
 
-    public function __construct(PDO $db = null) {
+    public function __construct(?PDO $db = null) {
         
         // Set PDO connection or use default connection
-        $this->db = $db ?: Connection::make();
+        $this->db = $db ?? Connection::make();
         
         // Set Default Table
         $this->dbtable = 'event_queue';
