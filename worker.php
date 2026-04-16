@@ -63,10 +63,10 @@ $server->addWorker(
             // append the output directly to the log file (opsi 1)
             // $logFile = BASEPATH . '/cron_log.txt';
             $logFile = logs_path('cron_log.txt');
-            system("php $source_path >> $logFile", $return_code);
+            system("php " . escapeshellarg($source_path) . " --iscron >> " . escapeshellarg($logFile) . " 2>&1", $return_code);
 
             // // or display the output directly to the console||browser (opsi 2)
-            // $last_line = system("php $source_path", $return_code);
+            // $last_line = system("php " . escapeshellarg($source_path), $return_code);
             // echo "Last line of output: $last_line" . PHP_EOL;
 
             echo "Return code: $return_code" . PHP_EOL;
@@ -85,15 +85,15 @@ $server->addWorker(
             // Execute the command (Linux/macOS) or (Windows)
             $source_path = BASEPATH . '/worker-event.php';
             
-            // // append the output directly to the log file (opsi 1)
-            // $logFile = logs_path('events_log.txt');
-            // system("php $source_path >> $logFile", $return_code);
+            // append the output directly to the log file (opsi 1)
+            $logFile = logs_path('cron_log.txt');
+            system("php " . escapeshellarg($source_path) . " --iscron >> " . escapeshellarg($logFile) . " 2>&1", $return_code);
 
-            // or display the output directly to the console||browser (opsi 2)
-            $last_line = system("php $source_path", $return_code);
-            echo "Last line of output: $last_line" . PHP_EOL;
+            // // or display the output directly to the console||browser (opsi 2)
+            // $last_line = system("php " . escapeshellarg($source_path), $return_code);
+            // echo "Last line of output: $last_line" . PHP_EOL;
 
-            echo "Return code: $return_code" . PHP_EOL;
+            // echo "Return code: $return_code" . PHP_EOL;
         },
     ),
 );

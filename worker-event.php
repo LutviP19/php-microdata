@@ -38,6 +38,11 @@ $lockFile = null;
 $once = true; // Set true jika ingin mode Cron/Once
 $lockPath = BASEPATH . '/worker.lock';
 
+if($once && $is_cron) {
+    $start = microtime(true);
+    echo "[" . date('Y-m-d H:i:s') . "] Run Worker Events..." . PHP_EOL;
+}
+
 // Setelah ini, ListenerRegistry sudah penuh dengan callback dari folder App/Listeners
 try {
     // --- Mencegah Zombie Process (Locking) ---
@@ -95,4 +100,12 @@ try {
         
         echo "[*] Lock released and worker finished." . PHP_EOL;
     }
+
+    if($once && $is_cron) {
+        $end = microtime(true);
+        $time = $end - $start;
+        echo "Worker Events Processing took: {$time} seconds" . PHP_EOL;
+        echo "End Worker Events..." . PHP_EOL;
+    }
+
 }

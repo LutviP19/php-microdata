@@ -15,6 +15,14 @@ if (!defined('BASEPATH_FFI')) {
     define('BASEPATH_FFI', BASEPATH . '/ffi');
 }
 
+/**
+ * Deteksi apakah script dijaankan dari CLI.
+ */
+if (!function_exists('is_cli')) {
+    function is_cli(): bool {
+        return PHP_SAPI === 'cli' || defined('STDIN');
+    }
+}
 
 /**
  * Sanitasi JSON berdasarkan tipe data.

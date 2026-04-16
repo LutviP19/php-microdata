@@ -1,10 +1,26 @@
+<style>
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+    .terminal-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 16px;
+        background-color: #4ade80; /* emerald-400 */
+        margin-left: 1px;
+        padding-bottom: 4px;
+        animation: blink 1s step-end infinite;
+        vertical-align: middle;
+    }
+</style>
 <div class="max-w-4xl mx-auto pb-8">
     <header class="mb-2">
         <h1 class="text-3xl font-bold">System Monitoring</h1>
         <p class="text-gray-400 mt-2">Memantau status sistem secara real-time.</p>
     </header>
 
-    <div class="space-y-4 mb-8">
+    <div class="space-y-4 mb-5">
         <div class="flex items-center justify-between">
             <div id="status-spinner" class="htmx-indicator">
                 <svg class="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
@@ -26,18 +42,18 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+        <div class="bg-gray-800 p-2 rounded-xl border border-gray-700">
             <p class="text-sm text-gray-400">Total Run</p>
-            <p class="text-2xl font-bold">1,284</p>
+            <p class="text-1xl font-bold">1,284</p>
         </div>
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+        <div class="bg-gray-800 p-2 rounded-xl border border-gray-700">
             <p class="text-sm text-gray-400">Errors</p>
-            <p class="text-2xl font-bold text-red-500">0</p>
+            <p class="text-1xl font-bold text-red-500">0</p>
         </div>
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+        <div class="bg-gray-800 p-2 rounded-xl border border-gray-700">
             <p class="text-sm text-gray-400">Next Sync</p>
-            <p class="text-2xl font-bold text-indigo-400">05:00</p>
+            <p class="text-1xl font-bold text-indigo-400">05:00</p>
         </div>
     </div>
 
@@ -50,11 +66,12 @@
         </div>
 
         <div id="log-container" hx-get="<?= url('get_logs'); ?>" hx-trigger="load, every 65s" hx-swap="innerHTML"
-            hx-on::after-settle="this.scrollTo({top: this.scrollHeight, behavior: 'smooth'})"
-            class="h-96 overflow-y-auto p-4 font-mono text-xs md:text-sm text-green-400 leading-none space-y-0.5 bg-black/90 rounded-xl border border-gray-800 shadow-inner">
+            hx-on::after-settle="this.scrollTo({top: this.scrollHeight, behavior: 'smooth'}); appendCursor(this);"
+            class="h-96 overflow-y-auto p-4 font-mono text-xs md:text-sm text-green-400 leading-none space-y-0.5 bg-black/90 border border-gray-800 shadow-inner">
             <div class="flex items-center space-x-2">
                 <span class="animate-pulse inline-block w-2 h-2 bg-green-500 rounded-full"></span>
                 <span>Menghubungkan ke stream server...</span>
+                <span class="terminal-cursor"></span>
             </div>
         </div>
     </div>
@@ -64,3 +81,19 @@
         <button class="hover:text-white transition">Clear Logs</button>
     </div>
 </div>
+<script>
+    // Fungsi untuk memastikan kursor selalu ada di baris terakhir setelah HTMX update
+    function appendCursor(el) {
+        // Hapus kursor lama jika ada
+        const oldCursor = el.querySelector('.terminal-cursor');
+        if (oldCursor) oldCursor.remove();
+        
+        // Tambahkan kursor baru di akhir konten
+        const cursor = document.createElement('span');
+        cursor.className = 'terminal-cursor';
+        el.appendChild(cursor);
+
+        // PAKSA MENTOK: Scroll agar kursor ini terlihat di layar
+        cursor.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+</script>

@@ -53,3 +53,9 @@ use App\Core\Support\App;
 App::register('config', require BASEPATH . '/config/app.php');
 App::register('routing_external_api', require BASEPATH . '/config/external-api.php');
 // dd(App::get('routing_external_api'));
+
+// Detect flag argument --iscron
+$is_cron = false;
+if (isset($argv) && in_array('--iscron', $argv)) {
+    $is_cron = true;
+}

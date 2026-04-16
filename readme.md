@@ -11,7 +11,7 @@
 ##### Database sample: [employees](https://github.com/datacharmer/test_db)
 
 ### Youtube Video - Basic Source
-[![Video](https://img.youtube.com/vi/rmiG0al8nWE/0.jpg)](https://youtu.be/rmiG0al8nWE)
+[![Video](public/Screenshot-monitoring.png)](https://youtu.be/rmiG0al8nWE)
 
 ### Few Shot Ideas
 * PHP and Go collaboration can be achieved primarily through PHP's FFI (Foreign Function Interface) or by embedding PHP within Go using FrankenPHP, with the latter being the modern, supported approach.

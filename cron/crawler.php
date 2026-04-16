@@ -71,12 +71,22 @@ $ffi->FreeString($ptr);
 $end = microtime(true);
 $time = $end - $start;
 
-echo "PHP-FFI Go Webcrawler result:" . PHP_EOL;
-if ($rawMode) {
-    echo $result . PHP_EOL; // Test raw-ouput
+// Logika cek output command line
+if (!$is_cron) {
+    echo "PHP-FFI Go Webcrawler result:" . PHP_EOL;
+
+    if ($rawMode) {
+        echo $result . PHP_EOL; // Test raw-ouput
+    } else {
+        $jsonResult = json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        echo $jsonResult . PHP_EOL;
+    }
 } else {
-    $jsonResult = json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-    echo $jsonResult . PHP_EOL;
+
+    if (!$rawMode) {
+        $count = count($result);
+        echo "Crawled items: {$count}" . PHP_EOL;
+    }
 }
 echo "It took {$time} seconds to finished." . PHP_EOL;
-echo "[" . date('Y-m-d H:i:s') . "] End Webcrawler..." . PHP_EOL;
+echo "End Webcrawler..." . PHP_EOL;
