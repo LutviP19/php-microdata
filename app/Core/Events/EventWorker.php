@@ -32,10 +32,10 @@ class EventWorker
     protected $timePerListener = 5; // Berikan waktu eksekusi 5 detik per listener (bisa disesuaikan)
     protected $baseTimeout = 30;    // Timeout dasar minimal
 
-    public function __construct(PDO $db = null, array $redisConfig = [])
+    public function __construct(?PDO $db = null, array $redisConfig = [])
     {
         // Set PDO connection or use default connection
-        $this->db = $db ?: Connection::make();
+        $this->db = $db ?? Connection::make();
         // Tanpa ERRMODE_EXCEPTION, PDO tidak akan melempar Exception saat query gagal
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
