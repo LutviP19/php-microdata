@@ -30,12 +30,18 @@ if (file_exists($logFile)) {
             }
         }
 
-        // Baca sisa file dari posisi tersebut ke bawah
-        // echo "<div class='leading-none font-mono text-xs md:text-sm bg-black text-gray-300'>";
-        echo "<div class='leading-none font-mono text-xs md:text-sm'>";
-        echo "<pre>" . htmlspecialchars(stream_get_contents($file)) . "</pre>";
-        echo "</div>";
-        
+        if(!$count) {
+            echo "<div class='leading-none font-mono text-xs md:text-sm'>";
+            echo "<pre>Belum ada log...</pre>";
+            echo "</div>";
+        } else {
+            // Baca sisa file dari posisi tersebut ke bawah
+            // echo "<div class='leading-none font-mono text-xs md:text-sm bg-black text-gray-300'>";
+            echo "<div class='leading-none font-mono text-xs md:text-sm'>";
+            echo "<pre>" . htmlspecialchars(stream_get_contents($file)) . "</pre>";
+            echo "</div>";
+        }
+
         fclose($file);
     }
     
@@ -43,10 +49,16 @@ if (file_exists($logFile)) {
     if($mode === 'tail') {
         $content = shell_exec("tail -n {$maxLines} " . escapeshellarg($logFile));
 
-        // echo "<pre>" . nl2br(htmlspecialchars($content)) . "</pre>";
-        echo "<div class='leading-none font-mono text-xs md:text-sm'>";
-        echo "<pre>" . htmlspecialchars($content) . "</pre>";
-        echo "</div>";
+        if(is_null($content)) {
+            echo "<div class='leading-none font-mono text-xs md:text-sm'>";
+            echo "<pre>Belum ada log...</pre>";
+            echo "</div>";
+        } else {
+            // echo "<pre>" . nl2br(htmlspecialchars($content)) . "</pre>";
+            echo "<div class='leading-none font-mono text-xs md:text-sm'>";
+            echo "<pre>" . htmlspecialchars($content) . "</pre>";
+            echo "</div>";
+        }
     }
 
 } else {
