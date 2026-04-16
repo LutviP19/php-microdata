@@ -1,22 +1,17 @@
 package main
 
-/*
-#include <stdlib.h>
-*/
 import "C"
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 	"time"
-	"unsafe"
-
-	"github.com/bytedance/sonic"
 )
 
-// --- STRUKTUR DATA ---
-
+// Struktur input dari PHP
 type RequestConfig struct {
 	Method  string            `json:"method"`
 	URL     string            `json:"url"`
@@ -29,39 +24,23 @@ type MultiRequestConfig struct {
 	Requests []RequestConfig `json:"requests"`
 }
 
+// Struktur output ke PHP
 type ResponseData struct {
 	Status int    `json:"status"`
 	Body   string `json:"body"`
 	Error  string `json:"error"`
 }
 
-// --- HELPER MEMORI ---
-// Helper untuk membuat response JSON C-String yang aman
+// Helper untuk membuat response JSON C-String
 func createJsonResponse(data interface{}) *C.char {
-	jsonRes, _ := sonic.Marshal(data)
-	size := len(jsonRes)
-
-	// Alokasi memori di C heap (tambah 1 untuk null terminator)
-	ptr := C.malloc(C.size_t(size + 1))
-	if ptr == nil {
-		return nil
-	}
-
-	// Gunakan unsafe.Slice untuk memetakan pointer C ke slice Go tanpa copy tambahan
-	// Lalu copy data jsonRes ke sana
-	cSlice := unsafe.Slice((*byte)(unsafe.Pointer(ptr)), size+1)
-	copy(cSlice, jsonRes)
-	cSlice[size] = 0 // Null terminator string C
-
-	return (*C.char)(ptr)
+	jsonRes, _ := json.Marshal(data)
+	return C.CString(string(jsonRes))
 }
-
-// --- EXPORTED FUNCTIONS ---
 
 //export ExecuteRequest
 func ExecuteRequest(jsonInput *C.char) *C.char {
 	var cfg RequestConfig
-	if err := sonic.Unmarshal([]byte(C.GoString(jsonInput)), &cfg); err != nil {
+	if err := json.Unmarshal([]byte(C.GoString(jsonInput)), &cfg); err != nil {
 		return createJsonResponse(ResponseData{Error: "Invalid JSON Input"})
 	}
 
@@ -72,24 +51,17 @@ func ExecuteRequest(jsonInput *C.char) *C.char {
 //export ExecuteMultiRequest
 func ExecuteMultiRequest(jsonInput *C.char) *C.char {
 	var config MultiRequestConfig
-	if err := sonic.Unmarshal([]byte(C.GoString(jsonInput)), &config); err != nil {
+	if err := json.Unmarshal([]byte(C.GoString(jsonInput)), &config); err != nil {
 		return createJsonResponse([]ResponseData{{Error: "Invalid JSON Input"}})
 	}
 
 	results := make([]ResponseData, len(config.Requests))
-
-	// Batasi concurrency agar tidak overload (Worker Pool)
-	maxConcurrency := 50
-	sem := make(chan struct{}, maxConcurrency)
 	var wg sync.WaitGroup
 
 	for i, reqCfg := range config.Requests {
 		wg.Add(1)
-		sem <- struct{}{} // Ambil slot worker
-
 		go func(index int, c RequestConfig) {
 			defer wg.Done()
-			defer func() { <-sem }() // Lepas slot worker
 			results[index] = performRequest(c)
 		}(i, reqCfg)
 	}
@@ -98,7 +70,7 @@ func ExecuteMultiRequest(jsonInput *C.char) *C.char {
 	return createJsonResponse(results)
 }
 
-// --- CORE LOGIC (STREAMING FILTER) ---
+// Core function dengan error handling yang lebih detail
 func performRequest(cfg RequestConfig) ResponseData {
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 30
@@ -110,7 +82,7 @@ func performRequest(cfg RequestConfig) ResponseData {
 
 	req, err := http.NewRequest(cfg.Method, cfg.URL, bytes.NewBuffer([]byte(cfg.Body)))
 	if err != nil {
-		return ResponseData{Error: fmt.Sprintf("[Go Engine] Setup Error: %v", err)}
+		return ResponseData{Error: fmt.Sprintf("[Go Engine] Request Setup Error: %v", err)}
 	}
 
 	for k, v := range cfg.Headers {
@@ -119,38 +91,19 @@ func performRequest(cfg RequestConfig) ResponseData {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		// Menangkap timeout atau DNS failure
 		return ResponseData{Error: fmt.Sprintf("[Go Engine] Connection Error: %v", err)}
 	}
 	defer resp.Body.Close()
 
-	// --- PROSES STREAMING UNTUK DATA JUTAAN BARIS ---
-	var filteredResults []map[string]interface{}
-
-	// Inisialisasi Sonic Decoder langsung dari Response Body (Stream)
-	decoder := sonic.ConfigDefault.NewDecoder(resp.Body)
-
-	// Looping melalui elemen array JSON tanpa memuat semua ke RAM
-	for decoder.More() {
-		var item map[string]interface{}
-		if err := decoder.Decode(&item); err != nil {
-			break // Berhenti jika JSON korup atau stream putus
-		}
-
-		// --- FILTERING / AGGREGATION ---
-		// memodifikasi logika filter di sini
-		// Contoh: Ambil semua data tanpa filter, tapi Go yang menghandle stream-nya
-		filteredResults = append(filteredResults, item)
-	}
-
-	// Marshal kembali hasil yang sudah diproses
-	finalBody, err := sonic.Marshal(filteredResults)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ResponseData{Status: resp.StatusCode, Error: "[Go Engine] Marshal Error"}
+		return ResponseData{Status: resp.StatusCode, Error: fmt.Sprintf("[Go Engine] Read Body Error: %v", err)}
 	}
 
 	return ResponseData{
 		Status: resp.StatusCode,
-		Body:   string(finalBody),
+		Body:   string(body),
 	}
 }
 

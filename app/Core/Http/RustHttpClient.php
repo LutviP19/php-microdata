@@ -16,7 +16,7 @@ class RustHttpClient
     private $ffi;
     private $libPath;
 
-    public function __construct(string $libPath = null)
+    public function __construct(?string $libPath = null)
     {
         // Pastikan path menunjuk ke file .so hasil cargo build --release
         $this->libPath = $libPath ?? realpath(BASEPATH_FFI . '/lib/librust_curl_ffi.so');

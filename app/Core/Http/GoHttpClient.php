@@ -17,7 +17,7 @@ class GoHttpClient
     private $libPath;
     private $debug = true;
 
-    public function __construct(string $libPath = null, $debug = null)
+    public function __construct(?string $libPath = null, $debug = null)
     {
         $this->debug = $debug ?? config('app.debug');
         $this->libPath = $libPath ?? realpath(BASEPATH_FFI . '/lib/curlgo.so');
@@ -48,7 +48,7 @@ class GoHttpClient
     {
         try {
             $payload = json_encode([
-                'method'  => strtoupper($method) ?? $options['method'],
+                'method'  => $method ? strtoupper($method) : $options['method'],
                 'url'     => $url ?? $options['url'],
                 'headers' => $options['headers'] ?? [],
                 'body'    => $options['body'] ?? '',
