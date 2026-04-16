@@ -13,6 +13,27 @@
         [x-cloak] { display: none !important; }
     </style>
     <style>
+        /* 1. Desain Global Scrollbar untuk #main-content */
+        #main-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        #main-content::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        #main-content::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 10px;
+            border: 2px solid transparent;
+        }
+        #main-content::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+        /* Firefox Support */
+        #main-content {
+            scrollbar-width: thin;
+            scrollbar-color: #374151 transparent;
+        }
+
         /* Custom scrollbar untuk log agar serasi dengan dark mode */
         #log-container::-webkit-scrollbar {
             width: 8px;
@@ -28,7 +49,7 @@
 </head>
 <body 
     hx-headers='{"X-API-KEY": "<?= str_replace('base64:', '', config('api.key')) ?>"}' 
-    class="bg-gray-900 text-gray-100 font-sans antialiased" 
+    class="bg-gray-900 text-gray-100 font-sans antialiased overflow-hidden" 
     x-data="{ sidebarOpen: false, openLogout: false, userMenuOpen: false, activePage: '<?= $page ?>' }"
     @popstate.window="
         let path = window.location.pathname.split('/').pop();
@@ -170,8 +191,8 @@
             </nav>
         </aside>
 
-        <main class="flex-1 p-6 overflow-y-auto bg-gray-900">
-            <div id="main-content" class="flex-1 overflow-y-auto">
+        <main class="flex flex-col h-screen w-full overflow-hidden bg-gray-900">
+            <div id="main-content" class="flex-1 p-6 pb-10 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                 <?php include BASEPATH . "/views/partial/" . $page . ".php"; ?>
             </div>
         </main>
