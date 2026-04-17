@@ -12,15 +12,20 @@ if (!defined('BASEPATH_FFI')) {
     define('BASEPATH_FFI', BASEPATH . '/ffi');
 }
 
-// error_reporting(E_ALL);
+
 // only level Deprecated & User Deprecated
 error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
+// error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 
 /**
  * Require the composer autoload File.
  */
 require_once BASEPATH .'/vendor/autoload.php';
+
+// Min php version
+ensure_minimum_php_version();
 
 // Muat file .env
 load_env();

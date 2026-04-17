@@ -16,6 +16,36 @@ if (!defined('BASEPATH_FFI')) {
 }
 
 /**
+ * Memastikan lingkungan berjalan di Versi PHP yang sesuai
+ */
+if (!function_exists('ensure_minimum_php_version')) {
+    function ensure_minimum_php_version(string $version = '8.4.0') {
+        if (version_compare(PHP_VERSION, $version, '<')) {
+            $message = "ERROR: PHP $version or higher is required. Current: " . PHP_VERSION;
+            
+            if (PHP_SAPI === 'cli') {
+                fwrite(STDERR, $message . PHP_EOL);
+            } else {
+                http_response_code(500);
+                die($message);
+            }
+            exit(1);
+        }
+    }
+}
+
+/**
+ * Setup Debugging hanya untuk Deprecated
+ */
+if (!function_exists('debug_deprecated_only')) {
+    function debug_deprecated_only() {
+        error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+    }
+}
+
+/**
  * Deteksi apakah script dijaankan dari CLI.
  */
 if (!function_exists('is_cli')) {
@@ -23,6 +53,69 @@ if (!function_exists('is_cli')) {
         return PHP_SAPI === 'cli' || defined('STDIN');
     }
 }
+
+/**
+ * Membaca baris terakhir dari file log (Performa Tinggi)
+ * Pengganti file_get_contents untuk file besar.
+ */
+if (!function_exists('tail_logs')) {
+    function tail_logs(string $filepath, int $lines = 100): string {
+        if (!file_exists($filepath)) return "Log file not found.";
+        
+        // Gunakan tail jika di Linux/Unix untuk kecepatan maksimal
+        if (str_contains(PHP_OS, 'WIN')) {
+            // Fallback untuk Windows (Sederhana)
+            $data = file($filepath);
+            return implode("", array_slice($data, -$lines));
+        }
+        
+        $escaped_path = escapeshellarg($filepath);
+        return (string) shell_exec("tail -n $lines $escaped_path 2>&1");
+    }
+}
+
+/**
+ * Melakukan rotate log jika ukuran file melebihi batas 
+ * dan menghapus backup lama (Auto-Cleanup).
+ * @param string $logFile Path file log utama
+ * @param int $maxSizeBytes Batas ukuran file (default 5MB)
+ * @param int $keepDays Jumlah hari file backup disimpan (default 7 hari)
+ */
+if (!function_exists('rotate_log_if_large')) {
+    function rotate_log_if_large(string $logFile, int $maxSizeBytes = 5242880, int $keepDays = 7) {
+        
+        // 1. PROSES ROTASI (Jika file terlalu besar)
+        if (file_exists($logFile) && filesize($logFile) > $maxSizeBytes) {
+            $backupPath = $logFile . '.' . date('Ymd_His') . '.bak';
+            
+            // Pindahkan file lama ke backup
+            if (rename($logFile, $backupPath)) {
+                touch($logFile);
+                chmod($logFile, 0666);
+            }
+        }
+
+        // 2. AUTO-CLEANUP (Hapus backup yang sudah tua)
+        $logDir = dirname($logFile);
+        $logFileName = basename($logFile);
+        
+        // Cari semua file yang berakhiran .bak yang terkait dengan log ini
+        $backups = glob($logDir . '/' . $logFileName . '.*.bak');
+        
+        if ($backups) {
+            $secondsInDay = 86400;
+            $threshold = time() - ($keepDays * $secondsInDay);
+
+            foreach ($backups as $file) {
+                // Jika waktu modifikasi file lebih lama dari ambang batas
+                if (filemtime($file) < $threshold) {
+                    unlink($file); // Hapus file
+                }
+            }
+        }
+    }
+}
+
 
 /**
  * Sanitasi JSON berdasarkan tipe data.

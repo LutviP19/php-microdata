@@ -63,10 +63,14 @@ $server->addWorker(
             // append the output directly to the log file (opsi 1)
             // $logFile = BASEPATH . '/cron_log.txt';
             $logFile = logs_path('cron_log.txt');
-            system("php " . escapeshellarg($source_path) . " --iscron >> " . escapeshellarg($logFile) . " 2>&1", $return_code);
+            // system("php " . escapeshellarg($source_path) . " --iscron >> " . escapeshellarg($logFile) . " 2>&1", $return_code);
+            $cmd = sprintf("php %s --iscron >> %s 2>&1", escapeshellarg($source_path), escapeshellarg($logFile));
+            system($cmd, $return_code);
 
             // // or display the output directly to the console||browser (opsi 2)
-            // $last_line = system("php " . escapeshellarg($source_path), $return_code);
+            // // $last_line = system("php " . escapeshellarg($source_path), $return_code);
+            // $cmd = sprintf("php %s", escapeshellarg($source_path));
+            // $last_line = system($cmd, $return_code);
             // echo "Last line of output: $last_line" . PHP_EOL;
 
             echo "Return code: $return_code" . PHP_EOL;
@@ -87,13 +91,17 @@ $server->addWorker(
             
             // append the output directly to the log file (opsi 1)
             $logFile = logs_path('cron_log.txt');
-            system("php " . escapeshellarg($source_path) . " --iscron >> " . escapeshellarg($logFile) . " 2>&1", $return_code);
+            // system("php " . escapeshellarg($source_path) . " --iscron >> " . escapeshellarg($logFile) . " 2>&1", $return_code);
+            $cmd = sprintf("php %s --iscron >> %s 2>&1", escapeshellarg($source_path), escapeshellarg($logFile));
+            system($cmd, $return_code);            
 
             // // or display the output directly to the console||browser (opsi 2)
-            // $last_line = system("php " . escapeshellarg($source_path), $return_code);
+            // // $last_line = system("php " . escapeshellarg($source_path), $return_code);
+            // $cmd = sprintf("php %s", escapeshellarg($source_path));
+            // $last_line = system($cmd, $return_code);
             // echo "Last line of output: $last_line" . PHP_EOL;
 
-            // echo "Return code: $return_code" . PHP_EOL;
+            echo "Return code: $return_code" . PHP_EOL;
         },
     ),
 );

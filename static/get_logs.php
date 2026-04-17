@@ -12,6 +12,10 @@ $mode = 'fopen'; // fopen | tail
 
 if (file_exists($logFile)) {
 
+    // --- JALANKAN ROTASI SEBELUM MEMBACA ---
+    // Rotate jika > 2MB, simpan backup selama 3 hari saja agar hemat disk
+    rotate_log_if_large($logFile, 2 * 1024 * 1024, 3);
+
     // PHP - open file
     if($mode === 'fopen') {
         $file = fopen($logFile, 'r');
@@ -47,7 +51,7 @@ if (file_exists($logFile)) {
     
     // Ambil 100 baris terakhir secara instan (tail - Linux Only)
     if($mode === 'tail') {
-        $content = shell_exec("tail -n {$maxLines} " . escapeshellarg($logFile));
+        $content = tail_logs($logFile, $maxLines);
 
         if(is_null($content)) {
             echo "<div class='leading-none font-mono text-xs md:text-sm'>";
