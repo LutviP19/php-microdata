@@ -12,7 +12,9 @@ if (!defined('BASEPATH_FFI')) {
     define('BASEPATH_FFI', BASEPATH . '/ffi');
 }
 
-error_reporting(E_ALL);
+// error_reporting(E_ALL);
+// only level Deprecated & User Deprecated
+error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
 ini_set('display_errors', 1);
 
 /**
