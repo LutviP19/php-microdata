@@ -19,7 +19,7 @@ return [
         'method' => 'GET',
         'url' => 'http://localhost:8000/api/v1/dashboard',
         'headers' => [
-            'User-Agent' => 'PHP-FFI-App',
+            'User-Agent' => 'PHP-Microdata',
             'Content-Type' => 'application/json',
             'X-API-KEY' => str_replace('base64:', '', config('api.key'))
         ]
@@ -28,7 +28,19 @@ return [
         'method' => 'POST',
         'url' => 'http://localhost:8000/api/v1/dashboard',
         'headers' => [
-            'User-Agent' => 'PHP-FFI-App',
+            'User-Agent' => 'PHP-Microdata',
+            'Content-Type' => 'application/json'
+        ]
+    ],
+
+    // Services
+    'ms_enabled_experimental' => [
+        'method' => 'PATCH',
+        'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/experimental-features',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
+            'Accept'        => 'application/json',
             'Content-Type' => 'application/json'
         ]
     ],

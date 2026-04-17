@@ -20,15 +20,15 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 
 $queue_name = 'hello'; // default
-$queue_name = 'crawler_queue'; // custom ffi
-$queue_name = 'payment_queue'; // bootListeners
+// $queue_name = 'crawler_queue'; // custom ffi
+// $queue_name = 'payment_queue'; // bootListeners
 
 $connection = new AMQPStreamConnection(env('MB_HOST', 'localhost'), env('MB_PORT', 5672), env('MB_USERNAME', 'guest'), env('MB_PASSWORD', 'guest'));
 $channel = $connection->channel();
 
 $channel->queue_declare('hello', false, false, false, false);
 
-echo " [*] Waiting for messages. To exit press CTRL+C\n";
+echo " [*] Waiting for messages [{$queue_name }]. To exit press CTRL+C\n";
 
 
 $callback = function (AMQPMessage $msg) {

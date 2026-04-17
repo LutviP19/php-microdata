@@ -10,30 +10,88 @@ https://github.com/datacharmer/test_db
 
 
 Build Directory structure :
+BASIC
 ---------------------------
 mkdir ./cron && 
 mkdir -p ./ffi/source && 
 mkdir ./ffi/lib && 
 mkdir ./public
 
+Build Core Directory structure :
+FRAMEWORK
+--------------------------------
+mkdir ./config && 
+mkdir -p ./app/Core/Database && 
+mkdir -p ./app/Core/Support && 
+mkdir -p ./app/Core/Auth && 
+mkdir -p ./app/Core/Events && 
+mkdir -p ./app/Core/Http && 
+mkdir -p ./app/Core/FFI && 
+mkdir ./app/Helpers && 
+mkdir ./app/Models && 
+mkdir ./app/Structs && 
+mkdir ./app/Data && 
+mkdir ./app/Listeners && 
+mkdir ./static && 
+mkdir -p ./storage/database && 
+mkdir -p ./storage/framework && 
+mkdir -p ./storage/logs && 
+mkdir -p ./views/partial && 
+mkdir -p ./views/elements && 
+mkdir -p ./views/error
 
-Test Go source:
-Make Sure no errors occurred
-----------------------------
-go run ./ffi/source/concurrency.go
-go run ./ffi/source/fibonacci.go
+
+######################################################
+BUILD APP
+######################################################
+
+Migrations Files:
+----------------
+storage/database/migrations/mysql/*.sql
+
+Seeders:
+--------
+storage/database/seeders/mysql/*.sql
 
 
 Build shared Library:
+GO
 ---------------------
 go build -buildmode=c-shared -o ./ffi/lib/concurrency.so ./ffi/source/concurrency.go
 go build -buildmode=c-shared -o ./ffi/lib/fibonacci.so ./ffi/source/fibonacci.go
 
 
+Build shared Library:
+RUST
+---------------------
+cd ffi/source/rust_curl
+cargo build --release
+cp target/release/librust_curl_ffi.so ../../lib/librust_curl_ffi.so
+
+
+######################################################
+LOGGING
+######################################################
+
 Test - Log:
 -----------
 php ./cron/test.php >> ./cron_log.txt
 
+
+Main Error Log:
+(Auto Create)
+---------------
+app 	: storage/logs/app-error.log
+cron 	: storage/logs/worker-error.log
+DB		: storage/logs/error_DB.log
+Encrypt	: storage/logs/error_ENCRYPTION.log
+Queue	: storage/logs/error_RabbitFFI.log
+Events	: storage/logs/error_EventLib.log
+
+
+######################################################
+RUN APP
+######################################################
 
 FrankenPHP:
 # Install FrankenPHP on Linux or macOS
@@ -61,7 +119,6 @@ frankenphp stop
 frankenphp run
 
 
-
 RUN - Worker (terminal 2):
 -------------------------
 php worker.php start
@@ -76,30 +133,35 @@ composer start:all
 composer stop:all 
 
 
-
-Fixing 
-PHP Warning:  cli_set_process_title(): cli_set_process_title had an error: Not initialized correctly
---------------------------------------
-vendor/phpstreamserver/core/src/Internal/MasterProcess.php - line 163
-Replace : \cli_set_process_title TO @cli_set_process_title
-
 Optional without FrankenPHP
 RUN - Web (new terminal):
 ----------------------
 php -S localhost:8000  -t public/
 
-OR Pulish to network:
-------------------
+OR Publish to network:
+---------------------
 php -S 0.0.0.0:8000  -t public/
 
 
 Update composer :
 -----------------
 composer dump-autoload -o
+composer du -o
 
-// Cleaner
+
+// Tmp Cleaner
 php cron/cleanTmp.php
 
+
+######################################################
+FIXING and DEBUGGING
+######################################################
+
+Fixing 
+PHP Warning:  cli_set_process_title(): cli_set_process_title had an error: Not initialized correctly
+--------------------------------------
+vendor/phpstreamserver/core/src/Internal/MasterProcess.php - line 163
+Replace : \cli_set_process_title TO @cli_set_process_title
 
 GIT Clone from branch :
 -----------------------
@@ -109,24 +171,14 @@ git clone -b <branch_name> --single-branch <repository_url>
 git add -f app/Structs/Dashboard/DashboardStruct.php
 
 
-Build Core Directory structure :
---------------------------------
-mkdir ./config && 
-mkdir -p ./app/Core/Database && 
-mkdir -p ./app/Core/Support && 
-mkdir ./app/Helpers && 
-mkdir ./app/Models && 
-mkdir ./static && 
-mkdir -p ./storage/database && 
-mkdir -p ./storage/logs && 
-mkdir -p ./views/partial && 
-mkdir -p ./views/error
-
-
 // Log-Debug :
 --------------
 write_log($this->getSQL(), 'Database.Model.execQuery.getSQL', 'debug', 'debug-model.log');
 
+
+######################################################
+TESTING - CURL
+######################################################
 
 // Test-Curl JSON :
 -------------------
@@ -180,8 +232,9 @@ curl --request POST \
 }'
 
 
-ON-Development:
----------------
+######################################################
+BUILD FFI - LIB
+######################################################
 
 crawler.go
 ===========
@@ -214,6 +267,78 @@ PHP-Testing
 Consumer		: php cron/queue-consumer.php
 Send Testing	: php cron/queue.php
 
+Sanitize:
+---------
+cd ffi/source/sanitize
+go mod init phpffi.lutvi/sanitize
+go mod tidy
+
+go build -o ../../lib/sanitize.so -buildmode=c-shared ./sanitize.go
+
+go build -buildmode=c-shared -o ./ffi/lib/sanitize.so ./ffi/source/sanitize/sanitize.go
+
+
+Validator:
+---------
+cd ffi/source/dynamic_validate
+go mod init phpffi.lutvi/dynamic_validate
+go mod tidy
+
+go build -o ../../lib/dynamic_validate.so -buildmode=c-shared ./dynamic_validate.go
+
+go build -buildmode=c-shared -o ./ffi/lib/dynamic_validate.so ./ffi/source/dynamic_validate/dynamic_validate.go
+
+
+Bulk_Data:
+----------
+cd ffi/source/bulk_data
+go mod init bulk_data
+go mod tidy
+
+go build -buildmode=c-shared -o ../../lib/bulk_data.so ./bulk_data.go
+OR ---
+go build -buildmode=c-shared -o ./ffi/lib/bulk_data.so ./ffi/source/bulk_data/bulk_data.go
+
+php cron/bulkData.php
+php cron/searchBulkData.php
+
+
+
+curlgo.go (CURL with Go - FFI)
+==============================
+cd ffi/source/curlgo
+go mod init curlgo
+go mod tidy
+go build -o ../../lib/curlgo.so -buildmode=c-shared ./curlgo.go
+
+PHP-Testing
+-----------
+Curl-Go : php cron/curlGo.php
+
+
+Curl - Rust (FFI)
+cargo clean (menghapus semua cache build)
+==================
+cd ffi/source/rust_curl
+cargo build --release
+cp target/release/librust_curl_ffi.so ../../lib/librust_curl_ffi.so
+
+PHP-Testing
+-----------
+Curl-Rust : php cron/curlRust.php
+
+
+DataEngine(Filter) - Rust (FFI)
+cargo clean (menghapus semua cache build)
+==================
+cd ffi/source/data_engine
+cargo test
+cargo build --release
+cp target/release/libdata_engine.so ../../lib/libdata_engine.so
+
+PHP-Testing
+-----------
+Data Filter-Rust : php cron/DataEngine.php
 
 Event - Listener:
 =================
@@ -240,9 +365,36 @@ php cron/event-dispatch_test.php
 php cron/rabbitmq-receiver.php
 
 
+######################################################
+CRON Testing
+######################################################
 
+Consumers (daemon)
+==================
+php cron/event-listener.php
+php cron/queue-consumer.php
+php cron/rabbitmq-receiver.php
+
+
+Senders (single run)
+====================
+php cron/event-dispatch_test.php
+php cron/queue.php
+php cron/rabbitmq-receiver.php
+
+
+Indexing
+========
+php cron/meiliserach.php
+php cron/indexing.php
+
+
+######################################################
 Framework - Performance Testing
-===============================
+######################################################
+
+Using k6 - grafana
+==================
 mkdir -p $HOME/tmp
 cp $PWD/test/k6-test.js $HOME/tmp/k6-test.js
 k6 run $HOME/tmp/k6-test.js
@@ -282,107 +434,16 @@ k6 run --summary-export=$PWD/test/TEST_SUMMARY.json $HOME/tmp/k6-test.js > $PWD/
 
 
 
-curlgo.go (CURL with Go - FFI)
-==============================
-cd ffi/source/curlgo
-go mod init curlgo
-go mod tidy
-go build -o ../../lib/curlgo.so -buildmode=c-shared ./curlgo.go
-
-PHP-Testing
------------
-Curl-Go : php cron/curlGo.php
-
-
-
-Curl - Rust (FFI)
-cargo clean (menghapus semua cache build)
-==================
-cd ffi/source/rust_curl
-cargo build --release
-cp target/release/librust_curl_ffi.so ../../lib/librust_curl_ffi.so
-
-PHP-Testing
------------
-Curl-Rust : php cron/curlRust.php
-
-
-
-DataEngine(Filter) - Rust (FFI)
-cargo clean (menghapus semua cache build)
-==================
-cd ffi/source/data_engine
-cargo test
-cargo build --release
-cp target/release/libdata_engine.so ../../lib/libdata_engine.so
-
-PHP-Testing
------------
-Data Filter-Rust : php cron/DataEngine.php
-
-
-
-
-
-
-
-
-
-
-
-
-######################################################
-######################################################
-######################################################
-
-Meilisearch:
-------------
-php cron/meiliserach.php
-
-
-RabbitMQ:
----------
-php cron/rabbitmq-receiver.php 
-php cron/rabbitmq-send.php
-
-
-Sanitize:
----------
-cd ffi/source/sanitize
-go mod init phpffi.lutvi/sanitize
-go mod tidy
-
-go build -o ../../lib/sanitize.so -buildmode=c-shared ./sanitize.go
-
-go build -buildmode=c-shared -o ./ffi/lib/sanitize.so ./ffi/source/sanitize/sanitize.go
-
-
-Validator:
----------
-cd ffi/source/dynamic_validate
-go mod init phpffi.lutvi/dynamic_validate
-go mod tidy
-
-go build -o ../../lib/dynamic_validate.so -buildmode=c-shared ./dynamic_validate.go
-
-go build -buildmode=c-shared -o ./ffi/lib/dynamic_validate.so ./ffi/source/dynamic_validate/dynamic_validate.go
-
-
-Bulk_Data:
-----------
-cd ffi/source/bulk_data
-go mod init bulk_data
-go mod tidy
-
-go build -buildmode=c-shared -o ../../lib/bulk_data.so ./bulk_data.go
-OR ---
-go build -buildmode=c-shared -o ./ffi/lib/bulk_data.so ./ffi/source/bulk_data/bulk_data.go
-
-php cron/bulkData.php
-php cron/searchBulkData.php
-
-
+Using ab tools
+--------------
 // Benchmark
 ab -c 128 -n 10000 -k http://localhost:8000/health 2>&1
 
 
+
+
+
+
+######################################################
+######################################################
+######################################################

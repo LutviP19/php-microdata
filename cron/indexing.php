@@ -13,7 +13,8 @@ require_once 'bootstrap.php';
 
 
 // Meili Search
-use GuzzleHttp\Client as GuzzleClient;
+use App\Core\Support\App;
+use App\Core\Http\GoHttpClient;
 use Meilisearch\Client as MelisearchClient;
 
 // Enabled Experimental filter operators
@@ -22,62 +23,35 @@ use Meilisearch\Client as MelisearchClient;
 // The CONTAINS one is similar to the SQL LIKE operator used in that way %venture% 
 // and the STARTS WITH one is like using vent%.
 try {
-    // Send PATCH to Enabling the experimental feature
-    $clientGuzzle = new GuzzleClient([
-        // Base URI is used with relative requests
-        'base_uri' => env('MEILISEARCH_URL', 'http://localhost:7700'),
-        // You can set default request options here
-        'timeout'  => 2.0,
-    ]);
     
-    $response = $clientGuzzle->patch('/experimental-features', [
-        'json' => [
-            'containsFilter' => true,
-        ],
-        'headers' => [
-            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
-            'Accept'        => 'application/json',
-        ]
+    $client = new GoHttpClient();
+    $apiParams = App::externalApi('ms_enabled_experimental', [
+        'body' => json_encode(['containsFilter' => true]), // Bisa Array|string|JSON
+        'timeout' => 2.0 // Set atau gunakan default
     ]);
+
+    // dd($apiParams, true);
+    $response = $client->request($apiParams);
+    // dd($response, true);
                 
     // Check the HTTP status code
-    $statusCode = $response->getStatusCode();
+    $statusCode = $response['status'];
     if($statusCode !== 200) {
         // Get the response body as a stream and convert to a string/JSON
-        $body = $response->getBody()->getContents();
+        $body = $response['body'];
         $data = json_decode($body, true);
         dd($data, true);
     }
 
-} catch(\GuzzleHttp\Exception\RequestException $e) { // Base exception for most errors
-    $errors = [];
-    // Handle the exception
-    if ($e->hasResponse()) {
-        // If an HTTP response was received, get its body and status code
-        $response = $e->getResponse();
-        $statusCode = $response->getStatusCode();
-        $responseBody = $response->getBody()->getContents();
-
-        $errors = [
-            'statusCode' => $statusCode,
-            'responseBody' => json_decode($responseBody, true),
-        ];
-
-    } else {
-        // Handle network errors (e.g., connection timeout, DNS error)
-        $errors = [
-            'exception' => "Network Error: " . $e->getMessage(),
-        ];
-    }
-
-    dd($errors, true);
+} catch(Exception $e) {
+    throw($e);
 }
 
 // Melisearch Client
 $client = new MelisearchClient(env('MEILISEARCH_URL', 'http://localhost:7700'), env('MEILISEARCH_KEY', 'ms'));
 
 // Add Documents to Your PHP Search Engine
-$index = $client->index('movies');
+$index = $client->index('movies2');
 $documents = [
     ['id' => 1, 'title' => 'Inception', 'genres' => ['Action', 'Sci-Fi']],
     ['id' => 2, 'title' => 'Interstellar', 'genres' => ['Adventure', 'Drama']],
@@ -107,11 +81,13 @@ $documents = [
 ];
 $index->addDocuments($documents);
 
-// // Keyword Search
-// $keyword = $request->q; // the || The Matrix
+// Keyword Search
+$keyword = 'The Matrix'; // the || The Matrix
+$genre = ''; // action || drama
 
 // // Build the Search Function and Return Results
 // $results = $index->search($keyword)->getHits();
+// dd($results, true);
 
 // Add Filters and Facets for Smarter Search
 $index->updateFilterableAttributes([
@@ -122,31 +98,22 @@ $index->updateFilterableAttributes([
 
 $status = $client->getTask(1);
 // dd($status, true);
-$logFile = logs_path('cron_log.txt');
-// TUGAS YANG DIJALANKAN
-$message = "[" . date('Y-m-d H:i:s') . "] Tugas dijalankan: Indexing Data setiap 1 menit..." . PHP_EOL;
-file_put_contents($logFile, $message, FILE_APPEND);
 
-// Perbarui status indexing
-file_put_contents($lastRunFile, $status);
+// filtered searches using SQL-style logic
+// dd($keyword);
 
-// // filtered searches using SQL-style logic        
-// // dd($keyword);
+// Default filter
+$maxId = 25;
+$filter = ['title CONTAINS "'.$keyword.'" AND id <= 25'];
 
-// // Default filter
-// $maxId = 25;
-// $filter = ['title CONTAINS "'.$keyword.'" AND id <= 25'];
+// Filter by genre
+if($genre !== '')
+    $filter = ['title CONTAINS "'.$keyword.'" AND genres IN ['.$genre.'] AND id <= 25'];
 
-// // Filter by genre
-// if($request->has('genre')) {
-//     $genre = (string) $request->genre; // action || drama
-//     if($genre !== '')
-//         $filter = ['title CONTAINS "'.$keyword.'" AND genres IN ['.$genre.'] AND id <= 25'];
-// }
 
-// $results = $index->search($keyword, [
-//     'facets' => ['title', 'genres', 'id'],
-//     'filter' => $filter,
-// ])->getHits();
+$results = $index->search($keyword, [
+    'facets' => ['title', 'genres', 'id'],
+    'filter' => $filter,
+])->getHits();
 
-// dd($results, true);
+dd($results, true);
