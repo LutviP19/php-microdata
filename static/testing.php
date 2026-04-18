@@ -4,6 +4,53 @@ declare(strict_types=1);
 use App\Data\Dashboard\v1\{DashboardData, StatsData, EmployeeData};
 use App\Structs\Dashboard\v1\{DashboardStruct, SallaryStruct};
 
+
+// // Generate random string
+// $rndString= generateRandomString(64, false);
+// die($rndString);
+
+
+// // Sample Cara Implementasi Permission
+// use App\Core\Auth\JWT;
+
+// $jwt = new JWT();
+
+// // Data yang ingin dimasukkan ke dalam token
+// $payload = [
+//     'user_id' => 123,
+//     'username' => 'dev_user',
+//     'user_permissions' => [ 
+//         "asset-create", 
+//         "asset-view", 
+//         "asset-edit", 
+//         "asset-delete", 
+//         "user-manage", 
+//         "report-view" 
+//     ],
+//     'exp' => time() + (60 * 60) // Expired dalam 1 jam
+// ];
+
+// // Generate Token
+// $token = $jwt->encode($payload);
+// // dd($token);
+
+
+// // Cara Mengecek Permission di Sisi Server
+// $decoded = $jwt->decode($token);
+
+// if ($decoded) {
+//     $permissions = $decoded['user_permissions'] ?? [];
+
+//     // Contoh pengecekan akses untuk fitur tertentu
+//     if (in_array('user-manage', $permissions)) {
+//         echo "Akses diberikan: Anda boleh mengelola user.";
+//     } else {
+//         echo "Akses ditolak: Anda tidak punya izin.";
+//     }
+// }
+// exit;
+
+
 // echo "Testing script.";
 
 // dd(config('app'));

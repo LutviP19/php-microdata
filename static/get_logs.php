@@ -13,8 +13,9 @@ $mode = 'fopen'; // fopen | tail
 if (file_exists($logFile)) {
 
     // --- JALANKAN ROTASI SEBELUM MEMBACA ---
-    // Rotate jika > 2MB, simpan backup selama 3 hari saja agar hemat disk
-    rotate_log_if_large($logFile, 2 * 1024 * 1024, 3);
+    // Rotate jika > 2MB, simpan backup selama 1 hari saja agar hemat disk
+    // rotate_log_if_large($logFile, 2 * 1024 * 1024, 1);
+    rotate_log_if_large($logFile, 2 * 1024, 1); // Simulasi cepat
 
     // PHP - open file
     if($mode === 'fopen') {

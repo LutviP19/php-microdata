@@ -112,7 +112,14 @@ class RecursiveModelLoader {
                 $isPageExists = false;
                 http_response_code(isHtmx() ? 200 : 404);
                 include config('app.path') . "/views/error/404.php";
-                exit();
+                
+                // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
+                if (!function_exists('microdata_worker')) {
+                    exit();
+                }
+
+                // Jika worker, kembalikan true sebagai sinyal untuk "return" di skrip utama
+                return true;
             }
         }
     }

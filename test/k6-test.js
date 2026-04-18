@@ -3,7 +3,7 @@ import { check, sleep } from 'k6';
 
 // Simulation: 50 users immediately hit the server from the first second to the last second.
 export const options = {
-    vus: 100,           // 50 concurrent users
+    vus: 200,           // 50 concurrent users
     duration: '30s',   // for 30 seconds
     // duration: '5m',   // for 5 minutes
 };
@@ -25,7 +25,7 @@ export default function () {
         tag_html: {div: '<div onclick=\'submitError()\'>Submit</div>'},
         page: '1',
         offset: '0',
-        limit: 2000, // Change Limit to real apps paging system (1000+ just for stress testing, usually between 10 - 100)
+        limit: 10, // Change Limit to real apps paging system (1000+ just for stress testing, usually between 10 - 100)
         float: 1.091,
         age: '18',
         username: 'lutvi',

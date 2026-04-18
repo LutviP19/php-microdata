@@ -1,66 +1,74 @@
-
 {
     # Global options
     frankenphp {
-        num_threads 3  # Sets the number of PHP threads to 3
-
+        num_threads 12
         php_ini {
-            memory_limit 1024M
+            memory_limit 512M
             max_execution_time 15
+            opcache.enable 1
+            opcache.enable_cli 1
+            opcache.memory_consumption 256
+            opcache.interned_strings_buffer 16
+            opcache.jit_buffer_size 64M
+            opcache.jit tracing
         }
     }
-
     servers {
-        # Allow all Local Network IP
         trusted_proxies static 0.0.0.0
     }
-
-    # Development Only
     auto_https off
 }
 
-
 http://localhost:8000 {
-	log
+    # Root (Gunakan tanda bintang)
+    root * ./public/
 
-	# encode zstd br gzip
-    
-    # Active Compression
-    # Caddy akan memilih otomatis: zstd (terbaik), br (brotli), atau gzip
+    # LOGGING (Sangat penting untuk debug)
+    log
+
     encode zstd br gzip {
-        # Penting untuk streaming: kompresi tetap jalan meskipun data dikirim per baris
         minimum_length 1
     }
 
-	root ./public/
+    # PRIORITAS UTAMA: API Worker
+    # Menggunakan handle_path agar awalan /api otomatis terdeteksi
+    handle_path /api/* {
+        rewrite * /api.php
+        php_server {
+            worker {
+                file ./public/api.php
+                num 8  
+                # Watch perubahan isi file
+                watch ./app/**/*.php ./config/**/*.php ./views/**/*.php ./public/api.php
+            }
+        }
+    }
 
-
-    # Your normal PHP handling
-	php_server {
-        #hot_reload  config/**/*.php app/**/*{.php,.js} cron/**/*.php  static/**/*.php public/**/*{.css,.js}
+    # PRIORITAS KEDUA: Web/HTMX (index.php)
+    handle {
+        # Cek apakah file fisik ada (css, js, images)
+        # Jika tidak ada, arahkan ke index.php
+        try_files {path} /index.php
         
-		try_files {path} index.php
-	}
+        php_server {
+            # Opsional: Jika index.php juga ingin jadi worker
+            # worker {
+            #    file ./public/index.php
+            #    num 3
+            #    watch ./app/**/*.php ./views/**/*.php ./public/index.php
+            # }
+        }
+    }
 
-    # Allow CORS if HTMX requests come from different subdomains
+    # CORS Headers
     header {
-        # Samakan nilainya dari env ALLOWED_ORIGINS
-        # Jika tidak ada di env, default ke '*'
         Access-Control-Allow-Origin "localhost,demo.test,demo.local,demo.app.com,192.168.0.100,[::1],127.0.0.1"
-
         Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, X-Api-Key, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
         Access-Control-Allow-Credentials "true"
-
-        # Memastikan browser tahu bahwa header ini bisa berubah tergantung origin
         Vary Origin
-        
-        # 'defer' memastikan header ini ditambahkan di akhir proses, 
-        # menimpa header yang mungkin diset secara otomatis oleh PHP
-        # defer
     }
 
-    # Handle CORS preflight (OPTIONS) requests
     @options {
         method OPTIONS
     }

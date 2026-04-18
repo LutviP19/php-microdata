@@ -205,8 +205,28 @@ if (!function_exists('env')) {
  */
 if (!function_exists('is_json_request')) {
     function is_json_request() {
-        return isset($_SERVER['CONTENT_TYPE']) && 
-                    stripos($_SERVER['CONTENT_TYPE'], 'application/json') !== false;
+        // 1. Cek dari $_SERVER (Standard)
+        if (isset($_SERVER['CONTENT_TYPE']) && stripos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            return true;
+        }
+
+        // 2. Cek dari HTTP_CONTENT_TYPE (Fallback beberapa konfigurasi FastCGI/Worker)
+        if (isset($_SERVER['HTTP_CONTENT_TYPE']) && stripos($_SERVER['HTTP_CONTENT_TYPE'], 'application/json') !== false) {
+            return true;
+        }
+
+        // 3. Cek langsung ke Header (Paling Akurat di Worker Mode)
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            // Normalisasi key menjadi lowercase karena header bisa bervariasi (Content-Type vs content-type)
+            foreach ($headers as $name => $value) {
+                if (strtolower($name) === 'content-type' && stripos($value, 'application/json') !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
 
@@ -243,10 +263,8 @@ if (!function_exists('sanitize')) {
  */
 if (!function_exists('handle_json_request')) {
     function handle_json_request() {
-        // Cek apakah Content-Type adalah application/json
-        $contentType = $_SERVER["CONTENT_TYPE"] ?? $_SERVER["HTTP_CONTENT_TYPE"] ?? '';
-        
-        if (stripos($contentType, 'application/json') !== false) {
+        // Cek apakah Content-Type adalah application/json        
+        if (is_json_request()) {
             // Ambil data mentah dari body
             $rawInput = file_get_contents('php://input');
 
@@ -331,7 +349,14 @@ if (!function_exists('json_response')) {
         }
 
         echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        exit();
+        
+        // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
+        if (!function_exists('microdata_worker')) {
+            exit();
+        }
+
+        // Jika worker, kembalikan true sebagai sinyal untuk "return" di skrip utama
+        return true;
     }
 }
 
@@ -418,7 +443,14 @@ if (!function_exists('json_response_stream')) {
         echo '}'; // tutup root
 
         flush();
-        exit;
+        
+        // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
+        if (!function_exists('microdata_worker')) {
+            exit();
+        }
+
+        // Jika worker, kembalikan true sebagai sinyal untuk "return" di skrip utama
+        return true;
     }
 }
 
@@ -518,14 +550,22 @@ function pathToNamespace(string $path): string {
  * Sistem log sederhana dengan level kategori.
  */
 if (!function_exists('write_log')) {
-    function write_log($message, $moduleName = '', $level = 'info', $file = '') {
+    function write_log(?string $message, ?string $moduleName = '', ?string $level = 'info', ?string $file = null) {
         // Tentukan path folder log
         $logDir = BASEPATH . '/storage/logs/';
-        $logFile = $logDir . $file ?? 'app'.str_replace(" ", "_", $level).'.log';
+        
+        // Pastikan pilihan nama file diisolasi dalam kurung
+        $fileName = ($file ?? 'app_' . str_replace(" ", "_", $level) . '.log');
+        $logFile = $logDir . $fileName;
 
         // Buat direktori jika belum ada
         if (!is_dir($logDir)) {
             mkdir($logDir, 0755, true);
+        }
+
+        if(!file_exists($logFile)) {
+            touch($logFile);
+            chmod($logFile, 0666);
         }
 
         // Format pesan log: [2026-01-30 20:00:00] [LEVEL] Message
@@ -537,12 +577,11 @@ if (!function_exists('write_log')) {
         if (is_array($message) || is_object($message)) {
             $message = json_encode($message);
         }
-        
-        // Format output log
-        $formattedMessage = "[$timestamp][$levelUpper][$moduleName]($datatype): $message" . PHP_EOL;
 
-        // Tulis ke file (APPEND agar tidak menimpa data lama)
-        return file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+        $formattedMessage = sprintf("[%s][%s][%s](%s): %s" . PHP_EOL, date('Y-m-d H:i:s'), $levelUpper, $moduleName, $datatype, $message);
+
+        // Gunakan LOCK_EX agar antar worker tidak bentrok saat menulis file yang sama
+        file_put_contents($logFile, $formattedMessage, FILE_APPEND | LOCK_EX);
     }
 }
 

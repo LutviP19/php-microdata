@@ -1,0 +1,210 @@
+<?php
+/**
+ * @author LutviP19 <lutvip19@gmail.com>
+ * FrankenPHP Worker Mode Implementation
+ */
+
+// file: public/api.php
+
+if (!defined('BASEPATH')) {
+    define('BASEPATH', __DIR__ . "/..");
+}
+
+// --- 1. INITIALIZATION (BOOTSTRAP) ---
+// Bagian ini hanya dijalankan SEKALI saat worker pertama kali naik.
+// Sangat efisien untuk i5-3210M karena load file init & composer dilakukan sekali saja.
+require_once BASEPATH .'/app/Core/init.php';
+include BASEPATH . "/config/router.php";
+
+// write_log("Api server run", 'api.php', 'debug', 'debug_API.log');
+
+$loader = new \App\Core\Support\RecursiveModelLoader($models);
+
+// --- 2. THE HANDLER FUNCTION ---
+// Fungsi ini dipanggil setiap ada request masuk. 
+// Superglobals ($_GET, $_POST, $_SERVER) otomatis di-reset oleh FrankenPHP.
+$handler = static function () use ($loader, $router, $models) {
+    try {
+
+        // Flag if using microdata_worker
+        if (!function_exists('microdata_worker')) {
+            function microdata_worker() {
+                return true;
+            }
+        }
+
+        // --- SESSION START (Setiap Request) ---
+        // Di Worker Mode, session_status() akan selalu NONE di awal handler
+        if (session_status() === PHP_SESSION_NONE) {
+            bp_session_start();
+        }
+
+        // --- UPDATE IDENTITY (Agar tidak tertukar antar user) ---
+        // Karena $_SERVER di-reset FrankenPHP, kita harus set ulang identity user saat ini
+        \App\Core\Support\Session::set('IPaddress', clientIP());
+        \App\Core\Support\Session::set('userAgent', $_SERVER['HTTP_USER_AGENT'] ?? "Unknown");
+
+        // --- AUTH CHECK ---
+        if(isset($_COOKIE['PHPFFISESSID'])){
+            if(!checkSession()) {
+                if (is_json_request()) {
+                    json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
+                    return;
+                } else {
+                    http_response_code(403);
+                    return;
+                }
+            }
+        }
+
+        // Pastikan variabel di-reset setiap request
+        http_response_code(200);
+        $isJson = is_json_request();
+        $isValidApiKey = validateApiKey();
+
+        // Filter IP - API Only
+        if ($isJson) {
+            check_ip_access(clientIP());
+        }
+
+        // Validasi API Key
+        if (! $isValidApiKey) {
+            json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
+            return;
+        }
+
+
+        // --- SEO ROUTING LOGIC ---
+        $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $lastSegment = basename($requestPath);
+        $urlSegments = explode('/', trim($requestPath, '/'));
+        $page = ($urlSegments[0] !== '') ? $urlSegments[0] : 'dashboard';
+        
+        $resolved = null;
+
+        // Cek router.php (Main Route to Models)
+        if (isset($router[$page])) {
+            $normalPath = $router[$page];
+            $resolved = $loader->resolve(formatRoutePath($normalPath));
+        } else {
+            $customPath = $router[$requestPath] ?? null;
+            if (is_numeric($lastSegment)) {
+                $fixReqPath = str_replace("/{$lastSegment}", "", $requestPath);
+                $customPath = $router[$fixReqPath] ?? null;
+            }
+
+            if ($customPath && ($resolved = $loader->resolve(formatRoutePath($customPath)))) {
+                $resolved['page'] = ltrim($requestPath, '/');
+            }
+        }
+
+        // Fallback default
+        if (!$resolved) {
+            $resolved = $loader->resolve($page);
+        }
+
+        // Start Output Buffering (Mencegah output bocor antar request)
+        // ob_start();
+
+        if ($resolved && file_exists($resolved['modelPath'])) {
+            // Load Model Utama
+            $modelPath = $resolved['modelPath'];
+            $modelName = $resolved['modelName'];
+            $structName = $resolved['structName'];
+            $structPath = $resolved['structPath'];
+            $dataName = $resolved['dataName'];
+            $dataPath = $resolved['dataPath'];
+            $model = $resolved['model'];
+
+            if ($model && file_exists($modelPath)) {
+                // Parameter ID untuk edit/detail
+                // if (isset($urlSegments[1]) && is_numeric($urlSegments[1])) {
+                if (is_numeric($lastSegment)) {
+                    $_GET['id'] = (int) $lastSegment;
+                }
+                // dd($_GET);
+
+                // Jalankan proses request
+                $page = $resolved['page'];
+
+                // Middleware Model for API Only
+                if(!$isJson || !expects_json()) {
+                    if(!file_exists(realpath(BASEPATH . "/views/partial/" . $page . ".php")))
+                    $loader->notFoundHandler($page, $modelPath);
+                }
+
+                include BASEPATH . '/app/Core/process_request.php';
+            } else {
+                // Handle 404
+                $loader->notFoundHandler($page, $modelPath);
+                return;
+            }
+        } else {
+            // Handle 404 - API JSON Only
+            $model = $router[$page] ?? $page;
+            $modelPath = "/app/Models/" . $model . "Model.php";
+            $loader->notFoundHandler($model, $modelPath, true);
+            return;
+        }
+
+
+        // // Load HTMX View
+        // // Tentukan apakah ke halaman login
+        // $isLoginPage = ($page === 'login');
+        // $isPageExists = $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
+        // // dd($viewPath);
+
+        // // Handle 404 - Non HTMX
+        // if(!isHtmx() && !$isPageExists) {
+        //     http_response_code(isHtmx() ? 200 : 404);
+        //     include BASEPATH . "/views/error/404.php";
+        //     return;
+        // }
+
+        // if(isHtmx()) {
+        //     if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
+        //         include $viewPath;
+        //     } else {
+        //         if ($isLoginPage) {
+        //             // Render hanya halaman login (tanpa sidebar/nav)
+        //             include BASEPATH . "/views/login.php";
+        //         } else {
+        //             http_response_code(isHtmx() ? 200 : 404);
+        //             include BASEPATH . "/views/error/404.php";
+        //         }
+        //     }
+        // } else {
+        //     if ($isLoginPage) {
+        //         // Render hanya halaman login (tanpa sidebar/nav)
+        //         include BASEPATH . "/views/login.php";
+        //     } else {
+        //         // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
+        //         include BASEPATH . "/views/index.php";
+        //     }
+        // }
+
+        // Kirim hasil render ke browser
+        // echo ob_get_clean();
+
+    } catch (\Throwable $e) {
+        if (ob_get_level() > 0) ob_end_clean();
+        http_response_code(500);
+        echo "Worker Error: " . $e->getMessage();
+    }
+};
+
+// Worker Loop (Kunci Utama)
+if (function_exists('frankenphp_handle_request')) {
+    $maxRequests = (int)($_SERVER['MAX_REQUESTS'] ?? 500);
+    for ($nbRequests = 0; $nbRequests < $maxRequests; ++$nbRequests) {
+        // Skrip HARUS mencapai baris ini agar Worker dianggap berhasil
+        $keepRunning = \frankenphp_handle_request($handler);
+        
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
+        }
+        if (!$keepRunning) break;
+    }
+} else {
+    $handler();
+}

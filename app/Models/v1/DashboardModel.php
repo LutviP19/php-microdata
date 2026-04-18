@@ -107,11 +107,11 @@ class DashboardModel extends DashboardData
         $page = (int) ($request['page'] ?? 1);
         $limit = (int) ($request['limit'] ?? 10); // total data perpage
 
-        // Ambil data stats dari cache selama 5 menit
-        $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
-            return $statsData->getAllDataSalaries();
-        }, 300);
-        // dd($dataStats);
+        // // Ambil data stats dari cache selama 5 menit
+        // $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
+        //     return $statsData->getAllDataSalaries();
+        // }, 300);
+        // // dd($dataStats);
 
 
         // Testing Data
@@ -142,7 +142,7 @@ class DashboardModel extends DashboardData
             'request' => $request,
             'table' => $this->table,
             'title' => $request['title'] ?? 'Testing model v1',
-            'stats_data' => $dataStats ?: null,
+            // 'stats_data' => $dataStats ?: null,
             'pagination_data' => $dataDashboard, // Ini mode cache
         ];
 

@@ -38,10 +38,10 @@ class DashboardModel extends DashboardData
         $limit = $request['limit'] ?? 10; // total data perpage
 
 
-        // Ambil data stats dari cache selama 5 menit
-        $dataStats = $cache->remember('dashboard_index', function() use ($statsData) {
-            return $statsData->getAllData();
-        }, 300);
+        // // Ambil data stats dari cache selama 5 menit
+        // $dataStats = $cache->remember('dashboard_index', function() use ($statsData) {
+        //     return $statsData->getAllData();
+        // }, 300);
 
 
         // Query dasar
@@ -69,7 +69,7 @@ class DashboardModel extends DashboardData
             'request' => $request,
             'table' => $this->table,
             'title' => $request['title'] ?? 'Testing model',
-            'stats_data' => $dataStats ?: null,
+            // 'stats_data' => $dataStats ?: null,
             'pagination_data' => $dataDashboard, // Ini mode cache
         ];
 
