@@ -8,6 +8,7 @@ namespace App\Models;
 
 use App\Core\Database\Model;
 
+use App\Core\Auth\JWT;
 use PDO;
 use Exception;
 use PDOException;
@@ -24,10 +25,14 @@ class BaseModel extends Model
 
     protected $primaryKey = 'id';
 
+    protected $jwt;
+
     public function __construct(?PDO $pdo = null)
     {
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
+
+        $this->jwt = new JWT();
     }
 
     protected function setRatelimiter($identifier, $perSeconds = 120, $limit = 10)
@@ -43,6 +48,51 @@ class BaseModel extends Model
             
             json_response([], 429, 'Too many requests', $errors);
         }
+    }
+
+    protected function generateTokenJWT(array $payload = [])
+    {
+        // Sample Payload
+        $payload = [
+            'user_id' => 123,
+            'username' => 'dev_user',
+            'user_permissions' => [ 
+                "asset-create", 
+                "asset-view", 
+                "asset-edit", 
+                "asset-delete", 
+                "user-manage", 
+                "report-view" 
+            ],
+            'exp' => time() + (60 * 60) // Expired dalam 1 jam
+        ];
+
+        $expToken = (int) (config('app.session.lifetime') / 2);
+        $payload = array_merge($payload, ['exp' => time() + ($expToken * 60)]);
+
+        // Generate Token
+        return $this->jwt->encode($payload);
+    }
+
+    protected function validateJWT($token, ?string $permission = null)
+    {        
+        // Cara Mengecek Permission di Sisi Server
+        $decoded = $this->jwt->decode($token);
+
+        if ($decoded && $permission) {
+            $permissions = $decoded['user_permissions'] ?? [];
+
+            // Contoh pengecekan akses untuk fitur tertentu
+            if (in_array($permission, $permissions)) {
+                return true;
+            } else {
+                return false;
+            }
+
+            return $decoded;
+        }
+
+        return null;
     }
 
     /**

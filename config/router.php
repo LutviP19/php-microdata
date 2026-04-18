@@ -19,5 +19,6 @@ $router = [
     'dashboard' => 'Dashboard',
 
     // Version 1
+    '/api/v1/auth' => 'v1/Auth',
     '/api/v1/dashboard' => 'v1/Dashboard',
 ];
