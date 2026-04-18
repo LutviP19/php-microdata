@@ -81,17 +81,22 @@ class Hash
      * @param int $len
      * @return string
      */
-    public static function randomString($len = 64, $special = true)
+    public static function randomString(int $len = 64, bool $special = true)
     {
+        $partLen = ($len / 2);
+        // Ambil entropi biner murni (CSPRNG)
+        $binaryPart = bin2hex(random_bytes($partLen));
+
         $characters = '012356789ABCDEFGHIJKLMNOPQRSTUVWXYZ098765321';
         $characters .= $special ? 'abcdefghijklmnopqrstuvwxyz*&!@%^#$' : '';
-        $strings = [];
         $max = mb_strlen($characters, '8bit') - 1;
+        $string = '';
 
-        for ($i = 0; $i < $len; ++$i) {
-            $strings[] = $characters[random_int(0, $max)];
+        for ($i = 0; $i < $partLen; ++$i) {
+            $string .= $characters[random_int(0, $max)];
         }
+        $combined = str_shuffle($binaryPart . $string);
 
-        return implode('', $strings);
+        return substr($combined, 0, $len);
     }
 }

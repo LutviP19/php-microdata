@@ -5,6 +5,9 @@
 *.zip
 *.ini
 *.lock
+*.old
+*.bak
+*.sample
 *DS*
 NOTES.txt
 SNIP.txt
@@ -12,6 +15,7 @@ last_run.txt
 cron_log.txt
 /node_modules
 /vendor
+/examples
 /.fleet
 /.idea
 /.nova

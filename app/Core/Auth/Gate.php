@@ -72,4 +72,81 @@ class Gate
 
         return true;
     }
+
+    /**
+     * Middleware untuk memvalidasi akses user
+     * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
+     */
+    public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null) {
+        
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        
+        $token = '';
+        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        // Jika token kosong, cek dari Cookie (fallback umum)
+        if (!$token && isset($_COOKIE['auth_token'])) {
+            $token = $_COOKIE['auth_token'];
+        }
+
+        if (!$token) {
+            self::unauthorized_response("Invalid token.");
+        }
+        
+        $secret = $secret ?? config('app.jwt_secret');
+        $jwt = new JWT($secret);
+        $userData = $jwt->decode($token);
+
+        // Verifikasi Token
+        if (!$userData) {
+            self::unauthorized_response("Session has expired please re-login.");
+        }
+
+        // Verifikasi Permission (jika diminta)
+        if ($requiredPermission) {
+            $permissions = $userData['user_permissions'] ?? [];
+            if (!in_array($requiredPermission, $permissions)) {
+                self::forbidden_response("$requiredPermission");
+            }
+        }
+
+        return $userData;
+    }
+
+    /**
+     * Response Helper jika tidak login (401)
+     */
+    private static function unauthorized_response($msg) {
+        if(is_json_request()) {
+            $message = "Unauthorized";
+            $errors = [
+                'auth' => 'Unauthorized: ' . $msg
+            ];
+            json_response([], 401, $message, $errors);
+        } else {
+            http_response_code(isHtmx() ? 200 : 401);
+            include BASEPATH . "/views/error/401.php";
+            exit();
+        }
+    }
+
+    /**
+     * Response Helper jika tidak punya izin (403)
+     */
+    private static function forbidden_response($permission) {
+        if(is_json_request()) {
+            $message = "You don't have access[$permission]";
+            $errors = [
+                'auth' => 'Forbidden to access: ' . $permission
+            ];
+            json_response([], 403, $message, $errors);
+        } else {
+            http_response_code(isHtmx() ? 200 : 403);
+            include BASEPATH . "/views/error/403.php";
+            exit();
+        }
+    }
 }
