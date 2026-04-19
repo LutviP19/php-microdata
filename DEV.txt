@@ -435,12 +435,33 @@ k6 run --summary-export=$PWD/test/TEST_SUMMARY.json $HOME/tmp/k6-test.js > $PWD/
 
 
 Using ab tools
---------------
+Apache Benchmark
+-----------------
 // Benchmark
 ab -c 128 -n 10000 -k http://localhost:8000/health 2>&1
 
+// POST
+ab -n 1000 -c 50 \
+-T application/json \
+-H "X-API-KEY: sswrSrFtV1VkYz0ikG4dpouo1uEqEvS9cZ3QfwgTxdc=" \
+-H "Accept: application/json" \
+-H "Content-Type: application/json" \
+-p $PWD/test/hey-data.json \
+"http://localhost:8000/api/v1/dashboard"
 
 
+
+Using hey tools
+https://github.com/rakyll/hey
+paste bin to: test/bin/
+======================
+test/bin/hey -n 1000 -c 50 \
+-m GET \
+-D $PWD/test/hey-data.json \
+-H "X-API-KEY: sswrSrFtV1VkYz0ikG4dpouo1uEqEvS9cZ3QfwgTxdc=" \
+-H "Accept: application/json" \
+-H "Content-Type: application/json" \
+"http://localhost:8000/api/v1/dashboard"
 
 
 
