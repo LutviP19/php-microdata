@@ -8,6 +8,7 @@ namespace App\Models;
 
 use App\Core\Database\Model;
 
+use App\Core\Auth\SodiumAuth;
 use App\Core\Auth\JWT;
 use PDO;
 use Exception;
@@ -26,13 +27,20 @@ class BaseModel extends Model
     protected $primaryKey = 'id';
 
     protected $jwt;
+    protected $auth;
+
+    private int $expToken;
+    private int $refreshTokenTimeout;
 
     public function __construct(?PDO $pdo = null)
     {
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
+        $this->expToken = (int) (config('app.session.lifetime') / 2); // 1 hour
+        $this->refreshTokenTimeout = 7; // X days
         $this->jwt = new JWT();
+        $this->auth = new SodiumAuth();
     }
 
     protected function setRatelimiter($identifier, $perSeconds = 120, $limit = 10)
@@ -53,25 +61,62 @@ class BaseModel extends Model
     protected function generateTokenJWT(array $payload = [])
     {
         // Sample Payload
-        $payload = [
-            'user_id' => 123,
+        // $info = $info ?: Config::get('app.name');
+        // $subject = $subject ?: 'api access';
+        // $token = $build->setContentType('JWT')
+        //         ->setHeaderClaim('info', $info)
+        //         ->setIssuer($this->issuer)
+        //         ->setSubject($subject)
+        //         ->setAudience($this->audience)
+        //         ->setExpiration(time() + $this->expirationTime)
+        //         ->setNotBefore(time() - $this->expirationTime)
+        //         ->setIssuedAt(time())
+        //         ->setJwtId($this->jwtId)
+        //         ->setPayloadClaim('uid', $userId)
+        //         ->build();
+
+        // Saat register/login karyawan baru
+        $newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
+        // dd($newUlid);
+
+        // Simpan ke DB jika belum ada ulid
+        // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
+        
+        $accessTokenPayload = [
+            // 'uid'  => $user->ulid,
+            'uid'  => 12345,
+            'ulid' => $newUlid,
             'username' => 'dev_user',
-            'user_permissions' => [ 
+            'type' => 'access',
+            'exp' => $this->expToken, // Expired dalam 1 jam
+            'role' => [ 
                 "asset-create", 
                 "asset-view", 
                 "asset-edit", 
                 "asset-delete", 
                 "user-manage", 
                 "report-view" 
-            ],
-            'exp' => time() + (60 * 60) // Expired dalam 1 jam
+            ]
         ];
 
-        $expToken = (int) (config('app.session.lifetime') / 2);
-        $payload = array_merge($payload, ['exp' => time() + ($expToken * 60)]);
+        // Merged payload
+        $accessTokenPayload = array_merge($accessTokenPayload, $payload);
 
-        // Generate Token
-        return $this->jwt->encode($payload);
+        $refreshTokenPayload = [
+            // 'uid'  => $user->ulid,
+            'uid'  => 12345,
+            'ulid' => $newUlid,
+            'type' => 'refresh',
+            'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
+        ];
+        
+        $dataToken = [
+            'access_token'  => $this->jwt->encode($accessTokenPayload),
+            'refresh_token' => $this->jwt->encode($refreshTokenPayload)
+        ];
+
+        // Generate Token JWT
+        return $dataToken;
     }
 
     protected function validateJWT($token, ?string $permission = null)
@@ -79,20 +124,75 @@ class BaseModel extends Model
         // Cara Mengecek Permission di Sisi Server
         $decoded = $this->jwt->decode($token);
 
+        if(!$decoded)
+            return null;
+
         if ($decoded && $permission) {
             $permissions = $decoded['user_permissions'] ?? [];
 
-            // Contoh pengecekan akses untuk fitur tertentu
-            if (in_array($permission, $permissions)) {
-                return true;
-            } else {
-                return false;
-            }
-
-            return $decoded;
+            // Cek dengan Gate
+            if(\App\Core\Auth\Gate::authorizeJwt($permission))
+                return $permissions;
         }
 
-        return null;
+        return $decoded;
+    }
+
+    protected function generateTokenSodium(array $payload = [])
+    {
+        $newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
+        // dd($newUlid);
+
+        // Simpan ke DB jika belum ada ulid
+        // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
+
+        $accessTokenPayload = [         
+            // 'uid'  => $user->ulid,
+            'uid'  => 12345,
+            'ulid' => $newUlid,
+            'role' => 'backend_dev',
+            'type' => 'access',
+            'exp'  => $this->expToken // 1 Jam
+        ];
+
+        // Merged payload
+        $accessTokenPayload = array_merge($accessTokenPayload, $payload);
+
+        $refreshTokenPayload = [
+            // 'uid'  => $user->ulid,
+            'uid'  => 12345,
+            'ulid' => $newUlid,
+            'type' => 'refresh',
+            'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
+        ];
+
+        $tipeRefreshToken = $this->auth->encode($refreshTokenPayload);
+        $dataToken = [
+            'access_token'  => $this->auth->encode($accessTokenPayload),
+            'refresh_token' => $tipeRefreshToken
+        ];
+
+        // Generate Token Sodium
+        return $dataToken;
+    }
+
+    protected function authorizeSodium($token, ?string $permission = null)
+    {        
+        // Cara Mengecek Permission di Sisi Server
+        $decoded = $this->jwt->decode($token);
+
+        if(!$decoded)
+            return null;
+
+        if ($decoded && $permission) {
+            $permissions = $decoded['user_permissions'] ?? [];
+            
+            // Cek dengan Gate
+            if(\App\Core\Auth\Gate::authorize($permission))
+                return $permissions;
+        }
+
+        return $decoded;
     }
 
     /**

@@ -57,24 +57,14 @@ class Gate
     public static function authorize($permission)
     {
         if (self::denies($permission)) {
-            if(is_json_request()) {
-                $message = "You don't have access[$permission]";
-                $errors = [
-                    'auth' => 'Forbidden to access: ' . $permission
-                ];
-                json_response([], 403, $message, $errors);
-            } else {
-                http_response_code(isHtmx() ? 200 : 403);
-                include BASEPATH . "/views/error/403.php";
-                exit();
-            }
+            self::forbidden_response($permission);
         }
 
         return true;
     }
 
     /**
-     * Middleware untuk memvalidasi akses user
+     * Middleware untuk memvalidasi akses user menggunakan JWT
      * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
      */
     public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null) {
@@ -109,7 +99,50 @@ class Gate
         if ($requiredPermission) {
             $permissions = $userData['user_permissions'] ?? [];
             if (!in_array($requiredPermission, $permissions)) {
-                self::forbidden_response("$requiredPermission");
+                self::forbidden_response($requiredPermission);
+            }
+        }
+
+        return $userData;
+    }
+
+    /**
+     * Middleware untuk memvalidasi akses user menggunakan Sodium
+     * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
+     */
+    public static function authorizeSodium(?string $requiredPermission = null, ?string $hexKey = null) {
+        
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        
+        $token = '';
+        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        // Jika token kosong, cek dari Cookie (fallback umum)
+        if (!$token && isset($_COOKIE['auth_token'])) {
+            $token = $_COOKIE['auth_token'];
+        }
+
+        if (!$token) {
+            self::unauthorized_response("Invalid token.");
+        }
+        
+        $hexKey = $hexKey ?? config('app.sodium_key');
+        $auth = new SodiumAuth($hexKey);
+        $userData = $auth->decode($token);
+
+        // Verifikasi Token
+        if (!$userData) {
+            self::unauthorized_response("Session has expired please re-login.");
+        }
+
+        // Verifikasi Permission (jika diminta)
+        if ($requiredPermission) {
+            $permissions = $userData['user_permissions'] ?? [];
+            if (!in_array($requiredPermission, $permissions)) {
+                self::forbidden_response($requiredPermission);
             }
         }
 
@@ -129,7 +162,12 @@ class Gate
         } else {
             http_response_code(isHtmx() ? 200 : 401);
             include BASEPATH . "/views/error/401.php";
-            exit();
+            // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
+            if (!function_exists('microdata_worker')) {
+                exit();
+            }
+
+            return;
         }
     }
 
@@ -146,7 +184,12 @@ class Gate
         } else {
             http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
-            exit();
+            // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
+            if (!function_exists('microdata_worker')) {
+                exit();
+            }
+
+            return;
         }
     }
 }

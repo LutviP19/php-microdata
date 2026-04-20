@@ -29,6 +29,8 @@ return [
         'key' => env('APP_KEY', 'base64:AA2L6m2LEf0WzxHpVuHxkLZEd7vsm6TWDGUUAjmYGnk='),
         'hash_key' => env('HASH_KEY', 'base64:RUHnrVLvGQXm8SLvFv2zI+YQH8KNGOhbiy1gGAqGFt0='),
         'jwt_secret' => env('JWT_SECRET', '152*vd61174Df9@eba3b4Y6ed9d452adae762j!b13H4Deym36i6Qo1f9m4d^n76'),
+        'sodium_key' => env('SODIUM_KEY', 'd9cffa8b79abd6ff9260e1aa23ffa65af2846cbbf21e8f0910cd7a1b09178df8'),
+        'sodium_prefix' => env('SODIUM_PREFIX', 'php.microdata.v1'),
         'encrpytion_id' => env('APP_ENC_ID', false),        
         'cache_driver' => env('CACHE_DRIVER', 'file'),
         'queue_driver' => env('QUEUE_DRIVER', 'redis'),

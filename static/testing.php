@@ -5,9 +5,129 @@ use App\Data\Dashboard\v1\{DashboardData, StatsData, EmployeeData};
 use App\Structs\Dashboard\v1\{DashboardStruct, SallaryStruct};
 
 
-// // Generate random string
-// $rndString= generateRandomString(64, false);
+// // Generate random string - JWT Secret
+// $rndString = generateRandomString(64, false);
 // die($rndString);
+
+// SodiumAuth - Key ($hexKey)
+// echo bin2hex(random_bytes(32)).PHP_EOL;
+// php -r "echo bin2hex(random_bytes(32)).PHP_EOL;"
+
+
+// Testing Class
+Class Testing extends \App\Models\BaseModel {
+    function __construct() {
+        parent::__construct();
+
+        // $genJwt = self::generateTokenJWT();
+        // dd($genJwt);
+
+        $genSodium = self::generateTokenSodium();
+        dd($genSodium);
+    }
+}
+
+$testing = new Testing();
+exit;
+
+
+
+use App\Core\Auth\SodiumAuth;
+
+// Saat register karyawan baru
+// $newUlid = \App\Core\Support\UlidGenerator::generate(); // Hasil: 01H7XRMZ5W...
+$newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
+// dd($newUlid);
+
+// Simpan ke DB jika belum ada ulid
+// $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
+
+$auth = new SodiumAuth();
+// Asumsi validasi user & password sukses
+$payload = [
+    'uid'  => 12345,
+    'ulid' => $newUlid,
+    'role' => 'backend_dev',
+    'exp'  => time() + (3600 * 8) // Berlaku 8 jam
+];
+
+$token = $auth->encode($payload);
+// dd($token);
+
+// 2. Dekripsi & Validasi
+$user = null;
+if (!empty($token)) {
+    $user = $auth->decode($token);
+}
+// dd($user);
+
+if (!$user) {
+    // http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    return;
+}
+
+// Cek Expired
+if (time() > $user['exp']) {
+    // http_response_code(401);
+    echo json_encode(['error' => 'Token Expired']);
+    return;
+}
+
+// Jika sukses, tampilkan data
+echo json_encode([
+    'message' => "Selamat datang, karyawan ID: " . $user['uid'],
+    'data' => [/* data dashboard */]
+]);
+
+// Middleware Refresh Token
+// SAAT LOGIN
+$accessTokenPayload = [
+    'uid'  => $user->ulid,
+    'uid'  => 12345,
+    'ulid' => $newUlid,
+    'role' => 'backend_dev',
+    'type' => 'access',
+    'exp'  => time() + 3600 // 1 Jam
+];
+
+$refreshTokenPayload = [
+    'uid'  => $user->ulid,
+    'type' => 'refresh',
+    'exp'  => time() + (3600 * 24 * 7) // 7 Hari
+];
+
+$tipeRefreshToken = $auth->encode($refreshTokenPayload);
+$dataToken = [
+    'access_token'  => $auth->encode($accessTokenPayload),
+    'refresh_token' => $tipeRefreshToken
+];
+
+
+// Validasi - Middleware: Apakah token ada, tipenya 'refresh', dan belum expired?
+$oldRefreshToken = $dataToken['refresh_token'] ?? '';
+$data = $auth->decode($oldRefreshToken);
+
+if ($data && $data['type'] === 'refresh' && $data['exp'] > time()) {
+    
+    // Buat Access Token baru
+    $newAccessPayload = [
+        'uid'  => $data['uid'],
+        'ulid' => $newUlid,
+        'role' => 'backend_dev',
+        'type' => 'access',
+        'exp'  => time() + 3600
+    ];
+
+    echo json_encode([
+        'access_token' => $auth->encode($newAccessPayload)
+    ]);
+} else {
+    http_response_code(401);
+    echo json_encode(['error' => 'Refresh token invalid atau expired']);
+}
+exit;
+
 
 
 // // Sample Cara Implementasi Permission

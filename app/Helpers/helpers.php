@@ -268,6 +268,11 @@ if (!function_exists('handle_json_request')) {
             // Ambil data mentah dari body
             $rawInput = file_get_contents('php://input');
 
+            // Cek jika body kosong (sering terjadi di benchmark GET)
+            if (empty($rawInput)) {
+                return false;
+            }
+
             // Sanitize Json
             $dataJson = sanitizeJson($rawInput);
             $decoded = json_decode($dataJson, true);
@@ -278,10 +283,16 @@ if (!function_exists('handle_json_request')) {
 
             // Jika JSON valid, gabungkan ke dalam $_REQUEST
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                $_REQUEST = array_merge($_REQUEST, $decoded);
+                // $_REQUEST = array_merge($_REQUEST, $decoded);
                 
-                // Opsional: Gabungkan juga ke $_POST jika Anda lebih suka menggunakannya
-                $_POST = array_merge($_POST, $decoded);
+                // // Opsional: Gabungkan juga ke $_POST jika Anda lebih suka menggunakannya
+                // $_POST = array_merge($_POST, $decoded);
+
+                // Gunakan array_replace untuk efisiensi di Worker Mode
+                $_REQUEST = array_replace($_REQUEST, $decoded);
+                $_GET = array_replace($_POST, $decoded);
+                $_POST = array_replace($_POST, $decoded);
+
                 return true;
             }
         }        

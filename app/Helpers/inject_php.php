@@ -457,11 +457,11 @@ function decryptData($value, $key = null)
  */
 function generateUlid($lowercased = false, $timestamp = null): string
 {
-    if (!is_null($timestamp)) {
-        return (string) \App\Core\Support\Ulid::fromTimestamp($timestamp, $lowercased);
-    }
+    $ulid = \App\Core\Support\UlidGenerator::generate();
+    if($lowercased)
+        return strtolower($ulid);
 
-    return (string) \App\Core\Support\Ulid::generate($lowercased);
+    return $ulid;
 }
 
 /**

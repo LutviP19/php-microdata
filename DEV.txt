@@ -93,6 +93,18 @@ Events	: storage/logs/error_EventLib.log
 RUN APP
 ######################################################
 
+Generate new KEY:
+----------------
+App Key | Api Key | JWT Secret
+$secret = generateRandomString(64, false);
+dd($secret);
+
+SodiumAuth:
+dd(bin2hex(random_bytes(32)));
+or
+php -r "echo bin2hex(random_bytes(32)).PHP_EOL;"
+
+
 FrankenPHP:
 # Install FrankenPHP on Linux or macOS
 curl https://frankenphp.dev/install.sh | sh
@@ -443,7 +455,7 @@ ab -c 128 -n 10000 -k http://localhost:8000/health 2>&1
 // POST
 ab -n 1000 -c 50 \
 -T application/json \
--H "X-API-KEY: sswrSrFtV1VkYz0ikG4dpouo1uEqEvS9cZ3QfwgTxdc=" \
+-H "X-API-KEY: zjwTis+UxjPt2VhvlqSQoTw1CZuaR0LC8a654X1ofVc=" \
 -H "Accept: application/json" \
 -H "Content-Type: application/json" \
 -p $PWD/test/hey-data.json \
@@ -458,7 +470,7 @@ paste bin to: test/bin/
 test/bin/hey -n 1000 -c 50 \
 -m GET \
 -D $PWD/test/hey-data.json \
--H "X-API-KEY: sswrSrFtV1VkYz0ikG4dpouo1uEqEvS9cZ3QfwgTxdc=" \
+-H "X-API-KEY: zjwTis+UxjPt2VhvlqSQoTw1CZuaR0LC8a654X1ofVc=" \
 -H "Accept: application/json" \
 -H "Content-Type: application/json" \
 "http://localhost:8000/api/v1/dashboard"

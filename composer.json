@@ -1,17 +1,16 @@
 {
-    "name": "lutvip19/phpffi-cronjob",
-    "license": "MIT",
-    "description": "Simple cronjob system with PHP8-FFi.",
-    "keywords": ["php8", "ffi", "cronjob"],
+    "name": "lutvip19/php-microdata",
+    "license": "Apache-2.0 license",
+    "description": "Micro system of PHP8 with FFi",
+    "keywords": ["php8", "ffi", "cronjob", "microservices", "frankenphp"],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "phpstreamserver/scheduler": "^0.8.1",
+        "predis/predis": "^3.4",
+        "php-amqplib/php-amqplib": "^3.7",
         "meilisearch/meilisearch-php": "^1.16",        
         "php-http/curl-client": "^2.4",
-        "nyholm/psr7": "^1.8",
-        "php-amqplib/php-amqplib": "^3.7",
-        "robinvdvleuten/ulid": "^5.0",
-        "predis/predis": "^3.4"
+        "nyholm/psr7": "^1.8"
     },
     "autoload": {
         "psr-4": {
