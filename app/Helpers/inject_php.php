@@ -684,6 +684,51 @@ function checkSession()
     }
 }
 
+/**
+ * Mendapatkan versi singkat dari User Agent (Browser + OS).
+ * @param bool $is_hash Jika true, mengembalikan MD5 hash (32 char).
+ * @return string
+ */
+if (!function_exists('get_short_ua')) {
+    function get_short_ua(bool $is_hash = false): string {
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+        
+        // 1. Identifikasi Platform/OS
+        $os = 'Unknown';
+        if (stripos($ua, 'windows') !== false) $os = 'Windows';
+        elseif (stripos($ua, 'android') !== false) $os = 'Android';
+        elseif (stripos($ua, 'iphone') !== false || stripos($ua, 'ipad') !== false) $os = 'iOS';
+        elseif (stripos($ua, 'macintosh') !== false) $os = 'MacOS';
+        elseif (stripos($ua, 'linux') !== false) $os = 'Linux';
+
+        // 2. Identifikasi Browser
+        $browser = 'Unknown';
+        if (stripos($ua, 'edg/') !== false) $browser = 'Edge';
+        elseif (stripos($ua, 'chrome/') !== false) $browser = 'Chrome';
+        elseif (stripos($ua, 'firefox/') !== false) $browser = 'Firefox';
+        elseif (stripos($ua, 'safari/') !== false && stripos($ua, 'chrome/') === false) $browser = 'Safari';
+        elseif (stripos($ua, 'opera/') !== false || stripos($ua, 'opr/') !== false) $browser = 'Opera';
+
+        $shortUa = $os . '_' . $browser;
+
+        return $is_hash ? md5($shortUa) : $shortUa;
+    }
+}
+
+/**
+ * Mendapatkan sidik jari perangkat yang stabil.
+ * @param bool $is_hash Jika true, mengembalikan MD5 hash (32 char).
+ * @return string
+ */
+if (!function_exists('get_device_fingerprint')) {
+    function get_device_fingerprint(bool $is_hash = true): string {
+        // Gabungkan Platform + UA + IP (Opsional: tambahkan IP agar lebih ketat)
+        $fingerprint = get_short_ua() . '_' . clientIP();
+
+        return $is_hash ? md5($fingerprint) : $fingerprint;
+    }
+}
+
 function bp_session_start()
 {
     ini_set('session.use_strict_mode', 1);
@@ -951,13 +996,7 @@ function check_ip_access($ip, ?array $list = null) {
             http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
-
-        // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
-        if (!function_exists('microdata_worker')) {
-            exit();
-        }
-
-        return;
+        die;
     }
 }
 

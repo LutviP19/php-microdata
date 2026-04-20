@@ -64,7 +64,6 @@ set_exception_handler(function (Throwable $exception) {
 
 // Mendaftarkan konfigurasi ke aplikasi.
 use App\Core\Support\App;
-use App\Core\Support\Session;
 App::register('config', require BASEPATH . '/config/app.php');
 App::register('routing_external_api', require BASEPATH . '/config/external-api.php');
 
@@ -91,27 +90,5 @@ if (session_status() == PHP_SESSION_NONE) {
     }
 
     session_name('PHPFFISESSID'); // Set a custom session name
-    bp_session_start();
-
-    // Set Client Identity
-    Session::set('IPaddress', clientIP());
-    Session::set('userAgent', $_SERVER['HTTP_USER_AGENT'] ?? "Unknown");
-}
-
-
-// Auth Session
-if(isset($_COOKIE['PHPFFISESSID'])){
-    // // Test Invalid
-    // $_SESSION['IPaddress'] = '192.168.0.101';
-
-    if(!checkSession()) {
-        if (is_json_request()) {
-            json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
-        } else {
-            http_response_code(isHtmx() ? 200 : 403);
-            include BASEPATH . "/views/error/403.php";
-        }
-        die;
-    }
 }
 

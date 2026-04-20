@@ -357,14 +357,7 @@ if (!function_exists('json_response')) {
         }
 
         echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        
-        // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
-        if (!function_exists('microdata_worker')) {
-            exit();
-        }
-
-        // Jika worker, kembalikan true sebagai sinyal untuk "return" di skrip utama
-        return true;
+        die;
     }
 }
 
@@ -451,14 +444,7 @@ if (!function_exists('json_response_stream')) {
         echo '}'; // tutup root
 
         flush();
-        
-        // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
-        if (!function_exists('microdata_worker')) {
-            exit();
-        }
-
-        // Jika worker, kembalikan true sebagai sinyal untuk "return" di skrip utama
-        return true;
+        die;
     }
 }
 

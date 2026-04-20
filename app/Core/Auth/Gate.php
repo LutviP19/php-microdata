@@ -162,12 +162,7 @@ class Gate
         } else {
             http_response_code(isHtmx() ? 200 : 401);
             include BASEPATH . "/views/error/401.php";
-            // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
-            if (!function_exists('microdata_worker')) {
-                exit();
-            }
-
-            return;
+            die;
         }
     }
 
@@ -184,12 +179,7 @@ class Gate
         } else {
             http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
-            // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
-            if (!function_exists('microdata_worker')) {
-                exit();
-            }
-
-            return;
+            die;
         }
     }
 }

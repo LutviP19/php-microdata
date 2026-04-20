@@ -60,24 +60,9 @@ class BaseModel extends Model
 
     protected function generateTokenJWT(array $payload = [])
     {
-        // Sample Payload
-        // $info = $info ?: Config::get('app.name');
-        // $subject = $subject ?: 'api access';
-        // $token = $build->setContentType('JWT')
-        //         ->setHeaderClaim('info', $info)
-        //         ->setIssuer($this->issuer)
-        //         ->setSubject($subject)
-        //         ->setAudience($this->audience)
-        //         ->setExpiration(time() + $this->expirationTime)
-        //         ->setNotBefore(time() - $this->expirationTime)
-        //         ->setIssuedAt(time())
-        //         ->setJwtId($this->jwtId)
-        //         ->setPayloadClaim('uid', $userId)
-        //         ->build();
-
         // Saat register/login karyawan baru
-        $newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
-        // dd($newUlid);
+        $newUlid = generateUlid();
+
 
         // Simpan ke DB jika belum ada ulid
         // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
@@ -88,6 +73,7 @@ class BaseModel extends Model
             'ulid' => $newUlid,
             'username' => 'dev_user',
             'type' => 'access',
+            'fingerprint' => get_device_fingerprint(),
             'exp' => $this->expToken, // Expired dalam 1 jam
             'role' => [ 
                 "asset-create", 
@@ -107,6 +93,7 @@ class BaseModel extends Model
             'uid'  => 12345,
             'ulid' => $newUlid,
             'type' => 'refresh',
+            'fingerprint' => get_device_fingerprint(),
             'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
         ];
         
@@ -140,7 +127,7 @@ class BaseModel extends Model
 
     protected function generateTokenSodium(array $payload = [])
     {
-        $newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
+        $newUlid = generateUlid();
         // dd($newUlid);
 
         // Simpan ke DB jika belum ada ulid
@@ -152,6 +139,7 @@ class BaseModel extends Model
             'ulid' => $newUlid,
             'role' => 'backend_dev',
             'type' => 'access',
+            'fingerprint' => get_device_fingerprint(),
             'exp'  => $this->expToken // 1 Jam
         ];
 
@@ -163,6 +151,7 @@ class BaseModel extends Model
             'uid'  => 12345,
             'ulid' => $newUlid,
             'type' => 'refresh',
+            'fingerprint' => get_device_fingerprint(),
             'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
         ];
 

@@ -9,6 +9,16 @@ if (!defined('BASEPATH')) {
 
 require_once BASEPATH .'/app/Core/init.php';
 
+use App\Core\Support\Session;
+
+if (session_status() === PHP_SESSION_NONE) {
+    bp_session_start();
+
+    // Set Client Identity
+    Session::set('IPaddress', clientIP());
+    Session::set('userAgent', $_SERVER['HTTP_USER_AGENT'] ?? "Unknown");
+}
+
 //====== Middleware
 // Jalankan fungsi CORS
 handle_cors();
@@ -21,6 +31,22 @@ if (is_json_request()) {
 // Validasi API Key
 if (!validateApiKey()) {
     json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
+}
+
+// Auth Session
+if(isset($_COOKIE['PHPFFISESSID'])){
+    // // Test Invalid
+    // $_SESSION['IPaddress'] = '192.168.0.101';
+
+    if(!checkSession()) {
+        if (is_json_request()) {
+            json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
+        } else {
+            http_response_code(isHtmx() ? 200 : 403);
+            include BASEPATH . "/views/error/403.php";
+        }
+        die;
+    }
 }
 //====== End Middleware
 
@@ -74,17 +100,10 @@ if (!$resolved) {
 
 if ($resolved && file_exists($resolved['modelPath'])) {
     // Load Model Utama
-    $modelPath = $resolved['modelPath'];
-    $modelName = $resolved['modelName'];
-    $structName = $resolved['structName'];
-    $structPath = $resolved['structPath'];
-    $dataName = $resolved['dataName'];
-    $dataPath = $resolved['dataPath'];
-    $model = $resolved['model'];
+    extract($resolved);
 
     if ($model && file_exists($modelPath)) {
         // Parameter ID untuk edit/detail
-        // if (isset($urlSegments[1]) && is_numeric($urlSegments[1])) {
         if (is_numeric($lastSegment)) {
             $_GET['id'] = (int) $lastSegment;
         }

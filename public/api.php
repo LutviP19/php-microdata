@@ -31,6 +31,23 @@ $privateNetwork = true; // set false jika ingin di publish ke internet
 $handler = static function () use ($loader, $router, $models, $privateNetwork) {
     try {
 
+        // Flag if using microdata_worker
+        if (!function_exists('microdata_worker')) {
+            function microdata_worker() {
+                return true;
+            }
+        }
+
+        // Menggunakan Class Identity yang bersifat per-request, pengganti Session
+        $userData = [
+            // Identitas selalu diambil segar dari $_SERVER di setiap loop
+            'ip' => clientIP(),
+            'ua' => get_short_ua(),
+            'fingerprint' => get_device_fingerprint(false), // readable
+        ];
+        \App\Core\Auth\Identity::set($userData);
+
+
         //====== Middleware 
         if($privateNetwork) {
             // Jalankan fungsi CORS
@@ -41,7 +58,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         }
 
         // Only Accept Valid JSON
-        if (!handle_json_request()) {
+        if (!expects_json() || !handle_json_request()) {
             json_response([], 406, 'Invalid JSON', ['input' => 'Invalid JSON format.']);
         } else {
             // Jalankan Middleware Bisnis Logic
@@ -51,39 +68,18 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
                     json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
                 }
             }
+
+            //===== Middleware Global akses
+            // Identity::check
+            if(is_null(\App\Core\Auth\Identity::check($userData))) {
+                json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
+            }
         }
         //====== End Middleware
 
-        // Flag if using microdata_worker
-        if (!function_exists('microdata_worker')) {
-            function microdata_worker() {
-                return true;
-            }
-        }
+        
 
-        // --- SESSION START (Setiap Request) ---
-        // Di Worker Mode, session_status() akan selalu NONE di awal handler
-        if (session_status() === PHP_SESSION_NONE) {
-            bp_session_start();
-        }
-
-        // --- UPDATE IDENTITY (Agar tidak tertukar antar user) ---
-        // Karena $_SERVER di-reset FrankenPHP, kita harus set ulang identity user saat ini
-        \App\Core\Support\Session::set('IPaddress', clientIP());
-        \App\Core\Support\Session::set('userAgent', $_SERVER['HTTP_USER_AGENT'] ?? "Unknown");
-
-        // --- AUTH CHECK ---
-        if(isset($_COOKIE['PHPFFISESSID'])){
-            if(!checkSession()) {
-                if (is_json_request()) {
-                    json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
-                    return;
-                } else {
-                    http_response_code(403);
-                    return;
-                }
-            }
-        }
+        
 
         // Pastikan variabel di-reset setiap request
         http_response_code(200);
@@ -131,22 +127,12 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
             $resolved = $loader->resolve($page);
         }
 
-        // Start Output Buffering (Mencegah output bocor antar request)
-        // ob_start();
-
         if ($resolved && file_exists($resolved['modelPath'])) {
             // Load Model Utama
-            $modelPath = $resolved['modelPath'];
-            $modelName = $resolved['modelName'];
-            $structName = $resolved['structName'];
-            $structPath = $resolved['structPath'];
-            $dataName = $resolved['dataName'];
-            $dataPath = $resolved['dataPath'];
-            $model = $resolved['model'];
+            extract($resolved);
 
             if ($model && file_exists($modelPath)) {
                 // Parameter ID untuk edit/detail
-                // if (isset($urlSegments[1]) && is_numeric($urlSegments[1])) {
                 if (is_numeric($lastSegment)) {
                     $_GET['id'] = (int) $lastSegment;
                 }
@@ -181,6 +167,11 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         echo "Worker Error: " . $e->getMessage();
         // Re-throw agar error detail muncul di log global
         throw $e;
+    } finally {
+
+        // KUNCI STABILITAS: Selalu bersihkan identitas di akhir request
+        // Apapun yang terjadi (error/sukses), memori dibersihkan
+        \App\Core\Auth\Identity::clear();
     }
 };
 

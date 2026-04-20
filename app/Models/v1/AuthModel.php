@@ -21,10 +21,15 @@ class AuthModel extends AuthData
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
-        // // Middleware - Model for API Only
-        // if(!is_json_request() || !expects_json()) {
-        //     dd('KO');
-        // }
+        // Middleware - Model for Worker Only
+        if(function_exists('microdata_worker')) {
+            // Identity
+            if(is_null(\App\Core\Auth\Identity::get('fingerprint'))) {
+                json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
+                die;
+            }
+        }
+        
     }
 
     public function index(?array $request = [])
@@ -34,18 +39,18 @@ class AuthModel extends AuthData
         $mainData = new AuthData($conn);
         $statsData = new AuthData($conn);
         
-        // Cache data
-        $cache = new \App\Core\Support\Cache();
+        // // Cache data
+        // $cache = new \App\Core\Support\Cache();
 
         // Ambil data untuk paginate result
         $page = (int) ($request['page'] ?? 1);
         $limit = (int) ($request['limit'] ?? 10); // total data perpage
 
 
-        // Ambil data stats dari cache selama 5 menit
-        $dataStats = $cache->remember('auth_index', function() use ($statsData) {
-            return $statsData->getAllData();
-        }, 300);
+        // // Ambil data stats dari cache selama 5 menit
+        // $dataStats = $cache->remember('auth_index', function() use ($statsData) {
+        //     return $statsData->getAllData();
+        // }, 300);
 
         // Query dasar
         $query = "SELECT * FROM ".$this->table." ORDER BY updated_at DESC";
@@ -67,18 +72,19 @@ class AuthModel extends AuthData
         }
 
         $modelA = [
-            // 'result' => $result,
+            // 'result' => $result,            
             'request' => $request,
             'table' => $this->table,
-            'title' => $request['title'] ?? 'Testing model',
-            'stats_data' => $dataStats ?: null,
+            'title' => $request['title'] ?? 'Auth model v1',
+            'identity' => \App\Core\Auth\Identity::get(),
+            // 'stats_data' => $dataStats ?: null,
             'pagination_data' => $dataAuth, // Ini mode cache
         ];
 
         $data = [            
             'data' => $modelA,
             'status' => $status ?? 200,
-            'message' => $message ?? 'testing index',
+            'message' => $message ?? 'testing index v1',
         ];
         // $data = array_merge($data, $dataAuth);
 
