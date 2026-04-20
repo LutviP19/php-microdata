@@ -39,6 +39,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         }
 
         // Menggunakan Class Identity yang bersifat per-request, pengganti Session
+        \App\Core\Auth\Identity::clear();
         $userData = [
             // Identitas selalu diambil segar dari $_SERVER di setiap loop
             'ip' => clientIP(),

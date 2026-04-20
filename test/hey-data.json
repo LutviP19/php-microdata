@@ -5,5 +5,5 @@
 	"website": "http://demo.local:8000/dashboard/",
     "page": 1,
     "offset": 0,
-    "limit": 10
+    "limit": 100
 }
