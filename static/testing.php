@@ -23,7 +23,7 @@ Class Testing extends \App\Models\BaseModel {
         // dd($genJwt);
 
         $genSodium = self::generateTokenSodium();
-        dd($genSodium);
+        dd($genSodium, true);
     }
 }
 

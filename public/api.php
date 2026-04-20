@@ -18,13 +18,41 @@ include BASEPATH . "/config/router.php";
 
 // write_log("Api server run", 'api.php', 'debug', 'debug_API.log');
 
+
+
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
+
+// Auto Select middleware
+$privateNetwork = true; // set false jika ingin di publish ke internet
 
 // --- 2. THE HANDLER FUNCTION ---
 // Fungsi ini dipanggil setiap ada request masuk. 
 // Superglobals ($_GET, $_POST, $_SERVER) otomatis di-reset oleh FrankenPHP.
-$handler = static function () use ($loader, $router, $models) {
+$handler = static function () use ($loader, $router, $models, $privateNetwork) {
     try {
+
+        //====== Middleware 
+        if($privateNetwork) {
+            // Jalankan fungsi CORS
+            handle_cors();
+
+            // Filter IP - API privateNetwork Only
+            check_ip_access(clientIP());
+        }
+
+        // Only Accept Valid JSON
+        if (!handle_json_request()) {
+            json_response([], 406, 'Invalid JSON', ['input' => 'Invalid JSON format.']);
+        } else {
+            // Jalankan Middleware Bisnis Logic
+            if($privateNetwork) {
+                // Validasi API Key
+                if (!validateApiKey()) {
+                    json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
+                }
+            }
+        }
+        //====== End Middleware
 
         // Flag if using microdata_worker
         if (!function_exists('microdata_worker')) {
@@ -147,49 +175,12 @@ $handler = static function () use ($loader, $router, $models) {
             return;
         }
 
-
-        // // Load HTMX View
-        // // Tentukan apakah ke halaman login
-        // $isLoginPage = ($page === 'login');
-        // $isPageExists = $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
-        // // dd($viewPath);
-
-        // // Handle 404 - Non HTMX
-        // if(!isHtmx() && !$isPageExists) {
-        //     http_response_code(isHtmx() ? 200 : 404);
-        //     include BASEPATH . "/views/error/404.php";
-        //     return;
-        // }
-
-        // if(isHtmx()) {
-        //     if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
-        //         include $viewPath;
-        //     } else {
-        //         if ($isLoginPage) {
-        //             // Render hanya halaman login (tanpa sidebar/nav)
-        //             include BASEPATH . "/views/login.php";
-        //         } else {
-        //             http_response_code(isHtmx() ? 200 : 404);
-        //             include BASEPATH . "/views/error/404.php";
-        //         }
-        //     }
-        // } else {
-        //     if ($isLoginPage) {
-        //         // Render hanya halaman login (tanpa sidebar/nav)
-        //         include BASEPATH . "/views/login.php";
-        //     } else {
-        //         // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
-        //         include BASEPATH . "/views/index.php";
-        //     }
-        // }
-
-        // Kirim hasil render ke browser
-        // echo ob_get_clean();
-
     } catch (\Throwable $e) {
         if (ob_get_level() > 0) ob_end_clean();
         http_response_code(500);
         echo "Worker Error: " . $e->getMessage();
+        // Re-throw agar error detail muncul di log global
+        throw $e;
     }
 };
 

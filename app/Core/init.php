@@ -68,19 +68,6 @@ use App\Core\Support\Session;
 App::register('config', require BASEPATH . '/config/app.php');
 App::register('routing_external_api', require BASEPATH . '/config/external-api.php');
 
-// Jalankan fungsi CORS
-handle_cors();
-
-// Filter IP - API Only
-if (is_json_request()) {
-    check_ip_access(clientIP());
-}
-
-// Validasi API Key
-if (!validateApiKey()) {
-    json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
-}
-
 // INI Set Session
 if (session_status() == PHP_SESSION_NONE) {
     try {

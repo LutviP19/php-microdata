@@ -658,7 +658,6 @@ function checkRateLimit($identifier, $limit, $timeframeSeconds) {
 function checkSession()
 {
     try {
-
         // dd($_SERVER['REMOTE_ADDR']);
 
         // // Load Gate
@@ -927,7 +926,7 @@ function is_valid_ip($ip, $type = 'both') {
  * @param array $list Daftar IP/CIDR (misal: ['127.0.0.1', '10.0.0.0/8'])
  * @return bool
  */
-function check_ip_access($ip, array $list = []) {
+function check_ip_access($ip, ?array $list = null) {
     $list = $list ?? config('api.whitelist_ips');
 
     if (empty($list)) {
@@ -952,7 +951,13 @@ function check_ip_access($ip, array $list = []) {
             http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
         }
-        exit;
+
+        // Jika bukan worker (misal: PHP-FPM atau CLI), langsung matikan proses
+        if (!function_exists('microdata_worker')) {
+            exit();
+        }
+
+        return;
     }
 }
 

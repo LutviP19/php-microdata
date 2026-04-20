@@ -9,6 +9,21 @@ if (!defined('BASEPATH')) {
 
 require_once BASEPATH .'/app/Core/init.php';
 
+//====== Middleware
+// Jalankan fungsi CORS
+handle_cors();
+
+// Filter IP - API Only
+if (is_json_request()) {
+    check_ip_access(clientIP());
+}
+
+// Validasi API Key
+if (!validateApiKey()) {
+    json_response([], 401, 'Unauthorized', ['auth' => 'Unauthorized: Invalid API Key']);
+}
+//====== End Middleware
+
 // --- SEO ROUTING LOGIC ---
 // Mengambil path dari URL (misal: /dashboard)
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);

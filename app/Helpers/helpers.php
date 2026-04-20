@@ -282,12 +282,8 @@ if (!function_exists('handle_json_request')) {
             }
 
             // Jika JSON valid, gabungkan ke dalam $_REQUEST
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                // $_REQUEST = array_merge($_REQUEST, $decoded);
-                
-                // // Opsional: Gabungkan juga ke $_POST jika Anda lebih suka menggunakannya
-                // $_POST = array_merge($_POST, $decoded);
-
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {                
+                // Opsional: Gabungkan juga ke $_POST jika Anda lebih suka menggunakannya
                 // Gunakan array_replace untuk efisiensi di Worker Mode
                 $_REQUEST = array_replace($_REQUEST, $decoded);
                 $_GET = array_replace($_POST, $decoded);
@@ -295,7 +291,8 @@ if (!function_exists('handle_json_request')) {
 
                 return true;
             }
-        }        
+        }
+
         return false;
     }
 }
@@ -469,11 +466,28 @@ if (!function_exists('json_response_stream')) {
  * Mengecek apakah request saat ini mengharapkan atau mengirimkan JSON.
  */
 if (!function_exists('expects_json')) {
-    function expects_json() {
+    function expects_json(): bool {
+        // Ambil header dengan fallback string kosong
         $contentType = $_SERVER["CONTENT_TYPE"] ?? '';
         $accept = $_SERVER["HTTP_ACCEPT"] ?? '';
-        return stripos($contentType, 'application/json') !== false || 
-               stripos($accept, 'application/json') !== false;
+        $ajax = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+
+        // Cek apakah ini AJAX request (XHR) - opsional tapi umum di backoffice
+        $isAjax = strtolower($ajax) === 'xmlhttprequest';
+
+        // Validasi Content-Type (untuk request yang membawa data seperti POST/PUT)
+        $isJsonInput = stripos($contentType, 'application/json') !== false;
+
+        // Validasi Accept (untuk request yang meminta data seperti GET)
+        // Menambahkan pengecekan */json untuk menangani wildcard dari beberapa library
+        $isJsonAccept = stripos($accept, 'application/json') !== false || 
+                        stripos($accept, '+json') !== false;
+
+        // Validasi Tambahan: Jika method adalah POST/PUT tapi Content-Type kosong, 
+        // kita bisa lebih ketat (opsional tergantung arsitektur bisnis).
+        
+        
+        return $isJsonInput || $isJsonAccept || $isAjax;
     }
 }
 
