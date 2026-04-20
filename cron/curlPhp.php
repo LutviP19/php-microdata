@@ -1,44 +1,33 @@
-<?php 
+<?php
 declare(strict_types=1);
-
-/**
- *  @author Lutvip19 <lutvip19@gmail.com>
- */
-
-// file: cron/curlGo.php
-
 
 /**
  * Require Worker Bootstrap File.
  */
 require_once 'bootstrap.php';
 
-
 use App\Core\Support\App;
+use App\Core\Http\NativeCurlStreamer;
 
 
+// --- EKSEKUSI DEMO ---
 
+$streamer = new NativeCurlStreamer();
 $start = microtime(true);
 
 try {
-    $client = new \App\Core\Http\GoHttpClient();
-
-    $params = App::externalApi('dashboard_get');
-    // dd($params);
-
-    // Hanya kirim Body / Timeout
-    $apiParams = App::externalApi('dashboard_get', [
-        'body' => ['page' => 1, 'limit' => 1000], // Bisa Array|string|JSON
-        'timeout' => 15 // Set atau gunakan default
+    // A. TEST SINGLE STREAM
+    echo "=== TESTING SINGLE STREAM ===" . PHP_EOL;
+    $singleTask = App::externalApi('dashboard_get', [
+        'body' => ['page' => 1, 'limit' => 1]
     ]);
-
-    // dd($apiParams, true);
-    $single = $client->request($apiParams);
+    $single = $streamer->singleStream($singleTask);
     // dd($single, true);
-    
+    // dd($single['statusCode'], true);
+
     if ($single['error']) {
         // Error ini sudah tercatat di log secara otomatis
-        echo "Gagal memproses data: " . $single['error'];
+        echo "Gagal memproses data: " . $single['error'] . PHP_EOL;
     } else {
         $data = json_decode($single['body'], true);
         // dd($data, true);
@@ -50,24 +39,17 @@ try {
         }
     }
     // exit;
+    
 
 
-    // 2. Contoh Parallel Call (Jauh lebih cepat untuk banyak URL)
-    $tasks = [
-        App::externalApi('dashboard_get', [
-            'body' => ['page' => 1, 'limit' => 20000], // Bisa Array|string|JSON
-        ]),
-        App::externalApi('dashboard_get', [
-            'body' => json_encode(['page' => 3, 'limit' => 5000]), // Bisa Array|string|JSON
-        ]),
-        App::externalApi('dashboard_get', [
-            'body' => ['page' => 2, 'limit' => 100000], // Bisa Array|string|JSON
-        ]),
+    echo PHP_EOL . "=== TESTING MULTI STREAM ===" . PHP_EOL;
+    // B. TEST MULTI STREAM
+    $multiTasks = [
+        App::externalApi('dashboard_get', ['body' => ['page' => 1, 'limit' => 20000]]),
+        App::externalApi('dashboard_get', ['body' => ['page' => 3, 'limit' => 5000]]),
+        App::externalApi('dashboard_get', ['body' => ['page' => 2, 'limit' => 100000]]),
     ];
-
-    echo "Executing multi-request..." . PHP_EOL;
-    $results = $client->multiRequest($tasks);
-    // dd($results);
+    $results = $streamer->multiStream($multiTasks);
 
     foreach ($results as $index => $res) {
         if (!empty($res['error'])) {
@@ -93,14 +75,10 @@ try {
     }
 
 } catch (Exception $e) {
-    echo "Fatal Error: " . $e->getMessage();
+    echo "Fatal Error: " . $e->getMessage() . PHP_EOL;
 } finally {
-    // Close App
-
-    // End timmer
-    $end = microtime(true);
-    $time = $end - $start;
-    echo "It took {$time} seconds to finished." . PHP_EOL;
+    $time = microtime(true) - $start;
+    echo PHP_EOL . "--------------------------------------" . PHP_EOL;
+    echo "Execution Time: " . round($time, 4) . " seconds" . PHP_EOL;
     echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB" . PHP_EOL;
-    exit;
 }

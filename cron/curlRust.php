@@ -99,6 +99,6 @@ try {
     $end = microtime(true);
     $time = $end - $start;
     echo "It took {$time} seconds to finished." . PHP_EOL;
-
+    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB" . PHP_EOL;
     exit;
 }
