@@ -42,7 +42,11 @@ class NativeCurlStreamer
         curl_exec($ch);
         $error = curl_error($ch);
         $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+
+        // Function curl_close() is deprecated since 8.5
+        if (version_compare(PHP_VERSION, '8.5.0', '<')) {
+            curl_close($ch);
+        }
 
         // echo PHP_EOL . "[DONE] Status: $statusCode" . PHP_EOL;
 
@@ -93,7 +97,11 @@ class NativeCurlStreamer
             $results[$i]['error'] = curl_error($ch) ?: null;
             $results[$i]['statusCode'] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_multi_remove_handle($mh, $ch);
-            curl_close($ch);
+            
+            // Function curl_close() is deprecated since 8.5
+            if (version_compare(PHP_VERSION, '8.5.0', '<')) {
+                curl_close($ch);
+            }
         }
 
         curl_multi_close($mh);

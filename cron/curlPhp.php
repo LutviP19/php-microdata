@@ -19,7 +19,7 @@ try {
     // A. TEST SINGLE STREAM
     echo "=== TESTING SINGLE STREAM ===" . PHP_EOL;
     $singleTask = App::externalApi('dashboard_get', [
-        'body' => ['page' => 1, 'limit' => 1]
+        'body' => ['page' => 1, 'limit' => 1000]
     ]);
     $single = $streamer->singleStream($singleTask);
     // dd($single, true);
@@ -47,14 +47,14 @@ try {
     $multiTasks = [
         App::externalApi('dashboard_get', ['body' => ['page' => 1, 'limit' => 20000]]),
         App::externalApi('dashboard_get', ['body' => ['page' => 3, 'limit' => 5000]]),
-        App::externalApi('dashboard_get', ['body' => ['page' => 2, 'limit' => 100000]]),
+        App::externalApi('dashboard_get', ['body' => ['page' => 2, 'limit' => 10000]]),
     ];
     $results = $streamer->multiStream($multiTasks);
 
     foreach ($results as $index => $res) {
         if (!empty($res['error'])) {
             echo "Request #$index Gagal: " . $res['error'] . PHP_EOL;
-        } else {            
+        } else {
             $data = json_decode($res['body'], true);
             
             // Validasi format GO STREAMING FILTER
@@ -79,6 +79,6 @@ try {
 } finally {
     $time = microtime(true) - $start;
     echo PHP_EOL . "--------------------------------------" . PHP_EOL;
-    echo "Execution Time: " . round($time, 4) . " seconds" . PHP_EOL;
+    echo "Execution Time: " . $time . " seconds" . PHP_EOL;
     echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB" . PHP_EOL;
 }
