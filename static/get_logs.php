@@ -8,14 +8,14 @@ declare(strict_types=1);
 
 $logFile = logs_path('cron_log.txt'); // read logfile every (x) seconds
 $maxLines = 100; // Ambil 100 baris terakhir saja
-$mode = 'fopen'; // fopen | tail
+$mode = 'tail'; // fopen | tail
 
 if (file_exists($logFile)) {
 
     // --- JALANKAN ROTASI SEBELUM MEMBACA ---
     // Rotate jika > 2MB, simpan backup selama 1 hari saja agar hemat disk
     // rotate_log_if_large($logFile, 2 * 1024 * 1024, 1);
-    rotate_log_if_large($logFile, 2 * 1024, 1); // Simulasi cepat
+    rotate_log_if_large($logFile, 2 * 1024 * 1024, 1); // Simulasi cepat
 
     // PHP - open file
     if($mode === 'fopen') {

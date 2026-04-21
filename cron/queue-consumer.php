@@ -38,7 +38,8 @@ while (true) {
                 echo "    URL: " . ($data['url_to_crawl'] ?? '-') . PHP_EOL;
                 echo "    CREATED: " . ($data['created_at'] ?? '-') . PHP_EOL;
             } else {
-                echo json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL;
+                // echo json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL;
+                echo json_encode($data) . PHP_EOL;
             }
             
 
