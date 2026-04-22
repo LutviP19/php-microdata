@@ -19,15 +19,27 @@ class Session
     public static function all()
     {
         $sessions = [];
-        // $escaped = ['ori'];
-        // Hide non user data
-        $escaped = [Config::get('session.csrf_token'), 'OBSOLETE', 'EXPIRES', 'nonce', 'new_session_id', 'destroyed','userAgent', 'IPaddress', 'password', 'pin', 'errors', 'secret', 'jwtId', 'tokenJwt', 'gnr', '_previous_uri', '_old_input'];
+        $escaped = [
+            Config::get('session.csrf_token'), 'OBSOLETE', 'EXPIRES', 'nonce', 
+            'new_session_id', 'destroyed', 'userAgent', 'IPaddress', 'password', 
+            'pin', 'errors', 'secret', 'jwtId', 'tokenJwt', 'gnr', 
+            '_previous_uri', '_old_input'
+        ];
+
         foreach ($_SESSION as $key => $value) {
             if (in_array($key, $escaped)) {
                 continue;
             }
 
-            $sessions[$key] = env('SESSION_ENCRYPT') ? decryptData($value) : $value;
+            $data = config('session.encrypt') ? decryptData($value) : $value;
+
+            // 2. Fitur Array to String Conversion (Handling JSON)
+            if (is_string($data)) {
+                $decoded = json_decode($data, true);
+                $sessions[$key] = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $data;
+            } else {
+                $sessions[$key] = is_array(json_decode($data, true)) ? json_decode($data, true) : $data;;
+            }
         }
 
         return $sessions;
@@ -42,19 +54,43 @@ class Session
      */
     public static function get($key)
     {
-        return self::has($key) == true ? (env('SESSION_ENCRYPT') ? decryptData($_SESSION[$key]) : $_SESSION[$key]): '';
+        if (!self::has($key)) {
+            return '';
+        }
+
+        $value = $_SESSION[$key];
+
+        if (config('session.encrypt')) {
+            // Dekripsi data mentah dari session
+            $decrypted = decryptData($value);
+            $decoded = json_decode($decrypted, true);
+            return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $decrypted;
+        }
+
+        return is_array(json_decode($value, true)) ? json_decode($value, true) : $value;
     }
 
     /**
-     * Set a value.
+     * Set a value (Compatible with string and array).
      *
      * @param string $key
-     * @param string $value
+     * @param mixed $value
      * @return bool
      */
     public static function set($key, $value)
     {
-        return (bool)($_SESSION[$key] = env('SESSION_ENCRYPT') ? encryptData($value) : $value);
+        // Jika value adalah array, ubah menjadi JSON string agar bisa dienkripsi
+        $processedValue = is_array($value) || is_object($value) 
+            ? json_encode($value) 
+            : $value;
+
+        if (config('session.encrypt')) {
+            $processedValue = encryptData($processedValue);
+        }
+
+        $_SESSION[$key] = $processedValue;
+        
+        return true;
     }
 
     /**

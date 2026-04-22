@@ -403,6 +403,9 @@ function matchEncryptedData($value, $encryptedData, $key = null)
  */
 function encryptData($value, $key = null)
 {
+    if(is_null($value))
+        return null;
+
     try {
         $encryption = new \App\Core\Support\EncryptDecrypt($key);
         return $encryption->encrypt($value);
@@ -430,6 +433,9 @@ function encryptData($value, $key = null)
  */
 function decryptData($value, $key = null)
 {
+    if(is_null($value))
+        return null;
+        
     try {
         $encryption = new \App\Core\Support\EncryptDecrypt($key);
         return $encryption->decrypt($value);
