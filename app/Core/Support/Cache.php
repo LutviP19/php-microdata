@@ -2,8 +2,9 @@
 
 /**
  * Cache class 
- * Supported drivers: file(default) and redis
+ * Supported drivers: files(default) and redis
  * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata
  */
 
  
@@ -94,12 +95,17 @@ class Cache
         //  Only cache if data is not empty
         if(!empty($data)) {
 
+            // //  Only cache if total data not 0
+            // if (is_array($data)) {
+            //     $total = $data['total'] ?? $data['data']['total'] ?? null;
+            //     if ($total === 0) {
+            //         return;
+            //     }
+            // }
+
             //  Only cache if total data not 0
-            if (is_array($data)) {
-                $total = $data['total'] ?? $data['data']['total'] ?? null;
-                if ($total === 0) {
-                    return;
-                }
+            if (is_array($data) && count($data) <= 0) {
+                return;
             }
         
             $serialized = serialize($data);

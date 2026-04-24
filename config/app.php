@@ -32,7 +32,7 @@ return [
         'sodium_key' => env('SODIUM_KEY', 'd9cffa8b79abd6ff9260e1aa23ffa65af2846cbbf21e8f0910cd7a1b09178df8'),
         'sodium_prefix' => env('SODIUM_PREFIX', 'php.microdata.v1'),
         'encrpytion_id' => env('APP_ENC_ID', false),        
-        'cache_driver' => env('CACHE_DRIVER', 'file'),
+        'cache_driver' => env('CACHE_DRIVER', 'files'),
         'queue_driver' => env('QUEUE_DRIVER', 'redis'),
     ],
 

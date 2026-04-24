@@ -107,7 +107,7 @@ class DashboardModel extends DashboardData
         $page = (int) ($request['page'] ?? 1);
         $limit = (int) ($request['limit'] ?? 10); // total data perpage
 
-        // // Ambil data stats dari cache selama 5 menit
+        // // // Ambil data stats dari cache selama 5 menit
         // $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
         //     return $statsData->getAllDataSalaries();
         // }, 300);
