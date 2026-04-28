@@ -561,9 +561,11 @@ function pathToNamespace(string $path): string {
  * Sistem log sederhana dengan level kategori.
  */
 if (!function_exists('write_log')) {
-    function write_log(?string $message, ?string $moduleName = '', ?string $level = 'info', ?string $file = null) {
+    function write_log($message, ?string $moduleName = '', ?string $level = 'info', ?string $file = null) {
         // Tentukan path folder log
         $logDir = BASEPATH . '/storage/logs/';
+
+        $message = (string) is_array($message) ? json_encode($message) : $message;
         
         // Pastikan pilihan nama file diisolasi dalam kurung
         $fileName = ($file ?? 'app_' . str_replace(" ", "_", $level) . '.log');
