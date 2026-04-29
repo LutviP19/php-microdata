@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cron Simulator Dashboard</title>
+    <title>PHP Microdata Server</title>
     
     <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
     <script defer src="<?= asset('js/alpinejs-cdn.min.js'); ?>"></script>

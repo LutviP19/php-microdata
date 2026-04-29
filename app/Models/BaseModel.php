@@ -37,7 +37,7 @@ class BaseModel extends Model
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
-        $this->expToken = (int) (config('app.session.lifetime') / 2); // 1 hour
+        $this->expToken = (int) (config('session.lifetime') / 2); // 1 hour
         $this->refreshTokenTimeout = 7; // X days
         $this->jwt = new JWT();
         $this->auth = new SodiumAuth();
@@ -133,32 +133,28 @@ class BaseModel extends Model
         // Simpan ke DB jika belum ada ulid
         // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
 
-        $accessTokenPayload = [         
+        // Sample payload
+        $payload = [
             // 'uid'  => $user->ulid,
             'uid'  => 12345,
             'ulid' => $newUlid,
             'role' => 'backend_dev',
-            'type' => 'access',
             'fingerprint' => get_device_fingerprint(),
+        ];
+
+        $accessTokenPayload = [ 
+            'type' => 'access',
             'exp'  => $this->expToken // 1 Jam
         ];
 
-        // Merged payload
-        $accessTokenPayload = array_merge($accessTokenPayload, $payload);
-
-        $refreshTokenPayload = [
-            // 'uid'  => $user->ulid,
-            'uid'  => 12345,
-            'ulid' => $newUlid,
+        $refreshTokenPayload = [ 
             'type' => 'refresh',
-            'fingerprint' => get_device_fingerprint(),
             'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
         ];
 
-        $tipeRefreshToken = $this->auth->encode($refreshTokenPayload);
         $dataToken = [
-            'access_token'  => $this->auth->encode($accessTokenPayload),
-            'refresh_token' => $tipeRefreshToken
+            'access_token'  => $this->auth->encode(array_merge($payload, $accessTokenPayload)),
+            'refresh_token' => $this->auth->encode(array_merge($payload, $refreshTokenPayload))
         ];
 
         // Generate Token Sodium
@@ -167,13 +163,13 @@ class BaseModel extends Model
 
     protected function authorizeSodium($token, ?string $permission = null)
     {        
-        // Cara Mengecek Permission di Sisi Server
-        $decoded = $this->jwt->decode($token);
+        // Mengecek Permission di Sisi Server
+        $decoded = $this->auth->decode($token);
 
         if(!$decoded)
             return null;
 
-        if ($decoded && $permission) {
+        if ($decoded && $permission && isset($decoded['user_permissions'])) {
             $permissions = $decoded['user_permissions'] ?? [];
             
             // Cek dengan Gate
