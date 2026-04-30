@@ -352,6 +352,22 @@ PHP-Testing
 -----------
 Data Filter-Rust : php cron/DataEngine.php
 
+
+Protobuf(Serial) - Rust (FFI)
+https://protobuf.dev/installation/
+cargo clean (menghapus semua cache build)
+==================
+protoc --version
+cd ffi/source/rust_protobuf/rust-lib
+cargo test
+cargo build --release
+cp ../target/release/librust_protobuf.so ../../../lib/librust_protobuf.so
+
+Web-Testing
+-----------
+Protobuf Serialize-Rust : http://localhost:8000/testing
+
+
 Event - Listener:
 =================
 // Migarte table

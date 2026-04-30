@@ -7,13 +7,16 @@ use RuntimeException;
 
 class DataEngine
 {
-    private $ffi;
-    private $libPath;
+    private FFI $ffi;
+    private string $libPath;
 
     public function __construct(?string $libPath = null)
     {
         // Gunakan konstanta BASEPATH_FFI jika tersedia, atau fallback ke direktori saat ini
-        $defaultPath = defined('BASEPATH_FFI') ? BASEPATH_FFI . '/lib/libdata_engine.so' : __DIR__ . '/lib/libdata_engine.so';
+        $defaultPath = defined('BASEPATH_FFI') 
+            ? BASEPATH_FFI . '/lib/libdata_engine.so' 
+            : __DIR__ . '/../../../ffi/lib/libdata_engine.so';
+        
         $this->libPath = $libPath ?? $defaultPath;
 
         if (!file_exists($this->libPath)) {

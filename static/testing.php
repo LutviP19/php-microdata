@@ -47,13 +47,40 @@ use App\Core\Auth\SodiumAuth;
 // exit;
 
 
+// Testing - Protobuf:
+$bridge = new \App\Core\FFI\ProtoBridge();
+
+// Metadata yang akan dikeluarkan lagi di decode
+$metadata = ["user_id" => rand(1,88), "ip_address" => clientIP(), "browser" => get_short_ua()];
+// $metadata = ["user" => "admin"];
+// Data Payload (Bisa berupa string biner, gambar, atau hasil encrypt)
+$extraPayload = "ini data biner rahasia";
+// // Simulasikan Encode
+// $binProto = $bridge->pack("/v1/auth", $metadata, $extraPayload);
+// $dataProto = $bridge->unpack($binProto);
+
+// // Jika metadata ada isinya
+// echo "metadata: ";
+// print_r($dataProto['metadata']);
+// echo "<br>". PHP_EOL;
+
+// // Jika ingin mengambil kembali payload aslinya
+// $originalPayload = hex2bin($dataProto['payload_raw']);
+// echo "payload_raw: " . $originalPayload ."<br>". PHP_EOL; // "ini data biner rahasia"
+// // dd($dataProto, true);
+
+// $dataArray = json_decode($dataProto['content'], true);
+// dd($dataArray, true);
+// exit;
+
+
 // Testing CURL - Client Web
 $streamer = new NativeCurlStreamer();
 $start = microtime(true);
 
 try {
     // A. TEST SINGLE STREAM
-    echo "=== TESTING CURL STREAM - Client Webhook ===" . PHP_EOL;
+    echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
     $singleTask = App::externalApi('microdata_client_web', [
         'body' => json_encode([
                     'email' => 'test@microdata.local', 
@@ -68,26 +95,47 @@ try {
 
     if ($single['error']) {
         // Error ini sudah tercatat di log secara otomatis
-        echo "Gagal memproses data: " . $single['error'] . PHP_EOL;
+        echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
     } else {
-        $data = json_decode($single['body'], true);
+
+        // // Curl Decode
+        // $data = json_decode($single['body'], true);
+        // // dd($data, true);
+
+
+        // Test JSON Protobuf
+        $binProto = $bridge->pack($single['body'], $metadata, $extraPayload);
+        $dataProto = $bridge->unpack($binProto);
+
+        // Jika metadata ada isinya
+        echo "metadata: ";
+        print_r($dataProto['metadata']);
+        echo "<br>". PHP_EOL;
+
+        // Jika ingin mengambil kembali payload aslinya
+        $originalPayload = hex2bin($dataProto['payload_raw']);
+        echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
+
+        $data = json_decode($dataProto['content'], true);
         // dd($data, true);
+
+
         if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
-            echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
+            // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
+            echo "Single Response: " . json_encode($data) ."<br>". PHP_EOL;
         } else {
             $statusCode = $data['statusCode'];
-            echo "Request Single Error: {$statusCode} - " . ($data['message'] ?? 'N/A') . PHP_EOL;
+            echo "Request Single Error: {$statusCode} - " . ($data['message'] ?? 'N/A') ."<br>". PHP_EOL;
         }
     }
     
-
 } catch (Exception $e) {
-    echo "Fatal Error: " . $e->getMessage() . PHP_EOL;
+    echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
 } finally {
     $time = microtime(true) - $start;
-    echo PHP_EOL . "--------------------------------------" . PHP_EOL;
-    echo "Execution Time: " . $time . " seconds" . PHP_EOL;
-    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB" . PHP_EOL;
+    echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
+    echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
+    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
 }
 exit;
 
