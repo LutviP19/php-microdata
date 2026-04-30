@@ -55,8 +55,11 @@ $metadata = ["user_id" => rand(1,88), "ip_address" => clientIP(), "browser" => g
 // $metadata = ["user" => "admin"];
 // Data Payload (Bisa berupa string biner, gambar, atau hasil encrypt)
 $extraPayload = "ini data biner rahasia";
+
 // // Simulasikan Encode
-// $binProto = $bridge->pack("/v1/auth", $metadata, $extraPayload);
+// $contentData = ['test' => 'value'];
+// $contentData = "/v1/auth x0001";
+// $binProto = $bridge->pack($contentData, $metadata, $extraPayload);
 // $dataProto = $bridge->unpack($binProto);
 
 // // Jika metadata ada isinya
@@ -70,6 +73,7 @@ $extraPayload = "ini data biner rahasia";
 // // dd($dataProto, true);
 
 // $dataArray = json_decode($dataProto['content'], true);
+// echo "content: ";
 // dd($dataArray, true);
 // exit;
 
@@ -98,13 +102,13 @@ try {
         echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
     } else {
 
-        // // Curl Decode
-        // $data = json_decode($single['body'], true);
-        // // dd($data, true);
+        // Curl Decode
+        $dataCurl = json_decode($single['body'], true);
+        // dd($dataCurl, true);
 
 
         // Test JSON Protobuf
-        $binProto = $bridge->pack($single['body'], $metadata, $extraPayload);
+        $binProto = $bridge->pack($dataCurl, $metadata, $extraPayload);
         $dataProto = $bridge->unpack($binProto);
 
         // Jika metadata ada isinya
@@ -117,6 +121,7 @@ try {
         echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
 
         $data = json_decode($dataProto['content'], true);
+        echo "content: ";
         // dd($data, true);
 
 

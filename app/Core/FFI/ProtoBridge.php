@@ -38,9 +38,13 @@ class ProtoBridge {
         ", $this->libPath);
     }
 
-    public function pack(string $content, array $metadata = [], string $binaryPayload = ''): string {
+    public function pack(mixed $content, array $metadata = [], string $binaryPayload = ''): string {
         if(!$content)
             return null;
+
+        // Convert content to JSON
+        $contentData = is_string($content) ? [str_replace(" ", "", $content)] : $content;
+        $content = json_encode($contentData, JSON_FORCE_OBJECT);
 
         // Pastikan semua value adalah string agar cocok dengan map<string, string> di Rust
         $sanitizedMetadata = array_map(function($value) {
