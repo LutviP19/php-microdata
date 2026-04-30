@@ -38,7 +38,7 @@ class ProtoBridge {
         ", $this->libPath);
     }
 
-    public function pack(mixed $content, array $metadata = [], string $binaryPayload = ''): string {
+    public function pack(mixed $content, array $metadata = [], string $binaryPayload = '', bool $outputBinary = true): string {
         if(!$content)
             return null;
 
@@ -70,7 +70,10 @@ class ProtoBridge {
         $binary = FFI::string($buf->data, $buf->len);
         $this->ffi->free_proto_buffer($buf);
         
-        return $binary;
+        if($outputBinary)
+            return $binary;
+        
+        return base64_encode($binary);
     }
 
     public function unpack(string $binaryData): array {

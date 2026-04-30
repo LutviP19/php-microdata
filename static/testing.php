@@ -85,7 +85,20 @@ $start = microtime(true);
 try {
     // A. TEST SINGLE STREAM
     echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
-    $singleTask = App::externalApi('microdata_client_web', [
+    // $singleTask = App::externalApi('microdata_client_web', [
+    //     'body' => json_encode([
+    //                 'email' => 'test@microdata.local', 
+    //                 'password' => 'abcde1234',
+    //                 // List Events should be run
+    //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
+    //             ])
+    // ]);
+
+    // $single = $streamer->singleStream($singleTask);
+    // // dd($single, true);
+    // // dd($single['statusCode'], true);
+
+    $singleProtoTask = App::externalApi('testing_client_web', [
         'body' => json_encode([
                     'email' => 'test@microdata.local', 
                     'password' => 'abcde1234',
@@ -93,9 +106,7 @@ try {
                     'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
                 ])
     ]);
-    $single = $streamer->singleStream($singleTask);
-    // dd($single, true);
-    // dd($single['statusCode'], true);
+    $single = $streamer->singleStream($singleProtoTask);
 
     if ($single['error']) {
         // Error ini sudah tercatat di log secara otomatis
@@ -103,13 +114,13 @@ try {
     } else {
 
         // Curl Decode
-        $dataCurl = json_decode($single['body'], true);
+        // $dataCurl = json_decode($single['body'], true);
         // dd($dataCurl, true);
 
 
         // Test JSON Protobuf
-        $binProto = $bridge->pack($dataCurl, $metadata, $extraPayload);
-        $dataProto = $bridge->unpack($binProto);
+        // $binProto = $bridge->pack($dataCurl, $metadata, $extraPayload);
+        $dataProto = $bridge->unpack($single['body']);
 
         // Jika metadata ada isinya
         echo "metadata: ";
@@ -122,7 +133,7 @@ try {
 
         $data = json_decode($dataProto['content'], true);
         echo "content: ";
-        // dd($data, true);
+        dd($data, true);
 
 
         if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {

@@ -691,6 +691,62 @@ function checkSession()
 }
 
 /**
+ * Prioritas Content Negotiation.
+ * protobuf | json
+ * @return string
+ */
+if (!function_exists('getBestFormat')) {
+    function getBestFormat(): string {
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '*/*';
+
+        // 1. Pecah semua format yang diminta client
+        $items = explode(',', $accept);
+        $choices = [];
+
+        foreach ($items as $item) {
+            // Pisahkan tipe media dengan parameter (seperti ;q=0.8)
+            $parts = explode(';', trim($item));
+            $mimeType = trim($parts[0]);
+            $priority = 1.0; // Default prioritas tertinggi
+
+            // Cari jika ada nilai q=...
+            foreach ($parts as $part) {
+                $part = trim($part);
+                if (str_starts_with($part, 'q=')) {
+                    $priority = (float) substr($part, 2);
+                }
+            }
+
+            $choices[] = [
+                'type' => $mimeType,
+                'q' => $priority
+            ];
+        }
+
+        // 2. Urutkan berdasarkan nilai q (descending)
+        usort($choices, function($a, $b) {
+            if ($a['q'] === $b['q']) return 0;
+            return ($a['q'] > $b['q']) ? -1 : 1;
+        });
+
+        // 3. Iterasi hasil urutan untuk menentukan yang kita dukung
+        foreach ($choices as $choice) {
+            $type = $choice['type'];
+
+            if ($type === 'application/x-protobuf') {
+                return 'protobuf';
+            }
+            
+            if ($type === 'application/json' || $type === '*/*') {
+                return 'json';
+            }
+        }
+
+        return 'json'; // Default fallback
+    }
+}
+
+/**
  * Mendapatkan versi singkat dari User Agent (Browser + OS).
  * @param bool $is_hash Jika true, mengembalikan MD5 hash (32 char).
  * @return string
