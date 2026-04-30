@@ -33,6 +33,18 @@ return [
         ]
     ],
 
+    // Client - Webhook
+    'microdata_client_web' => [
+        'method' => 'POST',
+        'url' => 'http://localhost:8008/api/v1/webhook',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'X-Api-Token' => 'eyJpdiI6InE2TUNrNGFsbDJYclUxMUh0S1pNS2c9PSIsInZhbHVlIjoiMlRRUGE0R2FWWERMU1UycmoycXZFYXhXMEhvcFZ6TXFuTHByZ1BMNnNORT0iLCJtYWMiOiIwZjA5ZmFiMmNkOGM3YTFlZWEwNTQ2OWYxYTE0N2ZmOWNiZTVkN2U4OWQxMzcyYTNkOGU3YjllNzc0OGFmZDVkIiwidGFnIjoiIn0=',
+        ]
+    ],
+
     // Services
     'ms_enabled_experimental' => [
         'method' => 'PATCH',

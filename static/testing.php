@@ -1,8 +1,24 @@
 <?php 
 declare(strict_types=1);
 
+// if(is_cli()) {
+//     if (!defined('BASEPATH')) {
+//         define('BASEPATH', __DIR__ . "/..");
+//     }
+
+//     if (!defined('BASEPATH_FFI')) {
+//         define('BASEPATH_FFI', __DIR__ . '/../ffi');
+//     }
+
+//     require_once BASEPATH . '/cron/bootstrap.php';
+// }
+
 use App\Data\Dashboard\v1\{DashboardData, StatsData, EmployeeData};
 use App\Structs\Dashboard\v1\{DashboardStruct, SallaryStruct};
+
+use App\Core\Support\App;
+use App\Core\Http\NativeCurlStreamer;
+use App\Core\Auth\SodiumAuth;
 
 
 // // Generate random string - JWT Secret
@@ -14,25 +30,67 @@ use App\Structs\Dashboard\v1\{DashboardStruct, SallaryStruct};
 // php -r "echo bin2hex(random_bytes(32)).PHP_EOL;"
 
 
-// Testing Class
-Class Testing extends \App\Models\BaseModel {
-    function __construct() {
-        parent::__construct();
+// // Testing Class
+// Class Testing extends \App\Models\BaseModel {
+//     function __construct() {
+//         parent::__construct();
 
-        // $genJwt = self::generateTokenJWT();
-        // dd($genJwt);
+//         // $genJwt = self::generateTokenJWT();
+//         // dd($genJwt);
 
-        $genSodium = self::generateTokenSodium();
-        dd($genSodium, true);
+//         $genSodium = self::generateTokenSodium();
+//         dd($genSodium, true);
+//     }
+// }
+
+// $testing = new Testing();
+// exit;
+
+
+// Testing CURL - Client Web
+$streamer = new NativeCurlStreamer();
+$start = microtime(true);
+
+try {
+    // A. TEST SINGLE STREAM
+    echo "=== TESTING CURL STREAM - Client Webhook ===" . PHP_EOL;
+    $singleTask = App::externalApi('microdata_client_web', [
+        'body' => json_encode([
+                    'email' => 'test@microdata.local', 
+                    'password' => 'abcde1234',
+                    // List Events should be run
+                    'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
+                ])
+    ]);
+    $single = $streamer->singleStream($singleTask);
+    // dd($single, true);
+    // dd($single['statusCode'], true);
+
+    if ($single['error']) {
+        // Error ini sudah tercatat di log secara otomatis
+        echo "Gagal memproses data: " . $single['error'] . PHP_EOL;
+    } else {
+        $data = json_decode($single['body'], true);
+        // dd($data, true);
+        if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
+            echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
+        } else {
+            $statusCode = $data['statusCode'];
+            echo "Request Single Error: {$statusCode} - " . ($data['message'] ?? 'N/A') . PHP_EOL;
+        }
     }
-}
+    
 
-$testing = new Testing();
+} catch (Exception $e) {
+    echo "Fatal Error: " . $e->getMessage() . PHP_EOL;
+} finally {
+    $time = microtime(true) - $start;
+    echo PHP_EOL . "--------------------------------------" . PHP_EOL;
+    echo "Execution Time: " . $time . " seconds" . PHP_EOL;
+    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB" . PHP_EOL;
+}
 exit;
 
-
-
-use App\Core\Auth\SodiumAuth;
 
 // Saat register karyawan baru
 // $newUlid = \App\Core\Support\UlidGenerator::generate(); // Hasil: 01H7XRMZ5W...

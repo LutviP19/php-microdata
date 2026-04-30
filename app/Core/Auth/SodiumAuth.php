@@ -19,7 +19,7 @@ namespace App\Core\Auth;
         $this->key = hex2bin($hexKey);
 
         // Mengikuti standar PASETO
-        $this->prefix = $configPrefix . config('app.sodium_prefix') . '.';
+        $this->prefix = config('app.sodium_prefix') . '.';
     }
 
     /**
