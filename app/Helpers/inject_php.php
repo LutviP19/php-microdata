@@ -627,9 +627,9 @@ function checkRateLimit($identifier, $limit, $timeframeSeconds) {
 
     try {
         $redis = new \Predis\Client([
-            'host' => Config::get('redis.cache.host'),
-            'port' => Config::get('redis.cache.port'),
-            'database' => Config::get('redis.cache.database'),
+            'host' => config('redis.cache.host'),
+            'port' => config('redis.cache.port'),
+            'database' => config('redis.cache.database'),
             'timeout' => 0.5, // Timeout pendek agar tidak menghambat user jika redis down
         ]);
 
