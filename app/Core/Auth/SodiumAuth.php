@@ -9,51 +9,64 @@ namespace App\Core\Auth;
  * Algoritma: HMAC SHA256 (HS256)
  */
 
- class SodiumAuth {
+use Exception;
+
+class SodiumAuth {
     private string $key;
-    private string $prefix;
+    private string $basePrefix;
 
     public function __construct(?string $hexKey = null) {
-        // Key harus 32 bytes (biner)
         $hexKey = $hexKey ?? config('app.sodium_key');
-        // Mengubah 64 karakter hex menjadi 32 byte biner
         $this->key = hex2bin($hexKey);
-
-        // Mengikuti standar PASETO
-        $this->prefix = config('app.sodium_prefix') . '.';
+        
+        // Simpan prefix dasar (misal: "v1.access")
+        $this->basePrefix = config('app.sodium_prefix');
     }
 
     /**
      * Membuat Token (Encrypt)
      */
     public function encode(array $payload): string {
-        // Nonce harus unik setiap kali enkripsi
         $nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
 
         // Bedakan prefix refresh
-        if(isset($payload['type']) && $payload['type'] === 'refresh') 
-        $this->prefix = str_replace('access', 'refresh', $this->prefix);
+        $currentPrefix = $this->basePrefix;
+        if (isset($payload['type']) && $payload['type'] === 'refresh') {
+            $currentPrefix = str_replace('access', 'refresh', $currentPrefix);
+        }
         
+        $footer = $currentPrefix . '.';
+
         $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(
             json_encode($payload),
-            $this->prefix, // Footer/AD untuk integritas
+            $footer, 
             $nonce,
             $this->key
         );
 
-        // Gabungkan Nonce + Ciphertext lalu encode ke Base64Url
-        return $this->prefix . $this->base64UrlEncode($nonce . $ciphertext);
+        return $footer . $this->base64UrlEncode($nonce . $ciphertext);
     }
 
     /**
      * Memvalidasi & Dekripsi Token
      */
     public function decode(string $token): ?array {
-        if (strpos($token, $this->prefix) !== 0) return null;
+        // Deteksi Prefix secara otomatis dari string token
+        // Mencari apakah token mengandung '.access.' atau '.refresh.'
+        $currentPrefix = $this->basePrefix;
+        $refreshPrefix = str_replace('access', 'refresh', $currentPrefix);
 
-        $raw = $this->base64UrlDecode(substr($token, strlen($this->prefix)));
+        if (str_starts_with($token, $refreshPrefix . '.')) {
+            $currentPrefix = $refreshPrefix;
+        } elseif (!str_starts_with($token, $currentPrefix . '.')) {
+            return null; // Prefix tidak dikenal
+        }
+
+        $footer = $currentPrefix . '.';
+        $payloadPart = substr($token, strlen($footer));
+        $raw = $this->base64UrlDecode($payloadPart);
+        
         $nonceSize = SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES;
-
         if (strlen($raw) <= $nonceSize) return null;
 
         $nonce = mb_substr($raw, 0, $nonceSize, '8bit');
@@ -62,12 +75,20 @@ namespace App\Core\Auth;
         try {
             $decrypted = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt(
                 $ciphertext,
-                $this->prefix,
+                $footer,
                 $nonce,
                 $this->key
             );
 
-            return $decrypted ? json_decode($decrypted, true) : null;
+            if (!$decrypted) return null;
+
+            $payload = json_decode($decrypted, true);
+            
+            if (isset($payload['exp']) && time() > $payload['exp']) {
+                return null; // Expired
+            }
+
+            return $payload;
         } catch (Exception $e) {
             return null;
         }
@@ -77,14 +98,10 @@ namespace App\Core\Auth;
         return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
     }
 
-    private function base64UrlDecode(string $data): string 
-    {
+    private function base64UrlDecode(string $data): string {
         $data = str_replace(['-', '_'], ['+', '/'], $data);
         $remainder = strlen($data) % 4;
-        if ($remainder) {
-            $data .= str_repeat('=', 4 - $remainder);
-        }
-        
+        if ($remainder) $data .= str_repeat('=', 4 - $remainder);
         return base64_decode($data);
     }
 }
