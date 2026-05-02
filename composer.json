@@ -8,9 +8,7 @@
         "phpstreamserver/scheduler": "^0.8.1",
         "predis/predis": "^3.4",
         "php-amqplib/php-amqplib": "^3.7",
-        "meilisearch/meilisearch-php": "^1.16",        
-        "php-http/curl-client": "^2.4",
-        "nyholm/psr7": "^1.8"
+        "meilisearch/meilisearch-php": "^1.16"
     },
     "autoload": {
         "psr-4": {
