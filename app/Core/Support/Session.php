@@ -32,6 +32,8 @@ class Session
             }
 
             $data = config('session.encrypt') ? decryptData($value) : $value;
+            if(empty($data))
+                continue;
 
             // 2. Fitur Array to String Conversion (Handling JSON)
             if (is_string($data)) {

@@ -4,6 +4,7 @@ namespace App\Core\Auth;
 
 /**
  * SodiumAuth Library 
+ * PASETO (Platform-Agnostic Security Tokens)
  * PasetoLite (Simetris/Shared Key) yang memanfaatkan XChaCha20-Poly1305 melalui ekstensi Sodium.
  * Algoritma: HMAC SHA256 (HS256)
  */
@@ -28,6 +29,10 @@ namespace App\Core\Auth;
     public function encode(array $payload): string {
         // Nonce harus unik setiap kali enkripsi
         $nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
+
+        // Bedakan prefix refresh
+        if(isset($payload['type']) && $payload['type'] === 'refresh') 
+        $this->prefix = str_replace('access', 'refresh', $this->prefix);
         
         $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(
             json_encode($payload),
@@ -72,7 +77,14 @@ namespace App\Core\Auth;
         return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
     }
 
-    private function base64UrlDecode(string $data): string {
-        return base64_decode(str_replace(['-', '_'], ['+', '/'], $data));
+    private function base64UrlDecode(string $data): string 
+    {
+        $data = str_replace(['-', '_'], ['+', '/'], $data);
+        $remainder = strlen($data) % 4;
+        if ($remainder) {
+            $data .= str_repeat('=', 4 - $remainder);
+        }
+        
+        return base64_decode($data);
     }
 }

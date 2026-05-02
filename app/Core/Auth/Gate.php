@@ -134,9 +134,22 @@ class Gate
         $userData = $auth->decode($token);
 
         // Verifikasi Token
-        if (!$userData) {
+        if (!$userData || !isset($userData['exp'])) {
             self::unauthorized_response("Session has expired please re-login.");
         }
+
+        // Cek exp
+        if ($userData && isset($userData['exp'])) {
+            $leeway = 60; // Toleransi perbedaan waktu antar server (60 detik)
+            if (time() > ($userData['exp'] + $leeway))
+                self::unauthorized_response("Session has expired please re-login.");
+        }
+
+        // // Cek Type refresh
+        // if ($userData && isset($userData['type'])) {
+        //     if($userData['type'] === 'refresh')
+        //         return self::refreshSodiumAuth($userData, $hexKey);
+        // }
 
         // Verifikasi Permission (jika diminta)
         if ($requiredPermission) {
@@ -147,6 +160,62 @@ class Gate
         }
 
         return $userData;
+    }
+
+    public static function refreshSodiumAuth(string $refreshToken, ?string $hexKey = null): string 
+    {
+        $hexKey = $hexKey ?? config('app.sodium_key');
+        $sodiumAuth = new SodiumAuth($hexKey);
+
+        // 1. Decode & Verify Signature Refresh Token
+        $payload = $sodiumAuth->decode($refreshToken);
+        $isValid = isset($payload['type']) && isset($payload['iis']) && isset($payload['fingerprint']);
+
+        if (!$payload || !$isValid || $payload['type'] !== 'refresh') {
+            self::unauthorized_response("Invalid Refresh Token");
+        }
+
+        // // 2. Cek di Redis (Whitelist)
+        // // Ini penting agar Refresh Token bisa di-revoke jika user logout/ban
+        // $stored = $this->redis->get("sso_refresh_map:" . $payload['uid']);
+        // if ($stored !== $refreshToken) {
+        //     self::unauthorized_response("Refresh Token Revoked");
+        // }
+
+        // Default payload
+        $expToken = time() + (60 * (config('session.lifetime') / 2));
+        $payloadDefault = [
+            'uid'  => $payload['uid'],
+            'role' => $payload['role'],
+            'fingerprint' => get_device_fingerprint(),
+            'iat'  => time(),
+            'iis' => 'php-microdata',
+            'aud' => 'users',
+        ];
+        $payload = array_merge($payloadDefault, $payload);
+
+        // 3. Generate Access Token Baru (Pendek: 1 jam)
+        $newAccessToken = [
+            'type' => 'access',
+            'exp' => $expToken
+        ];
+
+        // 4. Generate Refresh Token Baru (Rotasi - Opsional tapi disarankan)
+        $newRefreshToken = [
+            'type' => 'refresh',
+            'exp' => time() + (3600 * 24 * 7) // 7 Hari
+        ];
+
+        // // 5. Update Redis Whitelist
+        // $this->redis->setex("sso_refresh_map:" . $payload['uid'], 86400 * 7, $newRefreshToken);
+
+        $dataNewToken = [
+            'access_token'  => $sodiumAuth->encode(array_merge($payload, $newAccessToken)),
+            'refresh_token' => $sodiumAuth->encode(array_merge($payload, $newRefreshToken))
+        ];
+
+        // Generate New Token Sodium
+        return $dataNewToken;
     }
 
     /**

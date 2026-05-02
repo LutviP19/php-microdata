@@ -353,9 +353,9 @@ function setHeaders($headers = [])
  * Generates random keys for AES-256 encryption (32 bytes).
  * Output in Base64 format with prefix 'base64:'
  */
-function generateAppKey() {
+function generateAppKey($len = 32) {
     // AES-256 requires a key that is 32 bytes (256 bits) long.
-    $bytes = random_bytes(32);
+    $bytes = random_bytes($len);
     
     // Encode to base64 for safe text format
     return 'base64:' . base64_encode($bytes);
@@ -747,7 +747,7 @@ if (!function_exists('getBestFormat')) {
 }
 
 /**
- * Mendapatkan versi singkat dari User Agent (Browser + OS).
+ * Mendapatkan versi singkat dari User Agent (Browser + OS + Version).
  * @param bool $is_hash Jika true, mengembalikan MD5 hash (32 char).
  * @return string
  */
@@ -755,23 +755,28 @@ if (!function_exists('get_short_ua')) {
     function get_short_ua(bool $is_hash = false): string {
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
         
-        // 1. Identifikasi Platform/OS
+        // 1. Identifikasi Platform/OS & Versi
         $os = 'Unknown';
-        if (stripos($ua, 'windows') !== false) $os = 'Windows';
-        elseif (stripos($ua, 'android') !== false) $os = 'Android';
-        elseif (stripos($ua, 'iphone') !== false || stripos($ua, 'ipad') !== false) $os = 'iOS';
-        elseif (stripos($ua, 'macintosh') !== false) $os = 'MacOS';
+        if (preg_match('/Windows NT ([\d\.]+)/i', $ua, $m)) $os = 'Win' . $m[1];
+        elseif (preg_match('/Android ([\d\.]+)/i', $ua, $m)) $os = 'Android' . (int)$m[1];
+        elseif (preg_match('/iPhone OS ([\d_]+)/i', $ua, $m)) $os = 'iOS' . (int)str_replace('_', '', $m[1]);
+        elseif (preg_match('/Mac OS X ([\d_]+)/i', $ua, $m)) $os = 'MacOS' . (int)str_replace('_', '', $m[1]);
         elseif (stripos($ua, 'linux') !== false) $os = 'Linux';
 
-        // 2. Identifikasi Browser
+        // 2. Identifikasi Browser & Versi Mayor
         $browser = 'Unknown';
-        if (stripos($ua, 'edg/') !== false) $browser = 'Edge';
-        elseif (stripos($ua, 'chrome/') !== false) $browser = 'Chrome';
-        elseif (stripos($ua, 'firefox/') !== false) $browser = 'Firefox';
-        elseif (stripos($ua, 'safari/') !== false && stripos($ua, 'chrome/') === false) $browser = 'Safari';
-        elseif (stripos($ua, 'opera/') !== false || stripos($ua, 'opr/') !== false) $browser = 'Opera';
+        if (preg_match('/(Edg|Edge)\/([\d\.]+)/i', $ua, $m)) $browser = 'Edge' . (int)$m[2];
+        elseif (preg_match('/OPR\/([\d\.]+)/i', $ua, $m)) $browser = 'Opera' . (int)$m[1];
+        elseif (preg_match('/Chrome\/([\d\.]+)/i', $ua, $m)) $browser = 'Chrome' . (int)$m[1];
+        elseif (preg_match('/Firefox\/([\d\.]+)/i', $ua, $m)) $browser = 'Firefox' . (int)$m[1];
+        elseif (preg_match('/Version\/([\d\.]+).*Safari/i', $ua, $m)) $browser = 'Safari' . (int)$m[1];
 
         $shortUa = $os . '_' . $browser;
+
+        // Jika gagal deteksi, gunakan string asli yang dibersihkan sedikit
+        if ($shortUa === 'Unknown_Unknown') {
+            $shortUa = substr(preg_replace('/[^a-zA-Z0-0]/', '', $ua), 0, 20);
+        }
 
         return $is_hash ? md5($shortUa) : $shortUa;
     }

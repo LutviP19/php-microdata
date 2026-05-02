@@ -78,181 +78,221 @@ $extraPayload = "ini data biner rahasia";
 // exit;
 
 
-// Testing CURL - Client Web
-$streamer = new NativeCurlStreamer();
-$start = microtime(true);
+// // Testing CURL - Client Web
+// $streamer = new NativeCurlStreamer();
+// $start = microtime(true);
 
-try {
-    // A. TEST SINGLE STREAM
-    echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
-    // $singleTask = App::externalApi('microdata_client_web', [
-    //     'body' => json_encode([
-    //                 'email' => 'test@microdata.local', 
-    //                 'password' => 'abcde1234',
-    //                 // List Events should be run
-    //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
-    //             ])
-    // ]);
+// try {
+//     // A. TEST SINGLE STREAM
+//     echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
+//     $singleTask = App::externalApi('microdata_client_web', [
+//         'body' => json_encode([
+//                     'email' => 'test@microdata.local', 
+//                     'password' => 'abcde1234',
+//                     // List Events should be run
+//                     'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
+//                 ])
+//     ]);
 
-    // $single = $streamer->singleStream($singleTask);
-    // // dd($single, true);
-    // // dd($single['statusCode'], true);
+//     $single = $streamer->singleStream($singleTask);
+//     // dd($single, true);
+//     // dd($single['statusCode'], true);
 
-    $singleProtoTask = App::externalApi('testing_client_web', [
-        'body' => json_encode([
-                    'email' => 'test@microdata.local', 
-                    'password' => 'abcde1234',
-                    // List Events should be run
-                    'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
-                ])
-    ]);
-    $single = $streamer->singleStream($singleProtoTask);
+//     // // Test JSON Protobuf
+//     // $singleProtoTask = App::externalApi('testing_client_web', [
+//     //     'body' => json_encode([
+//     //                 'email' => 'test@microdata.local', 
+//     //                 'password' => 'abcde1234',
+//     //                 // List Events should be run
+//     //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
+//     //             ])
+//     // ]);
+//     // $single = $streamer->singleStream($singleProtoTask);
+//     // // End - Test JSON Protobuf
 
-    if ($single['error']) {
-        // Error ini sudah tercatat di log secara otomatis
-        echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
-    } else {
+//     if ($single['error']) {
+//         // Error ini sudah tercatat di log secara otomatis
+//         echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
+//     } else {
 
-        // Curl Decode
-        // $dataCurl = json_decode($single['body'], true);
-        // dd($dataCurl, true);
-
-
-        // Test JSON Protobuf
-        // $binProto = $bridge->pack($dataCurl, $metadata, $extraPayload);
-        $dataProto = $bridge->unpack($single['body']);
-
-        // Jika metadata ada isinya
-        echo "metadata: ";
-        print_r($dataProto['metadata']);
-        echo "<br>". PHP_EOL;
-
-        // Jika ingin mengambil kembali payload aslinya
-        $originalPayload = hex2bin($dataProto['payload_raw']);
-        echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
-
-        $data = json_decode($dataProto['content'], true);
-        echo "content: ";
-        dd($data, true);
+//         // Curl Decode
+//         $dataCurl = json_decode($single['body'], true);
+//         // dd($dataCurl, true);
 
 
-        if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
-            // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
-            echo "Single Response: " . json_encode($data) ."<br>". PHP_EOL;
-        } else {
-            $statusCode = $data['statusCode'];
-            echo "Request Single Error: {$statusCode} - " . ($data['message'] ?? 'N/A') ."<br>". PHP_EOL;
-        }
-    }
+//         // // Test JSON Protobuf
+//         // // $binProto = $bridge->pack($dataCurl, $metadata, $extraPayload);
+//         // $dataProto = $bridge->unpack($single['body']);
+
+//         // // Jika metadata ada isinya
+//         // echo "metadata: ";
+//         // print_r($dataProto['metadata']);
+//         // echo "<br>". PHP_EOL;
+
+//         // // Jika ingin mengambil kembali payload aslinya
+//         // $originalPayload = hex2bin($dataProto['payload_raw']);
+//         // echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
+
+//         // $data = json_decode($dataProto['content'], true);
+//         // echo "content: ";
+//         // dd($data, true);
+//         // // End - Test JSON Protobuf
+
+
+//         if($dataCurl['statusCode'] >= 200 && $dataCurl['statusCode'] < 300) {
+//             // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
+//             echo "Single Response: " . json_encode($dataCurl) ."<br>". PHP_EOL;
+//         } else {
+//             $statusCode = $dataCurl['statusCode'];
+//             echo "Request Single Error: {$statusCode} - " . ($dataCurl['message'] ?? 'N/A') ."<br>". PHP_EOL;
+//         }
+//     }
     
-} catch (Exception $e) {
-    echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
-} finally {
-    $time = microtime(true) - $start;
-    echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
-    echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
-    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
-}
-exit;
+// } catch (Exception $e) {
+//     echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
+// } finally {
+//     $time = microtime(true) - $start;
+//     echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
+//     echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
+//     echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
+// }
+// exit;
 
 
-// Saat register karyawan baru
-// $newUlid = \App\Core\Support\UlidGenerator::generate(); // Hasil: 01H7XRMZ5W...
-$newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
-// dd($newUlid);
+// Sodium V4 (Asymmetric - Ed25519)
+// ----------------
+use App\Core\Auth\SodiumAuthV4;
+$authV4 = new SodiumAuthV4();
 
-// Simpan ke DB jika belum ada ulid
-// $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
+// // 1. Generate Keys (Sekali saja):
+// $keys = SodiumAuthV4::generateKeys();
+// // Simpan $keys['private'] di env SSO Server
+// // Simpan $keys['public'] di env SSO Server dan SEMUA App Client
+// // dd($keys, true);
 
-$auth = new SodiumAuth();
-// Asumsi validasi user & password sukses
-$payload = [
-    'uid'  => 12345,
-    'ulid' => $newUlid,
-    'role' => 'backend_dev',
-    'exp'  => time() + (3600 * 8) // Berlaku 8 jam
-];
-
-$token = $auth->encode($payload);
+// 2. Di Server Backend (Login):
+$expToken = time() + (60 * (config('session.lifetime') / 2));
+$token = $authV4->encode(['uid' => 101, 'role' => 'admin', 'exp' => $expToken]);
 // dd($token);
 
-// 2. Dekripsi & Validasi
-$user = null;
-if (!empty($token)) {
-    $user = $auth->decode($token);
-}
-// dd($user);
+// 3. Di App Client (Middleware):
+$userData = $authV4->decode($token);
 
-if (!$user) {
-    // http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    return;
-}
-
-// Cek Expired
-if (time() > $user['exp']) {
-    // http_response_code(401);
-    echo json_encode(['error' => 'Token Expired']);
-    return;
-}
-
-// Jika sukses, tampilkan data
-echo json_encode([
-    'message' => "Selamat datang, karyawan ID: " . $user['uid'],
-    'data' => [/* data dashboard */]
-]);
-
-// Middleware Refresh Token
-// SAAT LOGIN
-$accessTokenPayload = [
-    'uid'  => $user->ulid,
-    'uid'  => 12345,
-    'ulid' => $newUlid,
-    'role' => 'backend_dev',
-    'type' => 'access',
-    'exp'  => time() + 3600 // 1 Jam
-];
-
-$refreshTokenPayload = [
-    'uid'  => $user->ulid,
-    'type' => 'refresh',
-    'exp'  => time() + (3600 * 24 * 7) // 7 Hari
-];
-
-$tipeRefreshToken = $auth->encode($refreshTokenPayload);
-$dataToken = [
-    'access_token'  => $auth->encode($accessTokenPayload),
-    'refresh_token' => $tipeRefreshToken
-];
-
-
-// Validasi - Middleware: Apakah token ada, tipenya 'refresh', dan belum expired?
-$oldRefreshToken = $dataToken['refresh_token'] ?? '';
-$data = $auth->decode($oldRefreshToken);
-
-if ($data && $data['type'] === 'refresh' && $data['exp'] > time()) {
-    
-    // Buat Access Token baru
-    $newAccessPayload = [
-        'uid'  => $data['uid'],
-        'ulid' => $newUlid,
-        'role' => 'backend_dev',
-        'type' => 'access',
-        'exp'  => time() + 3600
-    ];
-
-    echo json_encode([
-        'access_token' => $auth->encode($newAccessPayload)
-    ]);
-} else {
-    http_response_code(401);
-    echo json_encode(['error' => 'Refresh token invalid atau expired']);
+if ($userData) {
+    // Token Valid dan asli!
+    dd($userData, true);
 }
 exit;
+// ==============
+
+
+// // Saat register karyawan baru
+// // $newUlid = \App\Core\Support\UlidGenerator::generate(); // Hasil: 01H7XRMZ5W...
+// $newUlid = generateUlid(); // Hasil: 01H7XRMZ5W...
+// // dd($newUlid);
+// // dd(get_short_ua());
+
+// // Simpan ke DB jika belum ada ulid
+// // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
+
+// $auth = new SodiumAuth();
+// // Asumsi validasi user & password sukses
+// $expToken = time() + (60 * (config('session.lifetime') / 2));
+// $payload = [
+//     'uid'  => 12345,
+//     'ulid' => $newUlid,
+//     'role' => 'backend_dev',
+//     'issuer' => 'php-microdata',
+//     'audience' => 'users',
+//     'exp'  => $expToken
+// ];
+
+// $token = $auth->encode($payload);
+// // dd($token);
+
+// // 2. Dekripsi & Validasi
+// $user = null;
+// if (!empty($token)) {
+//     $user = $auth->decode($token);
+// }
+// // dd($user);
+
+// echo "Access token:<br>" . PHP_EOL;
+// if (!$user) {
+//     // http_response_code(401);
+//     echo json_encode(['error' => 'Unauthorized']);
+//     return;
+// }
+
+// // Cek Expired
+// if (time() > $user['exp']) {
+//     // http_response_code(401);
+//     echo json_encode(['error' => 'Token Expired']);
+//     return;
+// }
+
+// // Jika sukses, tampilkan data
+// echo json_encode([
+//     'message' => "Selamat datang, karyawan ID: " . $user['uid'],
+//     'data' => [/* data dashboard */]
+// ]);
+// echo "<br>-------<br>" . PHP_EOL;
+
+// // Middleware Refresh Token
+// // SAAT LOGIN
+// $expToken = time() + (60 * (config('session.lifetime') / 2));
+// $accessTokenPayload = [
+//     'uid'  => $user->ulid,
+//     'uid'  => 12345,
+//     'ulid' => $newUlid,
+//     'role' => 'backend_dev',
+//     'type' => 'access',
+//     'exp'  => $expToken
+// ];
+// $accessTokenPayload = array_merge($accessTokenPayload, $payload);
+
+// $refreshTokenPayload = [
+//     'type' => 'refresh',
+// ];
+// $refreshTokenPayload = array_merge($refreshTokenPayload, $payload);
+
+// $dataToken = [
+//     'access_token'  => $auth->encode($accessTokenPayload),
+//     'refresh_token' => $auth->encode($refreshTokenPayload)
+// ];
+// echo "With refresh token:<br>" . PHP_EOL;
+// echo "<pre>" . json_encode($dataToken, JSON_PRETTY_PRINT) ."</pre>";
+// echo "<br>-------<br>" . PHP_EOL;
+
+
+// // Validasi - Middleware: Apakah token ada, tipenya 'refresh', dan belum expired?
+// $oldRefreshToken = $dataToken['refresh_token'] ?? '';
+// $data = $auth->decode($oldRefreshToken);
+// echo " Validasi - Middleware refresh token:<br>" . PHP_EOL;
+// if ($data && $data['type'] === 'refresh' && $data['exp'] > time()) {
+    
+//     // Buat Access Token baru
+//     $newAccessPayload = [
+//         'uid'  => $data['uid'],
+//         'ulid' => $newUlid,
+//         'role' => 'backend_dev',
+//         'type' => 'access',
+//         'exp'  => time() + 3600
+//     ];
+
+//     echo json_encode([
+//         'access_token' => $auth->encode($newAccessPayload)
+//     ]);
+// } else {
+//     http_response_code(401);
+//     echo json_encode(['error' => 'Refresh token invalid atau expired']);
+// }
+// echo "<br>-------<br>" . PHP_EOL;
+// exit;
 
 
 
-// // Sample Cara Implementasi Permission
+// // Sample Cara Implementasi JWT Permission
 // use App\Core\Auth\JWT;
 
 // $jwt = new JWT();
@@ -266,7 +306,7 @@ exit;
 //         "asset-view", 
 //         "asset-edit", 
 //         "asset-delete", 
-//         "user-manage", 
+//         // "user-manage", 
 //         "report-view" 
 //     ],
 //     'exp' => time() + (60 * 60) // Expired dalam 1 jam

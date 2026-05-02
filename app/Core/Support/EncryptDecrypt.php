@@ -85,8 +85,10 @@ class EncryptDecrypt {
 
         // Kembalikan ke format Base64 standar
         $data = str_replace(['-', '_'], ['+', '/'], $encryptedData);
-        $mod4 = strlen($data) % 4;
-        if ($mod4) $data .= substr('====', $mod4);
+        $remainder = strlen($data) % 4;
+        if ($remainder) {
+            $data .= str_repeat('=', 4 - $remainder);
+        }
         
         $decoded = base64_decode($data);
         
