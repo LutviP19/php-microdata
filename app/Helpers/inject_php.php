@@ -611,7 +611,7 @@ function validateApiKey($headerName = 'X-API-KEY') {
 }
 
 /**
- * checkRateLimit function
+ * Check Rate Limit dengan Redis & Fallback File
  *
  * @param  string $identifier : client identity IP, Location, etc...
  * @param  int $limit : limit hit 
@@ -620,12 +620,46 @@ function validateApiKey($headerName = 'X-API-KEY') {
  * @return void
  */
 function checkRateLimit($identifier, $limit, $timeframeSeconds) {
-    $dirPath = storage_path('/framework/tmp/rate_limits/');
-    $filePath =  $dirPath . md5($identifier) . '.txt';
+    $key = "rate_limit:" . md5($identifier);
+    
+    if(config('app.cache_driver') === 'files')
+        return rateLimitFallbackFile($identifier, $limit, $timeframeSeconds);
 
-    // Clean tmp-rate_limits
-    if(file_exists($dirPath))
-        cleanTmpFiles($dirPath, 1);
+    try {
+        $redis = new \Predis\Client([
+            'host' => Config::get('redis.cache.host'),
+            'port' => Config::get('redis.cache.port'),
+            'database' => Config::get('redis.cache.database'),
+            'timeout' => 0.5, // Timeout pendek agar tidak menghambat user jika redis down
+        ]);
+
+        $redis->connect();
+
+        $responses = $redis->transaction(function ($tx) use ($key, $timeframeSeconds) {
+            $tx->incr($key);
+            $tx->expire($key, $timeframeSeconds);
+        });
+
+        return $responses[0] <= $limit;
+
+    } catch (\Predis\Connection\ConnectionException | \Exception $e) {
+        return rateLimitFallbackFile($identifier, $limit, $timeframeSeconds);
+    }
+}
+
+
+/**
+ * rateLimitFallbackFile function
+ *
+ * @param  string $identifier : client identity IP, Location, etc...
+ * @param  int $limit : limit hit 
+ * @param  int $timeframeSeconds : time in second
+ *
+ * @return void
+ */
+function rateLimitFallbackFile($identifier, $limit, $timeframeSeconds) {
+    $dirPath = storage_path('framework/tmp/rate_limits');
+    $filePath =  $dirPath .'/'. md5($identifier) . '.txt';
 
     // Create directory if it doesn't exist
     if (!is_dir($dirPath)) {
@@ -659,6 +693,22 @@ function checkRateLimit($identifier, $limit, $timeframeSeconds) {
     file_put_contents($filePath, json_encode($newTimestamps));
 
     return true; // Request allowed
+}
+
+// --- Base64URL Encoding Functions ---
+function base64url_encode($data) {
+    return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+}
+
+// --- Base64URL Decoding Functions ---
+function base64url_decode($data) {
+    $data = str_replace(['-', '_'], ['+', '/'], $data);
+    $remainder = strlen($data) % 4;
+    if ($remainder) {
+        $data .= str_repeat('=', 4 - $remainder);
+    }
+    
+    return base64_decode($data);
 }
 
 function checkSession()
