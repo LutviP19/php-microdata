@@ -189,29 +189,29 @@ class Gate
             'role' => $payload['role'],
             'fingerprint' => get_device_fingerprint(),
             'iat'  => time(),
-            'iis' => 'php-microdata',
+            'iss' => 'php-microdata',
             'aud' => 'users',
         ];
-        $payload = array_merge($payloadDefault, $payload);
+        $fullPayload = array_merge($payloadDefault, $payload);
 
         // 3. Generate Access Token Baru (Pendek: 1 jam)
-        $newAccessToken = [
+        $newAccessToken = array_merge($fullPayload, [
             'type' => 'access',
             'exp' => $expToken
-        ];
+        ]);
 
         // 4. Generate Refresh Token Baru (Rotasi - Opsional tapi disarankan)
-        $newRefreshToken = [
+        $newRefreshToken = array_merge($fullPayload, [
             'type' => 'refresh',
             'exp' => time() + (3600 * 24 * 7) // 7 Hari
-        ];
+        ]);
 
         // // 5. Update Redis Whitelist
         // $this->redis->setex("sso_refresh_map:" . $payload['uid'], 86400 * 7, $newRefreshToken);
 
         $dataNewToken = [
-            'access_token'  => $sodiumAuth->encode(array_merge($payload, $newAccessToken)),
-            'refresh_token' => $sodiumAuth->encode(array_merge($payload, $newRefreshToken))
+            'access_token'  => $sodiumAuth->encode(cleanSodiumPayload($newAccessToken, 'access')),
+            'refresh_token' => $sodiumAuth->encode(cleanSodiumPayload($newRefreshToken, 'refresh'))
         ];
 
         // Generate New Token Sodium

@@ -833,6 +833,22 @@ if (!function_exists('get_short_ua')) {
 }
 
 /**
+ * Memfilter payload berdasarkan tipe token untuk menjaga efisiensi dan keamanan.
+ * Refresh token hanya butuh identitas dasar untuk regenerasi access token.
+ */
+function cleanSodiumPayload(array $payload, string $type): array
+{
+    if ($type === 'access') {
+        return $payload; // Access token tetap lengkap
+    }
+
+    // Daftar key yang diperbolehkan ada di Refresh Token
+    $allowedForRefresh = ['uid', 'jti', 'type', 'exp', 'iat', 'iss', 'fingerprint'];
+
+    return array_intersect_key($payload, array_flip($allowedForRefresh));
+}
+
+/**
  * Mendapatkan sidik jari perangkat yang stabil.
  * @param bool $is_hash Jika true, mengembalikan MD5 hash (32 char).
  * @return string
