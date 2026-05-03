@@ -501,6 +501,24 @@ test/bin/hey -n 1000 -c 50 \
 -m GET \
 "http://localhost:8000/testing"
 
+
+
+######################################################
+Framework - Formater
+######################################################
+
+Rector:
+
+To see preview of suggested changed, run process command with --dry-run option:
+vendor/bin/rector process --dry-run
+vendor/bin/rector process --dry-run > rector.log
+vendor/bin/rector process --dry-run > storage/framework/cache/rector.log
+vendor/bin/rector process --dry-run --debug > storage/framework/cache/rector.log
+
+To make changes happen, run bare command:
+vendor/bin/rector process
+
+
 ######################################################
 ######################################################
 ######################################################
