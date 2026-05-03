@@ -31,7 +31,7 @@ while (true) {
         $message = $mq->receive($queueName);
 
         if ($message) {
-            $data = json_decode($message, true);
+            $data = json_decode((string) $message, true);
             
             if($queueName === 'crawler_queue') {
                 echo "\n[✔] Memproses Task ID: " . ($data['task_id'] ?? 'N/A') . PHP_EOL;

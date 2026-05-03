@@ -337,7 +337,7 @@ class Model
         // Cache data
         $cache = new \App\Core\Support\Cache();        
         $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
-        $queryString = md5($cleanQuery);
+        $queryString = md5((string) $cleanQuery);
         ksort($params);
         $paramSignature = !empty($params) ? md5(json_encode($params).$queryString) : $queryString;
         $cacheKeyId = "paginate_count:{$this->table}:p{$page}:l{$limit}:{$paramSignature}";
@@ -383,8 +383,6 @@ class Model
     public function getCachedData($key, $query, $params = [], $expiry = 600) {
         $cache = new \App\Core\Support\Cache();
         
-        return $cache->remember($key, function() use ($query, $params) {
-            return $this->execQuery($query, $params, false, false, true);
-        }, $expiry);
+        return $cache->remember($key, fn() => $this->execQuery($query, $params, false, false, true), $expiry);
     }
 }

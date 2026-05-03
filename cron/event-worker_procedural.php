@@ -70,7 +70,7 @@ while (true) {
         echo "[!] Error using redis: " . $e->getMessage() . PHP_EOL;
         echo "[-] Try Using MySQL as Fallback." . PHP_EOL;
     }
-    
+
     if (!$itemProcessed) {
         // Ambil 1 data pending
         $stmt = $db->query("SELECT * FROM {$tableDb} WHERE status = 'pending' LIMIT 1 FOR UPDATE");
@@ -81,8 +81,8 @@ while (true) {
             $db->prepare("UPDATE {$tableDb} SET status = 'processing' WHERE id = ?")->execute([$event['id']]);
 
             try {
-                $payload = json_decode($event['payload'], true);
-        
+                $payload = json_decode((string) $event['payload'], true);
+
                 // Membungkus metadata agar listener mendapatkan konteks lengkap
                 $payload['_metadata'] = [
                     'event_id'     => $event['id'],

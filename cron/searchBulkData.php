@@ -66,7 +66,7 @@ $results = json_decode($json, true);
 
 foreach ($results as $row) {
     echo "ID: {$row['id']} - Tags: {$row['tags']}\n";
-    echo "Content: " . mb_substr($row['content'], 0, 100) . "...\n================\n";
+    echo "Content: " . mb_substr((string) $row['content'], 0, 100) . "...\n================\n";
 }
 
 // // ======================

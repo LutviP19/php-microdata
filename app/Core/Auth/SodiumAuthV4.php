@@ -11,15 +11,15 @@ use Exception;
 class SodiumAuthV4 {
     private string $privateKey;
     private string $publicKey;
-    private string $basePrefix;
+    private readonly string $basePrefix;
 
     public function __construct(?string $hexPrivateKey = null, ?string $hexPublicKey = null) {
-        $hexPrivateKey = $hexPrivateKey ?? config('app.sodium_private_key');
+        $hexPrivateKey ??= config('app.sodium_private_key');
         if ($hexPrivateKey) {
             $this->privateKey = hex2bin($hexPrivateKey);
         }
 
-        $hexPublicKey = $hexPublicKey ?? config('app.sodium_public_key');
+        $hexPublicKey ??= config('app.sodium_public_key');
         if ($hexPublicKey) {
             $this->publicKey = hex2bin($hexPublicKey);
         }

@@ -139,7 +139,7 @@ class RabbitFFI {
 
         $str = FFI::string($result);
         // Kita asumsikan jika string mulai dengan ERROR: itu adalah kegagalan koneksi
-        if (strpos($str, 'ERROR:') === 0) {
+        if (str_starts_with($str, 'ERROR:')) {
 
             if (config('app.debug')) {
                 \write_log([

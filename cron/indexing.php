@@ -39,7 +39,7 @@ try {
     if($statusCode !== 200) {
         // Get the response body as a stream and convert to a string/JSON
         $body = $response['body'];
-        $data = json_decode($body, true);
+        $data = json_decode((string) $body, true);
         dd($data, true);
     }
 

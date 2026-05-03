@@ -52,7 +52,7 @@ if(isset($_COOKIE['PHPFFISESSID'])){
 
 // --- SEO ROUTING LOGIC ---
 // Mengambil path dari URL (misal: /dashboard)
-$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$requestPath = parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH);
 // dd($requestPath);
 $lastSegment = basename($requestPath);
 $urlSegments = explode('/', trim($requestPath, '/'));
@@ -145,7 +145,7 @@ if(!isHtmx() && !$isPageExists) {
 }
 
 if(isHtmx()) {
-    if ($viewPath && file_exists($viewPath) && strpos($viewPath, realpath(BASEPATH . "/views/")) === 0) {
+    if ($viewPath && file_exists($viewPath) && str_starts_with($viewPath, realpath(BASEPATH . "/views/"))) {
         include $viewPath;
     } else {
         if ($isLoginPage) {

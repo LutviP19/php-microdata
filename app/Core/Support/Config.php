@@ -25,7 +25,7 @@ class Config
     public static function get($key, $config = null)
     {
         try {
-            $config = $config ?? App::get('config');
+            $config ??= App::get('config');
             $keys = explode('.', $key);
             foreach ($keys as $key) {
                 if (isset($config[$key])) {

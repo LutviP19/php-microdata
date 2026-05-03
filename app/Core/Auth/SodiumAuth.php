@@ -12,11 +12,11 @@ namespace App\Core\Auth;
 use Exception;
 
 class SodiumAuth {
-    private string $key;
-    private string $basePrefix;
+    private readonly string $key;
+    private readonly string $basePrefix;
 
     public function __construct(?string $hexKey = null) {
-        $hexKey = $hexKey ?? config('app.sodium_key');
+        $hexKey ??= config('app.sodium_key');
         $this->key = hex2bin($hexKey);
         
         // Simpan prefix dasar (misal: "v1.access")
@@ -89,7 +89,7 @@ class SodiumAuth {
             }
 
             return $payload;
-        } catch (Exception $e) {
+        } catch (Exception) {
             return null;
         }
     }

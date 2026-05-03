@@ -8,7 +8,7 @@ namespace App\Core\Auth;
  */
 class JWT {
 
-    private string $secret;
+    private readonly string $secret;
 
     public function __construct(?string $secret = null) 
     {

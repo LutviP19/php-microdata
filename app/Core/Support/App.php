@@ -142,7 +142,7 @@ class App
                                 // dd($index);
                                 // dd($structRule);
                                 // dd(isset($_REQUEST[$index]));
-                                
+
                                 // if($index === "website") 
                                 //     dd($structRule);
 
@@ -174,7 +174,7 @@ class App
                     // $id = formatReqId("abcd", 1);
                     // // $id = encryptData("abcd");
                     // dd($id);
-                    
+
                     // // Simulate encrypted ID
                     // $reqId = "g4RPUbVo0lPHZdTccyJ6z53A9fK9_mphd0ikawMdDk0"; // 123456
                     // // $reqId = "MP7GTz3IeGdgCcJISx6z4IswrAxv9hhxbzBrYW-Klmw"; // abcd
@@ -319,10 +319,10 @@ class App
 
                 if (class_exists($className)) {
                     $reflection = new \ReflectionClass($className);
-                    
-                    if ($reflection->implementsInterface('App\Core\Events\ListenerInterface')) {
+
+                    if ($reflection->implementsInterface(\App\Core\Events\ListenerInterface::class)) {
                         $instance = new $className();
-                        
+
                         $event    = $instance->event ?? null;
                         $priority = $instance->priority ?? 0;
 
@@ -341,9 +341,7 @@ class App
         // dd($collectedListeners, true);
         foreach ($collectedListeners as $eventName => $listeners) {
             // ASC: Priority 1 tampil sebelum Priority 10
-            usort($listeners, function($a, $b) {
-                return $a['priority'] <=> $b['priority'];
-            });
+            usort($listeners, fn($a, $b) => $a['priority'] <=> $b['priority']);
 
             // dd($listeners, true);
             foreach ($listeners as $item) {
@@ -423,9 +421,9 @@ class App
     //                 JOIN role_permissions rp ON ur.role_id = rp.role_id
     //                 JOIN permissions p ON rp.permission_id = p.id
     //                 WHERE ur.user_id = ? AND (ur.group_id = ? OR ur.group_id IS NULL)";
-            
+
     //         $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
-            
+
     //         // Flatten array agar mudah dicek: ['create-asset', 'edit-asset', ...]
     //         return array_column($rows, 'slug');
     //     }, 3600); // Simpan 1 jam

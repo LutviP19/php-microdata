@@ -55,12 +55,10 @@ class DashboardModel extends DashboardData
             $dataDashboard = $mainData->paginate($query, [], $page, $limit);
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
-            $queryString = md5($cleanQuery);
+            $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "dashboard:{$this->table}:" . $queryString . ":p{$page}:l{$limit}";
 
-            $dataDashboard = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
-                return $mainData->paginate($query, [], $page, $limit);
-            }, 300);
+            $dataDashboard = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
         }
         
 

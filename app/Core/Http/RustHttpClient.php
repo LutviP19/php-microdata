@@ -86,7 +86,7 @@ class RustHttpClient
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
             $caller = isset($trace[1]) ? "{$trace[1]['class']}::{$trace[1]['function']}" : 'Global';
             
-            write_log("[$caller] $message", 'App\Core\Http\RustHttpClient', 'error', 'error_RustHttpClient.log');
+            write_log("[$caller] $message", \App\Core\Http\RustHttpClient::class, 'error', 'error_RustHttpClient.log');
         }
     }
 }

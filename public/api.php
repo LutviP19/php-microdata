@@ -72,7 +72,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
 
             //===== Middleware Global akses
             // Identity::check
-            if(is_null(\App\Core\Auth\Identity::check($userData))) {
+            if(is_null(\App\Core\Auth\Identity::check())) {
                 json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
             }
         }
@@ -100,7 +100,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
 
 
         // --- SEO ROUTING LOGIC ---
-        $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $requestPath = parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $lastSegment = basename($requestPath);
         $urlSegments = explode('/', trim($requestPath, '/'));
         $page = ($urlSegments[0] !== '') ? $urlSegments[0] : 'dashboard';

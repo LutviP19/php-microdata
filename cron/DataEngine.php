@@ -60,7 +60,7 @@ echo "Total target data: $totalData baris" . PHP_EOL;
 // MODE 2: Gunnakan append_data (TERBAIK Manual Append - RAM efisien ~30MB)
 for ($i = 1; $i <= $totalData; $i++) {
     // 1. Buat data satu per satu
-    $randomKeys = array_rand($tagPool, rand(2, 3));
+    $randomKeys = array_rand($tagPool, random_int(2, 3));
     $selectedTags = array_map(fn($key) => $tagPool[$key], (array)$randomKeys);
 
     $currentChunk[] = [
@@ -68,15 +68,15 @@ for ($i = 1; $i <= $totalData; $i++) {
         'name' => "Produk Ke-$i",
         'tags' => implode(' ', $selectedTags),
         'category' => ($i % 2 == 0) ? 'elektronik' : 'fashion',
-        'price' => rand(100, 5000),
-        'stock' => rand(0, 50)
+        'price' => random_int(100, 5000),
+        'stock' => random_int(0, 50)
     ];
 
     // 2. Jika chunk sudah penuh, kirim ke Rust dan KOSONGKAN RAM PHP
     if ($i % $chunkSize === 0) {
         $engine->appendChunk($currentChunk); // Fungsi baru di PHP wrapper
         echo "Sent " . $i . " rows to Rust memory...\r";
-        
+
         $currentChunk = []; // PAKSA KOSONGKAN ARRAY
         // gc_collect_cycles(); // Opsional: paksa garbage collection
     }
@@ -202,7 +202,7 @@ echo "Filter Contains: Ditemukan " . count($searchResult) . " data dengan tags p
 //     public function getOutOfStockExpensiveProducts(array $allProducts) {
 //         // Step 1: Filter harga > 4000
 //         $expensive = $this->dataEngine->filter($allProducts, 'price', 4000, 'gt');
-        
+
 //         // Step 2: Filter stok yang habis (0)
 //         return $this->dataEngine->filter($expensive, 'stock', 0, 'equals');
 //     }

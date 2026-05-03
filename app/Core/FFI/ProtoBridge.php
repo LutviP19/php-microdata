@@ -6,14 +6,14 @@ use FFI;
 use RuntimeException;
 
 class ProtoBridge {
-    private FFI $ffi;
-    private string $libPath;
+    private readonly FFI $ffi;
+    private readonly string $libPath;
 
     public function __construct(?string $libPath = null) {
         $defaultPath = defined('BASEPATH_FFI') 
             ? BASEPATH_FFI . '/lib/librust_protobuf.so' 
             : __DIR__ . '/../../../ffi/lib/librust_protobuf.so';
-        
+
         $this->libPath = $libPath ?? $defaultPath;
 
         if (!file_exists($this->libPath)) {
@@ -47,14 +47,12 @@ class ProtoBridge {
         $content = json_encode($contentData, JSON_FORCE_OBJECT);
 
         // Pastikan semua value adalah string agar cocok dengan map<string, string> di Rust
-        $sanitizedMetadata = array_map(function($value) {
-            return (string) $value;
-        }, $metadata);
+        $sanitizedMetadata = array_map(fn($value) => (string) $value, $metadata);
         $jsonMetadata = json_encode($sanitizedMetadata, JSON_FORCE_OBJECT);
-        
+
         $payloadLen = strlen($binaryPayload);
         $cPayload = null;
-        
+
         if ($payloadLen > 0) {
             $cPayload = $this->ffi->new("unsigned char[$payloadLen]", false);
             FFI::memcpy($cPayload, $binaryPayload, $payloadLen);
@@ -69,10 +67,10 @@ class ProtoBridge {
 
         $binary = FFI::string($buf->data, $buf->len);
         $this->ffi->free_proto_buffer($buf);
-        
+
         if($outputBinary)
             return $binary;
-        
+
         return base64_encode($binary);
     }
 
@@ -91,13 +89,13 @@ class ProtoBridge {
         // Panggil Rust untuk decode
         // Kita cast ke (const unsigned char*) agar sesuai dengan signature C
         $jsonPtr = $this->ffi->decode_generic($this->ffi->cast("unsigned char*", $cBuf), $len);
-        
+
         if (FFI::isNull($jsonPtr)) {
             return [];
         }
 
         $jsonStr = FFI::string($jsonPtr);
-        
+
         // WAJIB: Bebaskan string JSON yang dibuat oleh Rust (CString::into_raw)
         $this->ffi->free_string($jsonPtr);
 

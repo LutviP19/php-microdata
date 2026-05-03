@@ -40,7 +40,7 @@ class Session
                 $decoded = json_decode($data, true);
                 $sessions[$key] = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $data;
             } else {
-                $sessions[$key] = is_array(json_decode($data, true)) ? json_decode($data, true) : $data;;
+                $sessions[$key] = is_array(json_decode((string) $data, true)) ? json_decode((string) $data, true) : $data;;
             }
         }
 
@@ -65,11 +65,11 @@ class Session
         if (config('session.encrypt')) {
             // Dekripsi data mentah dari session
             $decrypted = decryptData($value);
-            $decoded = json_decode($decrypted, true);
+            $decoded = json_decode((string) $decrypted, true);
             return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $decrypted;
         }
 
-        return is_array(json_decode($value, true)) ? json_decode($value, true) : $value;
+        return is_array(json_decode((string) $value, true)) ? json_decode((string) $value, true) : $value;
     }
 
     /**

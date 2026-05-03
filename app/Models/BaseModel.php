@@ -29,8 +29,8 @@ class BaseModel extends Model
     protected $jwt;
     protected $auth;
 
-    private int $expToken;
-    private int $refreshTokenTimeout;
+    private readonly int $expToken;
+    private readonly int $refreshTokenTimeout;
 
     public function __construct(?PDO $pdo = null)
     {
@@ -184,7 +184,7 @@ class BaseModel extends Model
 
         $bearerToken = $this->getBearerToken();
 
-        $token = $token ?? $bearerToken;
+        $token ??= $bearerToken;
 
         // Cara Mengecek Permission di Sisi Server
         $decoded = $this->auth->decode($token);

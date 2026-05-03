@@ -72,7 +72,7 @@ if (session_status() == PHP_SESSION_NONE) {
     try {
         //Starting the session will be the first we do.
         ini_set('session.save_handler', env('SESSION_DRIVER', 'files'));
-        
+
         if (env('SESSION_DRIVER') === "redis") {
             ini_set('session.save_path', "tcp://" . config('redis.default.host') . ":" . config('redis.default.port') . "?auth" . config('redis.default.password'));
             ini_set('session.gc_maxlifetime', (int)(config('session.lifetime') * 60)); // Set default to 2 hours

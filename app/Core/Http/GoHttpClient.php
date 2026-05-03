@@ -48,7 +48,7 @@ class GoHttpClient
     {
         try {
             $payload = json_encode([
-                'method'  => $method ? strtoupper($method) : $options['method'],
+                'method'  => $method ? strtoupper((string) $method) : $options['method'],
                 'url'     => $url ?? $options['url'],
                 'headers' => $options['headers'] ?? [],
                 'body'    => $options['body'] ?? '',
@@ -113,7 +113,7 @@ class GoHttpClient
             $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
             $caller = isset($trace[1]) ? "{$trace[1]['class']}::{$trace[1]['function']}" : 'Global';
             
-            write_log("[$caller] $message", 'App\Core\Http\GoHttpClient', 'error', 'error_GoHttpClient.log');
+            write_log("[$caller] $message", \App\Core\Http\GoHttpClient::class, 'error', 'error_GoHttpClient.log');
         }
     }
 }

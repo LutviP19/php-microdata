@@ -43,8 +43,8 @@
                             <ul class="mt-2 text-sm text-gray-300 list-disc list-inside space-y-1">
                                 <?php foreach ($resultDefault['errors'] as $field => $message): ?>
                                     <li>
-                                        <span class="text-rose-300 font-semibold"><?= htmlspecialchars($field); ?>:</span> 
-                                        <?= htmlspecialchars($message); ?>
+                                        <span class="text-rose-300 font-semibold"><?= htmlspecialchars((string) $field); ?>:</span> 
+                                        <?= htmlspecialchars((string) $message); ?>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>

@@ -38,6 +38,7 @@ class StatsData extends DashboardData {
         $this->table = self::$tableM;
     }
 
+    #[\Override]
     public function getAllData($id = null, $selectCols = '*') { 
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;

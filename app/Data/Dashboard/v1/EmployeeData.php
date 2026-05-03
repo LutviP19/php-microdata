@@ -30,16 +30,17 @@ class EmployeeData extends DashboardData {
         $password = '';
 
         $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
-        
+
         // Default connection
         parent::__construct($conn);
-        
+
         // Set default table
         $this->table = self::$tableM;
 
         // $this->limitToStream = 1000;
     }
 
+    #[\Override]
     public function getAllData($id = null, $selectCols = '*') {
         $id = $id ? [$id] : [];
         $sql = 'SELECT '.$selectCols.' FROM '.$this->table;

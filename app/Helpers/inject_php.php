@@ -177,7 +177,7 @@ if (!function_exists('formatReqId')) {
             return (int)$reqId;
         } else {
             // Hanya proses type data integer
-            if(!$reqId || !preg_match('/^-?\d+$/', $reqId))
+            if(!$reqId || !preg_match('/^-?\d+$/', (string) $reqId))
                 return null;
 
             // Pastikan type data ID adalah integer agar bisa di encrypt
@@ -204,11 +204,11 @@ if (!function_exists('refineRequest')) {
                 continue;
 
             // Map Go-style rules back to PHP Filter constants
-            $tags = explode(',', $ruleString);
+            $tags = explode(',', (string) $ruleString);
             
             if (in_array('numeric', $tags)) {
                 // Handles both int and float
-                if (strpos((string)$request[$field], '.') !== false) {
+                if (str_contains((string)$request[$field], '.')) {
                     $filters[$field] = FILTER_VALIDATE_FLOAT;
                 } else {
                     $filters[$field] = FILTER_VALIDATE_INT;
@@ -497,7 +497,7 @@ function get_request_origin() {
     // 2. Cek Header Referer (Fallback)
     if (isset($_SERVER['HTTP_REFERER'])) {
         $referer = $_SERVER['HTTP_REFERER'];
-        $parts = parse_url($referer);
+        $parts = parse_url((string) $referer);
         if (isset($parts['scheme']) && isset($parts['host'])) {
             $port = isset($parts['port']) ? ':' . $parts['port'] : '';
             return $parts['scheme'] . '://' . $parts['host'] . $port;
@@ -522,7 +522,7 @@ function handle_cors() {
     // 2. Ambil string dari .env, pecah jadi array, dan bersihkan spasi
     $envOrigins = env('ALLOWED_ORIGINS', '*');
     $allowedOrigins = ($envOrigins !== '*') 
-        ? array_map('trim', explode(',', $envOrigins)) 
+        ? array_map(trim(...), explode(',', $envOrigins)) 
         : ['*'];
 
     // if (isHtmx()) { 
@@ -530,7 +530,7 @@ function handle_cors() {
     // }
 
     // 3. Bersihkan Host untuk pengecekan (hapus http:// dan :port)
-    $cleanHost = parse_url($currentOrigin, PHP_URL_HOST);
+    $cleanHost = parse_url((string) $currentOrigin, PHP_URL_HOST);
 
     // 4. LOGIKA VALIDASI
     $isAllowed = false;
@@ -594,7 +594,7 @@ function validateApiKey($headerName = 'X-API-KEY') {
 
     // 1. Dapatkan header dari server
     // PHP mengubah "X-API-KEY" menjadi "HTTP_X_API_KEY" di $_SERVER
-    $serverKey = 'HTTP_' . str_replace('-', '_', strtoupper($headerName));
+    $serverKey = 'HTTP_' . str_replace('-', '_', strtoupper((string) $headerName));
     $apiKeyInput = $_SERVER[$serverKey] ?? null;
     // dd($apiKeyInput);
 
@@ -642,7 +642,7 @@ function checkRateLimit($identifier, $limit, $timeframeSeconds) {
 
         return $responses[0] <= $limit;
 
-    } catch (\Predis\Connection\ConnectionException | \Exception $e) {
+    } catch (\Predis\Connection\ConnectionException | \Exception) {
         return rateLimitFallbackFile($identifier, $limit, $timeframeSeconds);
     }
 }
@@ -697,7 +697,7 @@ function rateLimitFallbackFile($identifier, $limit, $timeframeSeconds) {
 
 // --- Base64URL Encoding Functions ---
 function base64url_encode($data) {
-    return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+    return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode((string) $data));
 }
 
 // --- Base64URL Decoding Functions ---
@@ -735,7 +735,7 @@ function checkSession()
 
         return true;
 
-    } catch (Exception $e) {
+    } catch (Exception) {
         return false;
     }
 }
@@ -750,7 +750,7 @@ if (!function_exists('getBestFormat')) {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '*/*';
 
         // 1. Pecah semua format yang diminta client
-        $items = explode(',', $accept);
+        $items = explode(',', (string) $accept);
         $choices = [];
 
         foreach ($items as $item) {
@@ -774,10 +774,7 @@ if (!function_exists('getBestFormat')) {
         }
 
         // 2. Urutkan berdasarkan nilai q (descending)
-        usort($choices, function($a, $b) {
-            if ($a['q'] === $b['q']) return 0;
-            return ($a['q'] > $b['q']) ? -1 : 1;
-        });
+        usort($choices, fn($a, $b) => $b['q'] <=> $a['q']);
 
         // 3. Iterasi hasil urutan untuk menentukan yang kita dukung
         foreach ($choices as $choice) {
@@ -786,7 +783,7 @@ if (!function_exists('getBestFormat')) {
             if ($type === 'application/x-protobuf') {
                 return 'protobuf';
             }
-            
+
             if ($type === 'application/json' || $type === '*/*') {
                 return 'json';
             }
@@ -807,25 +804,25 @@ if (!function_exists('get_short_ua')) {
         
         // 1. Identifikasi Platform/OS & Versi
         $os = 'Unknown';
-        if (preg_match('/Windows NT ([\d\.]+)/i', $ua, $m)) $os = 'Win' . $m[1];
-        elseif (preg_match('/Android ([\d\.]+)/i', $ua, $m)) $os = 'Android' . (int)$m[1];
-        elseif (preg_match('/iPhone OS ([\d_]+)/i', $ua, $m)) $os = 'iOS' . (int)str_replace('_', '', $m[1]);
-        elseif (preg_match('/Mac OS X ([\d_]+)/i', $ua, $m)) $os = 'MacOS' . (int)str_replace('_', '', $m[1]);
-        elseif (stripos($ua, 'linux') !== false) $os = 'Linux';
+        if (preg_match('/Windows NT ([\d\.]+)/i', (string) $ua, $m)) $os = 'Win' . $m[1];
+        elseif (preg_match('/Android ([\d\.]+)/i', (string) $ua, $m)) $os = 'Android' . (int)$m[1];
+        elseif (preg_match('/iPhone OS ([\d_]+)/i', (string) $ua, $m)) $os = 'iOS' . (int)str_replace('_', '', $m[1]);
+        elseif (preg_match('/Mac OS X ([\d_]+)/i', (string) $ua, $m)) $os = 'MacOS' . (int)str_replace('_', '', $m[1]);
+        elseif (stripos((string) $ua, 'linux') !== false) $os = 'Linux';
 
         // 2. Identifikasi Browser & Versi Mayor
         $browser = 'Unknown';
-        if (preg_match('/(Edg|Edge)\/([\d\.]+)/i', $ua, $m)) $browser = 'Edge' . (int)$m[2];
-        elseif (preg_match('/OPR\/([\d\.]+)/i', $ua, $m)) $browser = 'Opera' . (int)$m[1];
-        elseif (preg_match('/Chrome\/([\d\.]+)/i', $ua, $m)) $browser = 'Chrome' . (int)$m[1];
-        elseif (preg_match('/Firefox\/([\d\.]+)/i', $ua, $m)) $browser = 'Firefox' . (int)$m[1];
-        elseif (preg_match('/Version\/([\d\.]+).*Safari/i', $ua, $m)) $browser = 'Safari' . (int)$m[1];
+        if (preg_match('/(Edg|Edge)\/([\d\.]+)/i', (string) $ua, $m)) $browser = 'Edge' . (int)$m[2];
+        elseif (preg_match('/OPR\/([\d\.]+)/i', (string) $ua, $m)) $browser = 'Opera' . (int)$m[1];
+        elseif (preg_match('/Chrome\/([\d\.]+)/i', (string) $ua, $m)) $browser = 'Chrome' . (int)$m[1];
+        elseif (preg_match('/Firefox\/([\d\.]+)/i', (string) $ua, $m)) $browser = 'Firefox' . (int)$m[1];
+        elseif (preg_match('/Version\/([\d\.]+).*Safari/i', (string) $ua, $m)) $browser = 'Safari' . (int)$m[1];
 
         $shortUa = $os . '_' . $browser;
 
         // Jika gagal deteksi, gunakan string asli yang dibersihkan sedikit
         if ($shortUa === 'Unknown_Unknown') {
-            $shortUa = substr(preg_replace('/[^a-zA-Z0-0]/', '', $ua), 0, 20);
+            $shortUa = substr((string) preg_replace('/[^a-zA-Z0-0]/', '', (string) $ua), 0, 20);
         }
 
         return $is_hash ? md5($shortUa) : $shortUa;
@@ -869,7 +866,7 @@ function bp_session_start()
     if (isset($_SESSION['destroyed'])) {
 
         // $ttl = (int)env('SESSION_REGENERATE', 300);
-        $ttl = config('session.regenerate', 300);
+        $ttl = config('session.regenerate');
 
         // $valid = (bool)($_SESSION['destroyed'] < time() - $ttl);
         // // dd($ttl);
@@ -1073,7 +1070,7 @@ function clientIP()
         $ip = $client;
     } elseif (filter_var($forward, FILTER_VALIDATE_IP)) {
         // X-Forwarded-For bisa berisi banyak IP (comma separated), ambil yang pertama
-        $ips = explode(',', $forward);
+        $ips = explode(',', (string) $forward);
         $ip = trim($ips[0]);
     } else {
         $ip = $remote;
@@ -1105,7 +1102,7 @@ function is_valid_ip($ip, $type = 'both') {
  * @return bool
  */
 function check_ip_access($ip, ?array $list = null) {
-    $list = $list ?? config('api.whitelist_ips');
+    $list ??= config('api.whitelist_ips');
 
     if (empty($list)) {
         return;
@@ -1140,12 +1137,12 @@ function check_ip_access($ip, ?array $list = null) {
  * @return bool
  */
 function ip_in_range($ip, $range) {
-    if (strpos($range, '/') === false) {
+    if (!str_contains($range, '/')) {
         return $ip === $range;
     }
 
-    list($subnet, $bits) = explode('/', $range);
-    
+    [$subnet, $bits] = explode('/', $range);
+
     $ip_long = ip2long($ip);
     $subnet_long = ip2long($subnet);
     $mask = -1 << (32 - $bits);

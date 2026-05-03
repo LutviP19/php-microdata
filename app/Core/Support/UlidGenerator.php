@@ -9,7 +9,7 @@
 namespace App\Core\Support;
 
 class UlidGenerator {
-    private const ENCODING_ULID_CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    private const string ENCODING_ULID_CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
     
     /**
      * Generate ULID baru

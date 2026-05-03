@@ -7,8 +7,8 @@ use RuntimeException;
 
 class DataEngine
 {
-    private FFI $ffi;
-    private string $libPath;
+    private readonly FFI $ffi;
+    private readonly string $libPath;
 
     public function __construct(?string $libPath = null)
     {

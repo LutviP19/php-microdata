@@ -20,7 +20,7 @@ class EncryptDecrypt {
         $rawKey = (string) ($key ?: Config::get('app.key'));
         
         // Clear base64: prefix if present
-        if (strpos($rawKey, 'base64:') === 0) {
+        if (str_starts_with($rawKey, 'base64:')) {
             $rawKey = base64_decode(substr($rawKey, 7));
         }
 
@@ -40,7 +40,7 @@ class EncryptDecrypt {
             $decrypted = $this->decrypt($encryptedData);            
             
             return $decrypted === $value;
-        } catch (Exception $e) {
+        } catch (Exception) {
             
             return false;
         }
@@ -65,7 +65,7 @@ class EncryptDecrypt {
 
         // Buat Signature (HMAC) dari IV + Encrypted Data
         // Gunakan key yang sama atau key berbeda untuk hashing
-        $signature = hash_hmac('sha256', $iv . $encrypted, $this->key, true);
+        $signature = hash_hmac('sha256', $iv . $encrypted, (string) $this->key, true);
 
         // Gabungkan: Signature (32 bytes) + IV (16 bytes) + Data
         $raw = $signature . $iv . $encrypted;
@@ -102,7 +102,7 @@ class EncryptDecrypt {
         $encrypted   = substr($decoded, $sigLength + $ivLength);
 
         // 1. VERIFIKASI: Hitung ulang HMAC dari IV + Encrypted
-        $calculatedSig = hash_hmac('sha256', $iv . $encrypted, $this->key, true);
+        $calculatedSig = hash_hmac('sha256', $iv . $encrypted, (string) $this->key, true);
 
         // Gunakan hash_equals untuk mencegah Timing Attack
         if (!hash_equals($receivedSig, $calculatedSig)) {

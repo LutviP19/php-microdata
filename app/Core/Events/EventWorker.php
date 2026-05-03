@@ -197,7 +197,7 @@ class EventWorker
         try {
             $raw = $this->redis->rpop($this->queueKey);
             if ($raw) {
-                $event = json_decode($raw, true);
+                $event = json_decode((string) $raw, true);
                 $startTime = microtime(true); // Mulai hitung waktu eksekusi
 
                 try {
@@ -253,7 +253,7 @@ class EventWorker
 
             try {
                 // Parsing payload dari object
-                $payloadData = json_decode($event->payload, true);
+                $payloadData = json_decode((string) $event->payload, true);
 
                 ListenerRegistry::executeListener(
                     $event->event_name,

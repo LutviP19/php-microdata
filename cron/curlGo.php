@@ -40,7 +40,7 @@ try {
         // Error ini sudah tercatat di log secara otomatis
         echo "Gagal memproses data: " . $single['error'];
     } else {
-        $data = json_decode($single['body'], true);
+        $data = json_decode((string) $single['body'], true);
         // dd($data, true);
         if($data['statusCode'] >= 200 && $data['statusCode'] < 300) {
             echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
@@ -73,7 +73,7 @@ try {
         if (!empty($res['error'])) {
             echo "Request #$index Gagal: " . $res['error'] . PHP_EOL;
         } else {            
-            $data = json_decode($res['body'], true);
+            $data = json_decode((string) $res['body'], true);
             
             // Validasi format GO STREAMING FILTER
             if(is_array($data) && isset($data[0])) {

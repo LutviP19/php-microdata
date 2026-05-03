@@ -28,7 +28,7 @@ class Gate
             $db = new Model();
             $sql = "SELECT permission_slug AS slug FROM v_user_permissions 
                     WHERE user_id = ? AND group_id = ?";
-            
+
             $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
             return array_column($rows, 'slug');
         }, (int)(config('session.lifetime') * 30));
@@ -86,7 +86,7 @@ class Gate
             self::unauthorized_response("Invalid token.");
         }
         
-        $secret = $secret ?? config('app.jwt_secret');
+        $secret ??= config('app.jwt_secret');
         $jwt = new JWT($secret);
         $userData = $jwt->decode($token);
 
@@ -129,7 +129,7 @@ class Gate
             self::unauthorized_response("Invalid token.");
         }
         
-        $hexKey = $hexKey ?? config('app.sodium_key');
+        $hexKey ??= config('app.sodium_key');
         $auth = new SodiumAuth($hexKey);
         $userData = $auth->decode($token);
 
@@ -164,7 +164,7 @@ class Gate
 
     public static function refreshSodiumAuth(string $refreshToken, ?string $hexKey = null): string 
     {
-        $hexKey = $hexKey ?? config('app.sodium_key');
+        $hexKey ??= config('app.sodium_key');
         $sodiumAuth = new SodiumAuth($hexKey);
 
         // 1. Decode & Verify Signature Refresh Token

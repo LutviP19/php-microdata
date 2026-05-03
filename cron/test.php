@@ -99,7 +99,7 @@ if ($count > 0) {
         if(!$is_cron)
         echo " - " . FFI::string($failedOut[$i]) . PHP_EOL;
     }
-    
+
     /**
      * PENTING: Jika Go menggunakan 'C.CString' untuk failedOut, 
      * Anda WAJIB memanggil fungsi free dari sisi Go/C agar tidak memory leak.

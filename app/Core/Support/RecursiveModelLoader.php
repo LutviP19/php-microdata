@@ -11,7 +11,7 @@ class RecursiveModelLoader {
     protected $moduleConfig;
     protected $dataMapping;
 
-    public function __construct(private array $config = []) {
+    public function __construct(private readonly array $config = []) {
         $this->basePath = realpath(config('app.path') . "/app");
         // Load konfigurasi modul        
         $this->moduleConfig = $config['modules'] ?? [];
@@ -26,8 +26,8 @@ class RecursiveModelLoader {
         $baseModelPath = $this->basePath . "/Models/";
         
         // Jika input adalah "v1-dashboard"
-        if (str_contains($page, '-')) {
-            $parts = explode('-', $page, 2); // ['v1', 'dashboard']
+        if (str_contains((string) $page, '-')) {
+            $parts = explode('-', (string) $page, 2); // ['v1', 'dashboard']
             $version = strtolower($parts[0]);            // v1
             $module = $parts[1];             // dashboard
             
@@ -88,7 +88,7 @@ class RecursiveModelLoader {
         // dd($baseDataPath);
 
         return [
-            'page'       => strtolower($cleanName),
+            'page'       => strtolower((string) $cleanName),
             'modelName'  => $modelName,
             'modelPath'  => $modelPath,
             'structName' => $structName,
@@ -158,7 +158,7 @@ class RecursiveModelLoader {
                 $pattern = $this->moduleConfig[$version][$name];
             }
 
-            if (is_string(($pattern)) && preg_match($pattern, $name)) {
+            if (is_string(($pattern)) && preg_match($pattern, (string) $name)) {
                 $modelPath = $baseModelPath . $folder;
                 if (is_dir($modelPath))
                     return $folder;
@@ -173,12 +173,7 @@ class RecursiveModelLoader {
      * Mendapatkan nama file Data secara dinamis dari config mapping
      */
     private function getDataName($name) {
-        // Cek apakah ada mapping khusus di config
-        if (isset($this->dataMapping[$name])) {
-            return $this->dataMapping[$name];
-        }
-        
         // Default: NamaModel + Data
-        return $name . "Data";
+        return $this->dataMapping[$name] ?? $name . "Data";
     }
 }

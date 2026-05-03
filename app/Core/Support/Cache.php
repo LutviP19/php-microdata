@@ -33,7 +33,7 @@ class Cache
                     'port' => Config::get('redis.cache.port'),
                     'database' => Config::get('redis.cache.database')
                 ]);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 $this->redisClient = null;
             }
         } else {
@@ -69,13 +69,13 @@ class Cache
             try {
                 $data = $this->redisClient->get($key);
                 if ($data) return unserialize($data);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 $this->redisClient = null; // Fallback ke file
             }
         }
 
         // Strategy 2: Fallback Files
-        $file = $this->storagePath . md5($key) . '.cache';
+        $file = $this->storagePath . md5((string) $key) . '.cache';
         if (file_exists($file)) {
             $content = unserialize(file_get_contents($file));
             if (time() < $content['expiry']) {
@@ -115,7 +115,7 @@ class Cache
                 try {
                     $this->redisClient->setex($key, $expiry, $serialized);
                     return;
-                } catch (Exception $e) {
+                } catch (Exception) {
                     $this->redisClient = null;
                 }
             }
@@ -126,7 +126,7 @@ class Cache
                 'expiry' => time() + $expiry,
                 'data'   => $serialized
             ]);
-            file_put_contents($this->storagePath . md5($key) . '.cache', $content);
+            file_put_contents($this->storagePath . md5((string) $key) . '.cache', $content);
         }
     }
 
@@ -137,11 +137,11 @@ class Cache
     {
         // Delete in Redis
         if ($this->redisClient) {
-            try { $this->redisClient->del($key); } catch (Exception $e) {}
+            try { $this->redisClient->del($key); } catch (Exception) {}
         }
 
         // Delete in Files
-        $file = $this->storagePath . md5($key) . '.cache';
+        $file = $this->storagePath . md5((string) $key) . '.cache';
         if (file_exists($file)) unlink($file);
     }
 }

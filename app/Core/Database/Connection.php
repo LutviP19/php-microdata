@@ -105,7 +105,7 @@ class Connection
             // die($e->getMessage());
             if(config('app.env') === 'production') {
                 if(config('app.debug'))
-                \write_log($e->getMessage(), 'App\Core\Database\Connection', 'error', 'error_DB.log');
+                \write_log($e->getMessage(), \App\Core\Database\Connection::class, 'error', 'error_DB.log');
                 
                 json_response([], 403, 'Auth errors', ['auth' => 'Invalid credentials.']);
             }  else {                

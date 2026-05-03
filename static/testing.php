@@ -52,7 +52,7 @@ exit;
 $bridge = new \App\Core\FFI\ProtoBridge();
 
 // Metadata yang akan dikeluarkan lagi di decode
-$metadata = ["user_id" => rand(1, 88), "ip_address" => clientIP(), "browser" => get_short_ua()];
+$metadata = ["user_id" => random_int(1, 88), "ip_address" => clientIP(), "browser" => get_short_ua()];
 // $metadata = ["user" => "admin"];
 // Data Payload (Bisa berupa string biner, gambar, atau hasil encrypt)
 $extraPayload = "ini data biner rahasia";
@@ -358,7 +358,7 @@ if ($limit >= $maxLimitToRender) {
     $logDebug = "Memory PHP saat ini: " . (memory_get_usage(true) / 1024 / 1024) . " MB";
     write_log($logDebug, 'static/testing.php', 'debug', 'debug_FFI.log');
 
-    $isInsomnia = str_contains($_SERVER['HTTP_USER_AGENT'], 'insomnia');
+    $isInsomnia = str_contains((string) $_SERVER['HTTP_USER_AGENT'], 'insomnia');
     // dd($isInsomnia);
     try {
         // dd($limit);
@@ -498,12 +498,10 @@ if ($limit > $mainData->limitToStream) {
     json_response_stream(200, 'testing-stream', $dataEmployees['data'], $dataEmployees['meta']);
 } else {
     $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
-    $queryString = md5($cleanQuery);
+    $queryString = md5((string) $cleanQuery);
     $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataEmployees = $cache->remember($cacheKeyId, function () use ($query, $page, $limit, $mainData) {
-        return $mainData->paginate($query, [], $page, $limit);
-    }, 300);
+    $dataEmployees = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
 }
 dd($dataEmployees, true);
 // echo "<pre>".json_encode($dataEmployees, JSON_PRETTY_PRINT)."</pre>";

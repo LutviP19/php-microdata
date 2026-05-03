@@ -64,11 +64,9 @@ class AuthModel extends AuthData
             $dataAuth = $mainData->paginate($query, [], $page, $limit);
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
-            $queryString = md5($cleanQuery);
+            $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "auth_data:{$this->table}:" . $queryString . ":p{$page}:l{$limit}";
-            $dataAuth = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
-                return $mainData->paginate($query, [], $page, $limit);
-            }, 300);
+            $dataAuth = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
         }
 
         $modelA = [
