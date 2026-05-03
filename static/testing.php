@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 declare(strict_types=1);
 
 // if(is_cli()) {
@@ -15,43 +16,43 @@ declare(strict_types=1);
 
 use App\Data\Dashboard\v1\{DashboardData, StatsData, EmployeeData};
 use App\Structs\Dashboard\v1\{DashboardStruct, SallaryStruct};
-
 use App\Core\Support\App;
 use App\Core\Http\NativeCurlStreamer;
 use App\Core\Auth\SodiumAuth;
-
 
 // // Generate random string - JWT Secret
 // $rndString = generateRandomString(64, false);
 // die($rndString);
 
-// SodiumAuth - Key ($hexKey)
+// // SodiumAuth - Key ($hexKey)
 // echo bin2hex(random_bytes(32)).PHP_EOL;
 // php -r "echo bin2hex(random_bytes(32)).PHP_EOL;"
 
 
-// // Testing Class
-// Class Testing extends \App\Models\BaseModel {
-//     function __construct() {
-//         parent::__construct();
+// Testing Class
+class Testing extends \App\Models\BaseModel
+{
+    public function __construct()
+    {
+        parent::__construct();
 
-//         // $genJwt = self::generateTokenJWT();
-//         // dd($genJwt);
+        $genJwt = self::generateTokenJWT();
+        dd($genJwt, true);
 
-//         $genSodium = self::generateTokenSodium();
-//         dd($genSodium, true);
-//     }
-// }
+        // $genSodium = self::generateTokenSodium();
+        // dd($genSodium, true);
+    }
+}
 
-// $testing = new Testing();
-// exit;
+$testing = new Testing();
+exit;
 
 
 // Testing - Protobuf:
 $bridge = new \App\Core\FFI\ProtoBridge();
 
 // Metadata yang akan dikeluarkan lagi di decode
-$metadata = ["user_id" => rand(1,88), "ip_address" => clientIP(), "browser" => get_short_ua()];
+$metadata = ["user_id" => rand(1, 88), "ip_address" => clientIP(), "browser" => get_short_ua()];
 // $metadata = ["user" => "admin"];
 // Data Payload (Bisa berupa string biner, gambar, atau hasil encrypt)
 $extraPayload = "ini data biner rahasia";
@@ -87,10 +88,10 @@ $extraPayload = "ini data biner rahasia";
 //     echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
 //     $singleTask = App::externalApi('microdata_client_web', [
 //         'body' => json_encode([
-//                     'email' => 'test@microdata.local', 
+//                     'email' => 'test@microdata.local',
 //                     'password' => 'abcde1234',
 //                     // List Events should be run
-//                     'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
+//                     'calledEvents' => ['order.created', 'order.payment', 'order.notif']
 //                 ])
 //     ]);
 
@@ -101,10 +102,10 @@ $extraPayload = "ini data biner rahasia";
 //     // // Test JSON Protobuf
 //     // $singleProtoTask = App::externalApi('testing_client_web', [
 //     //     'body' => json_encode([
-//     //                 'email' => 'test@microdata.local', 
+//     //                 'email' => 'test@microdata.local',
 //     //                 'password' => 'abcde1234',
 //     //                 // List Events should be run
-//     //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif'] 
+//     //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
 //     //             ])
 //     // ]);
 //     // $single = $streamer->singleStream($singleProtoTask);
@@ -147,7 +148,7 @@ $extraPayload = "ini data biner rahasia";
 //             echo "Request Single Error: {$statusCode} - " . ($dataCurl['message'] ?? 'N/A') ."<br>". PHP_EOL;
 //         }
 //     }
-    
+
 // } catch (Exception $e) {
 //     echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
 // } finally {
@@ -162,6 +163,7 @@ $extraPayload = "ini data biner rahasia";
 // Sodium V4 (Asymmetric - Ed25519)
 // ----------------
 use App\Core\Auth\SodiumAuthV4;
+
 $authV4 = new SodiumAuthV4();
 
 // // 1. Generate Keys (Sekali saja):
@@ -270,7 +272,7 @@ exit;
 // $data = $auth->decode($oldRefreshToken);
 // echo " Validasi - Middleware refresh token:<br>" . PHP_EOL;
 // if ($data && $data['type'] === 'refresh' && $data['exp'] > time()) {
-    
+
 //     // Buat Access Token baru
 //     $newAccessPayload = [
 //         'uid'  => $data['uid'],
@@ -301,13 +303,13 @@ exit;
 // $payload = [
 //     'user_id' => 123,
 //     'username' => 'dev_user',
-//     'user_permissions' => [ 
-//         "asset-create", 
-//         "asset-view", 
-//         "asset-edit", 
-//         "asset-delete", 
-//         // "user-manage", 
-//         "report-view" 
+//     'user_permissions' => [
+//         "asset-create",
+//         "asset-view",
+//         "asset-edit",
+//         "asset-delete",
+//         // "user-manage",
+//         "report-view"
 //     ],
 //     'exp' => time() + (60 * 60) // Expired dalam 1 jam
 // ];
@@ -351,14 +353,14 @@ $id = $request['id'] ?? null;
 // else using chunk - FFI
 $maxLimitToRender = 10000;
 
-// Dynamic 
-if($limit >= $maxLimitToRender) {
+// Dynamic
+if ($limit >= $maxLimitToRender) {
     $logDebug = "Memory PHP saat ini: " . (memory_get_usage(true) / 1024 / 1024) . " MB";
     write_log($logDebug, 'static/testing.php', 'debug', 'debug_FFI.log');
 
     $isInsomnia = str_contains($_SERVER['HTTP_USER_AGENT'], 'insomnia');
     // dd($isInsomnia);
-    try{
+    try {
         // dd($limit);
         $options = [
             // PENTING: Matikan buffering agar PHP tidak menarik 1 juta baris sekaligus ke RAM
@@ -380,78 +382,82 @@ if($limit >= $maxLimitToRender) {
         $chunkData = $mainData->getAllDataSalaries($id, $limit, '*', true);
 
         // Gunakan helper
-        if($isInsomnia) {
+        if ($isInsomnia) {
             json_response_stream($status, $message, $chunkData);
         } else {
             // Pastikan output buffering PHP kosong
-            while (ob_get_level()) ob_end_flush();
+            while (ob_get_level()) {
+                ob_end_flush();
+            }
             $counter = 0;
             // Parsing Generator()
-            foreach ($chunkData as $item) {                
+            foreach ($chunkData as $item) {
                 // Flush data ke Caddy setiap 100 baris
                 if (++$counter % 100 === 0) {
-                    flush(); 
+                    flush();
                 }
-                if (connection_aborted()) break;
+                if (connection_aborted()) {
+                    break;
+                }
             }
             echo "Total data: " . number_format($counter, 0);
             exit;
         }
 
-// // === MANUAL HANDLER
-//         // PAKSA PHP melakukan kompresi di level output buffer
-//         // Ini lebih stabil daripada ob_gzhandler untuk streaming
-//         if (!connection_aborted()) {
-//             ini_set('zlib.output_compression', 'On');
-//         }
+        // // === MANUAL HANDLER
+        //         // PAKSA PHP melakukan kompresi di level output buffer
+        //         // Ini lebih stabil daripada ob_gzhandler untuk streaming
+        //         if (!connection_aborted()) {
+        //             ini_set('zlib.output_compression', 'On');
+        //         }
 
-        
-//         header('Content-Type: application/json');
-//         // Matikan buffering Caddy/Nginx
-//         header('X-Accel-Buffering: no'); 
-//         header('X-Content-Type-Options: nosniff');
-//         http_response_code(200);
 
-//         // Aktifkan streaming
-//         set_time_limit(0);
-//         if (ob_get_level()) ob_end_clean();
+        //         header('Content-Type: application/json');
+        //         // Matikan buffering Caddy/Nginx
+        //         header('X-Accel-Buffering: no');
+        //         header('X-Content-Type-Options: nosniff');
+        //         http_response_code(200);
 
-//         // Pastikan output buffering PHP kosong
-//         while (ob_get_level()) ob_end_flush();
-        
+        //         // Aktifkan streaming
+        //         set_time_limit(0);
+        //         if (ob_get_level()) ob_end_clean();
 
-//         echo '{';
-//         echo '"statusCode":' . $status . ',';
-//         echo '"message":"' . addslashes($message) . '",';
-        
-//         // 2. Buka object "data"
-//         echo '"data":';
+        //         // Pastikan output buffering PHP kosong
+        //         while (ob_get_level()) ob_end_flush();
 
-//         echo "[";
-//         $counter = 0;
-//         $first = true;
-//             // Parsing Generator()
-//             foreach ($chunkData as $item) {
 
-//                 if($isInsomnia) {
-//                     if (!$first) echo ',';
-//                     echo json_encode($item, JSON_UNESCAPED_SLASHES);
-//                     $first = false;
-//                 }
-                
-//                 // Flush data ke Caddy setiap 100 baris
-//                 if (++$counter % 100 === 0) {
-//                     flush(); 
-//                 }
-//                 if (connection_aborted()) break;
-//             }
-//         echo "]";
-//         echo '}'; // tutup root
+        //         echo '{';
+        //         echo '"statusCode":' . $status . ',';
+        //         echo '"message":"' . addslashes($message) . '",';
 
-//         if(!$isInsomnia) {
-//             echo $counter;
-//         }
-// // === END MANUAL HANDLER
+        //         // 2. Buka object "data"
+        //         echo '"data":';
+
+        //         echo "[";
+        //         $counter = 0;
+        //         $first = true;
+        //             // Parsing Generator()
+        //             foreach ($chunkData as $item) {
+
+        //                 if($isInsomnia) {
+        //                     if (!$first) echo ',';
+        //                     echo json_encode($item, JSON_UNESCAPED_SLASHES);
+        //                     $first = false;
+        //                 }
+
+        //                 // Flush data ke Caddy setiap 100 baris
+        //                 if (++$counter % 100 === 0) {
+        //                     flush();
+        //                 }
+        //                 if (connection_aborted()) break;
+        //             }
+        //         echo "]";
+        //         echo '}'; // tutup root
+
+        //         if(!$isInsomnia) {
+        //             echo $counter;
+        //         }
+        // // === END MANUAL HANDLER
 
     } catch (\Throwable $e) {
         // Log error secara detail
@@ -461,10 +467,10 @@ if($limit >= $maxLimitToRender) {
     } finally {
         // 2. Hapus referensi variabel besar
         unset($chunkData, $mainData);
-        
+
         // 3. Paksa PHP Engine membuang sampah memori
         gc_collect_cycles();
-        
+
         exit;
     }
 } else {
@@ -484,18 +490,18 @@ $dataEmployees = null;
 $query = "SELECT * FROM ".$table." ORDER BY to_date DESC";
 
 // Cek limit agar otomatis masuk ke Mode Stream
-if($limit > $mainData->limitToStream) {
+if ($limit > $mainData->limitToStream) {
     $dataEmployees = $mainData->paginate($query, [], $page, $limit);
     // dd($dataEmployees['meta']);
 
     // Stream - Output
     json_response_stream(200, 'testing-stream', $dataEmployees['data'], $dataEmployees['meta']);
-} else {            
+} else {
     $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
     $queryString = md5($cleanQuery);
     $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataEmployees = $cache->remember($cacheKeyId, function() use ($query, $page, $limit, $mainData) {
+    $dataEmployees = $cache->remember($cacheKeyId, function () use ($query, $page, $limit, $mainData) {
         return $mainData->paginate($query, [], $page, $limit);
     }, 300);
 }

@@ -37,5 +37,8 @@
             "@phpcron:stop",
             "@frankenphp:stop"
         ]
+    },
+    "require-dev": {
+        "rector/rector": "^2.4"
     }
 }
