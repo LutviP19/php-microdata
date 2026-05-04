@@ -74,10 +74,15 @@ class ProtoBridge {
         return base64_encode($binary);
     }
 
-    public function unpack(string $binaryData): array {
+    public function unpack(string $binaryData, bool $sourceiSBinary = true): array {
 
         if(!$binaryData)
             return null;
+        
+        if(!$sourceiSBinary) {
+            $binaryData = base64_decode($binaryData);
+            // dd($binaryData);
+        }
 
         $len = strlen($binaryData);
         if ($len === 0) return [];

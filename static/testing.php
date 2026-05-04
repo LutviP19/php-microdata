@@ -29,23 +29,27 @@ use App\Core\Auth\SodiumAuth;
 // php -r "echo bin2hex(random_bytes(32)).PHP_EOL;"
 
 
-// Testing Class
-class Testing extends \App\Models\BaseModel
-{
-    public function __construct()
-    {
-        parent::__construct();
+// // Testing Class
+// class Testing extends \App\Models\BaseModel
+// {
+//     public function __construct()
+//     {
+//         parent::__construct();
 
-        $genJwt = self::generateTokenJWT();
-        dd($genJwt, true);
+//         $genJwt = self::generateTokenJWT();
+//         dd($genJwt, true);
 
-        // $genSodium = self::generateTokenSodium();
-        // dd($genSodium, true);
-    }
-}
+//         // $genSodium = self::generateTokenSodium();
+//         // dd($genSodium, true);
+//     }
+// }
 
-$testing = new Testing();
-exit;
+// $testing = new Testing();
+// exit;
+
+
+$isInsomnia = str_contains((string) $_SERVER['HTTP_USER_AGENT'], 'insomnia');
+// dd($isInsomnia);
 
 
 // Testing - Protobuf:
@@ -79,113 +83,150 @@ $extraPayload = "ini data biner rahasia";
 // exit;
 
 
-// // Testing CURL - Client Web
-// $streamer = new NativeCurlStreamer();
-// $start = microtime(true);
+// Testing CURL - Client Web
+$streamer = new NativeCurlStreamer();
+$start = microtime(true);
 
-// try {
-//     // A. TEST SINGLE STREAM
-//     echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
-//     $singleTask = App::externalApi('microdata_client_web', [
-//         'body' => json_encode([
-//                     'email' => 'test@microdata.local',
-//                     'password' => 'abcde1234',
-//                     // List Events should be run
-//                     'calledEvents' => ['order.created', 'order.payment', 'order.notif']
-//                 ])
-//     ]);
-
-//     $single = $streamer->singleStream($singleTask);
-//     // dd($single, true);
-//     // dd($single['statusCode'], true);
-
-//     // // Test JSON Protobuf
-//     // $singleProtoTask = App::externalApi('testing_client_web', [
-//     //     'body' => json_encode([
-//     //                 'email' => 'test@microdata.local',
-//     //                 'password' => 'abcde1234',
-//     //                 // List Events should be run
-//     //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
-//     //             ])
-//     // ]);
-//     // $single = $streamer->singleStream($singleProtoTask);
-//     // // End - Test JSON Protobuf
-
-//     if ($single['error']) {
-//         // Error ini sudah tercatat di log secara otomatis
-//         echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
-//     } else {
-
-//         // Curl Decode
-//         $dataCurl = json_decode($single['body'], true);
-//         // dd($dataCurl, true);
+try {
+    // A. TEST SINGLE STREAM
+    // echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
 
 
-//         // // Test JSON Protobuf
-//         // // $binProto = $bridge->pack($dataCurl, $metadata, $extraPayload);
-//         // $dataProto = $bridge->unpack($single['body']);
+    // // Test JSON
+    // $singleTask = App::externalApi('microdata_client_web', [
+    //     'body' => json_encode([
+    //                 'email' => 'test@microdata.local',
+    //                 'password' => 'abcde1234',
+    //                 // List Events should be run
+    //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
+    //             ])
+    // ]);
 
-//         // // Jika metadata ada isinya
-//         // echo "metadata: ";
-//         // print_r($dataProto['metadata']);
-//         // echo "<br>". PHP_EOL;
-
-//         // // Jika ingin mengambil kembali payload aslinya
-//         // $originalPayload = hex2bin($dataProto['payload_raw']);
-//         // echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
-
-//         // $data = json_decode($dataProto['content'], true);
-//         // echo "content: ";
-//         // dd($data, true);
-//         // // End - Test JSON Protobuf
+    // $single = $streamer->singleStream($singleTask);
+    // // dd($single, true);
+    // // dd($single['statusCode'], true);
 
 
-//         if($dataCurl['statusCode'] >= 200 && $dataCurl['statusCode'] < 300) {
-//             // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
-//             echo "Single Response: " . json_encode($dataCurl) ."<br>". PHP_EOL;
-//         } else {
-//             $statusCode = $dataCurl['statusCode'];
-//             echo "Request Single Error: {$statusCode} - " . ($dataCurl['message'] ?? 'N/A') ."<br>". PHP_EOL;
-//         }
-//     }
 
-// } catch (Exception $e) {
-//     echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
-// } finally {
-//     $time = microtime(true) - $start;
-//     echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
-//     echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
-//     echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
-// }
-// exit;
+    // Test JSON Protobuf
+    $singleProtoTask = App::externalApi('microdata_client_web', [
+        'body' => json_encode([
+                    'email' => 'test@microdata.local',
+                    'password' => 'abcde1234',
+                    // List Events should be run
+                    'calledEvents' => ['order.created', 'order.payment', 'order.notif']
+                ])
+    ]);
+    $single = $streamer->singleStream($singleProtoTask);
+    // dd($single);
+    // End - Test JSON Protobuf
+
+    if ($single['error']) {
+        // Error ini sudah tercatat di log secara otomatis
+        echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
+    } else {
+
+        $response = $single['body'];
+
+        // Curl Decode
+        if (json_validate($response)) {
+            $dataCurl = json_decode($response, true);
+
+            if($isInsomnia) {
+                // unpack - ['data']['content']
+                if(isset($dataCurl['data']) && is_string($dataCurl['data'])) {
+                    // $dataCurl['data'] = json_decode($bridge->unpack(base64_decode($dataCurl['data']))['content'], true);
+                    $dataCurl['data'] = $bridge->unpack($dataCurl['data'], false);
+                    $dataCurl['data']['content'] = json_decode($dataCurl['data']['content'], true);
+                }
+
+                dd($dataCurl, true);
+            }
+        }
 
 
-// Sodium V4 (Asymmetric - Ed25519)
-// ----------------
-use App\Core\Auth\SodiumAuthV4;
+        // Test JSON Protobuf
+        $dataProto = $bridge->unpack($response);
+        $data = json_decode($dataProto['content'], true);
+        $metadata = $dataProto['metadata'];
+        $payload_raw = $dataProto['payload_raw'];
 
-$authV4 = new SodiumAuthV4();
+        if($isInsomnia) {
+            $payload_raw = hex2bin($payload_raw);
+            $responseProto = [
+                'status' => true,
+                'statusCode' => $single['statusCode'],
+                'message' => 'Testing Curl Protobuf',
+                'data' => [
+                    'content' => $data,                    
+                    'metadata' => $metadata,
+                    'payload_raw' => $payload_raw,
+                    'payload_size' => strlen($payload_raw),
+                ]                
+            ];
+            dd($responseProto, true);
+        }
 
-// // 1. Generate Keys (Sekali saja):
-// $keys = SodiumAuthV4::generateKeys();
-// // Simpan $keys['private'] di env SSO Server
-// // Simpan $keys['public'] di env SSO Server dan SEMUA App Client
-// // dd($keys, true);
+        // Jika metadata ada isinya
+        echo "metadata: ";
+        print_r($metadata);
+        echo "<br>". PHP_EOL;
 
-// 2. Di Server Backend (Login):
-$expToken = time() + (60 * (config('session.lifetime') / 2));
-$token = $authV4->encode(['uid' => 101, 'role' => 'admin', 'exp' => $expToken]);
-// dd($token);
+        // Jika ingin mengambil kembali payload aslinya
+        $originalPayload = hex2bin($payload_raw);
+        echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
 
-// 3. Di App Client (Middleware):
-$userData = $authV4->decode($token);
+        echo "content: ";
+        print_r($data, true);
+        // End - Test JSON Protobuf
 
-if ($userData) {
-    // Token Valid dan asli!
-    dd($userData, true);
+
+        if ($dataCurl['statusCode'] >= 200 && $dataCurl['statusCode'] < 300) {
+            // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
+            echo "Single Response: " . json_encode($dataCurl) ."<br>". PHP_EOL;
+        } else {
+            $statusCode = $dataCurl['statusCode'];
+            echo "Request Single Error: {$statusCode} - " . ($dataCurl['message'] ?? 'N/A') ."<br>". PHP_EOL;
+        }
+    }
+
+} catch (Exception $e) {
+    echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
+} finally {
+    $time = microtime(true) - $start;
+    echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
+    echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
+    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
 }
 exit;
-// ==============
+
+
+// // Sodium V4 (Asymmetric - Ed25519)
+// // ----------------
+// use App\Core\Auth\SodiumAuthV4;
+
+// $authV4 = new SodiumAuthV4();
+
+// // // 1. Generate Keys (Sekali saja):
+// // $keys = SodiumAuthV4::generateKeys();
+// // // Simpan $keys['private'] di env SSO Server
+// // // Simpan $keys['public'] di env SSO Server dan SEMUA App Client
+// // // dd($keys, true);
+
+// // 2. Di Server Backend (Login):
+// $expToken = time() + (60 * (config('session.lifetime') / 2));
+// $token = $authV4->encode(['uid' => 101, 'role' => 'admin', 'exp' => $expToken]);
+// // dd($token);
+
+// // 3. Di App Client (Middleware):
+// $userData = $authV4->decode($token);
+
+// if ($userData) {
+//     // Token Valid dan asli!
+//     dd($userData, true);
+// }
+// exit;
+// // ==============
 
 
 // // Saat register karyawan baru
@@ -358,8 +399,7 @@ if ($limit >= $maxLimitToRender) {
     $logDebug = "Memory PHP saat ini: " . (memory_get_usage(true) / 1024 / 1024) . " MB";
     write_log($logDebug, 'static/testing.php', 'debug', 'debug_FFI.log');
 
-    $isInsomnia = str_contains((string) $_SERVER['HTTP_USER_AGENT'], 'insomnia');
-    // dd($isInsomnia);
+    
     try {
         // dd($limit);
         $options = [
@@ -501,7 +541,7 @@ if ($limit > $mainData->limitToStream) {
     $queryString = md5((string) $cleanQuery);
     $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataEmployees = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
+    $dataEmployees = $cache->remember($cacheKeyId, fn () => $mainData->paginate($query, [], $page, $limit), 300);
 }
 dd($dataEmployees, true);
 // echo "<pre>".json_encode($dataEmployees, JSON_PRETTY_PRINT)."</pre>";
