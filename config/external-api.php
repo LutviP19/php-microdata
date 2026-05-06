@@ -41,7 +41,7 @@ return [
             'User-Agent' => 'PHP-Microdata',
             'Content-Type' => 'application/json',
             'Accept' => 'application/x-protobuf;q=0.9, application/json;q=0.8, text/plain;q=0.5',
-            'X-Api-Token' => 'eyJpdiI6InE2TUNrNGFsbDJYclUxMUh0S1pNS2c9PSIsInZhbHVlIjoiMlRRUGE0R2FWWERMU1UycmoycXZFYXhXMEhvcFZ6TXFuTHByZ1BMNnNORT0iLCJtYWMiOiIwZjA5ZmFiMmNkOGM3YTFlZWEwNTQ2OWYxYTE0N2ZmOWNiZTVkN2U4OWQxMzcyYTNkOGU3YjllNzc0OGFmZDVkIiwidGFnIjoiIn0=',
+            'X-Api-Token' => config('clients.client_web.x-api-token'),
         ]
     ],
 
@@ -54,7 +54,7 @@ return [
             'Content-Type' => 'application/json',
             'Accept' => 'application/x-protobuf;q=0.9, application/json;q=1.8, text/plain;q=0.5',
             'Accept-Encoding' => 'gzip',
-            'X-Api-Token' => 'eyJpdiI6InE2TUNrNGFsbDJYclUxMUh0S1pNS2c9PSIsInZhbHVlIjoiMlRRUGE0R2FWWERMU1UycmoycXZFYXhXMEhvcFZ6TXFuTHByZ1BMNnNORT0iLCJtYWMiOiIwZjA5ZmFiMmNkOGM3YTFlZWEwNTQ2OWYxYTE0N2ZmOWNiZTVkN2U4OWQxMzcyYTNkOGU3YjllNzc0OGFmZDVkIiwidGFnIjoiIn0=',
+            'X-Api-Token' => config('clients.client_web.x-api-token'),
         ]
     ],
 

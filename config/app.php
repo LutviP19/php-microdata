@@ -31,9 +31,9 @@ return [
         'jwt_secret' => env('JWT_SECRET', '152*vd61174Df9@eba3b4Y6ed9d452adae762j!b13H4Deym36i6Qo1f9m4d^n76'),
         'sodium_key' => env('SODIUM_KEY', 'd9cffa8b79abd6ff9260e1aa23ffa65af2846cbbf21e8f0910cd7a1b09178df8'),
         'sodium_private_key' => env('SODIUM_PRIVATE_KEY', '6a1a0b5ce76f343f488a71eeee8719b82900d2df8976942dc42e7bcdd8ffb52f529e7b68eb1175261dc3c100c587be4eb09f262d3f620b3d775d972765e6544c'),
-        'sodium_public_key' => env('SODIUM_PUBLIC_KEY', '529e7b68eb1175261dc3c100c587be4eb09f262d3f620b3d775d972765e6544c'), 
+        'sodium_public_key' => env('SODIUM_PUBLIC_KEY', '529e7b68eb1175261dc3c100c587be4eb09f262d3f620b3d775d972765e6544c'),
         'sodium_prefix' => env('SODIUM_PREFIX', 'v1.access.microdata'),
-        'encrpytion_id' => env('APP_ENC_ID', false),        
+        'encrpytion_id' => env('APP_ENC_ID', false),
         'cache_driver' => env('CACHE_DRIVER', 'files'),
         'queue_driver' => env('QUEUE_DRIVER', 'redis'),
     ],
@@ -44,6 +44,16 @@ return [
     'api' => [
         'key' => env('API_KEY', 'base64:FxfDQdiN9IguAgG5NSfESiNryDdAQf9aBiZKLIklNoE='),
         'whitelist_ips' => null, // null||[]: no filter, (Array)IP/CIDR: ['127.0.0.1', '192.168.1.0/24', '10.0.0.0/8']
+    ],
+
+    /**
+     * Clients Api Credentials and default setup.
+     */
+    'clients' => [
+        'client_web' => [
+            'x-api-token' => env('CLENT_WEB_API_TOKEN', ''),
+
+        ],
     ],
 
     /**
@@ -77,11 +87,6 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            // 'options' => extension_loaded('pdo_mysql') ? array_filter([
-            //     PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            //     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            //     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
-            // ]) : [],
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 // Deteksi otomatis konstanta SSL CA (Mendukung PHP < 8.5 & 8.5+)
                 (defined('\Pdo\Mysql::ATTR_SSL_CA') ? \Pdo\Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
@@ -91,7 +96,7 @@ return [
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
 
                 // Tambahan: Jika Anda menggunakan fitur Unbuffered (Optional)
-                // (defined('\Pdo\Mysql::ATTR_USE_BUFFERED_QUERY') ? \Pdo\Mysql::ATTR_USE_BUFFERED_QUERY : PDO::MYSQL_ATTR_USE_BUFFERED_QUERY) 
+                // (defined('\Pdo\Mysql::ATTR_USE_BUFFERED_QUERY') ? \Pdo\Mysql::ATTR_USE_BUFFERED_QUERY : PDO::MYSQL_ATTR_USE_BUFFERED_QUERY)
                 //    => true,
                 // Gunakan 1001 langsung untuk menjamin kompatibilitas di PHP 8.3 - 8.5
                 1001 => true,
