@@ -1,17 +1,25 @@
 <?php
 
+/**
+ * ProtoBridge FFI Class to Serialize protobuff with librust_protobuf.
+ * @package Microdata-PHP
+ * @author Lutvi <lutvip19@gmail.com>
+ */
+
 namespace App\Core\FFI;
 
 use FFI;
 use RuntimeException;
 
-class ProtoBridge {
+class ProtoBridge
+{
     private readonly FFI $ffi;
     private readonly string $libPath;
 
-    public function __construct(?string $libPath = null) {
-        $defaultPath = defined('BASEPATH_FFI') 
-            ? BASEPATH_FFI . '/lib/librust_protobuf.so' 
+    public function __construct(?string $libPath = null)
+    {
+        $defaultPath = defined('BASEPATH_FFI')
+            ? BASEPATH_FFI . '/lib/librust_protobuf.so'
             : __DIR__ . '/../../../ffi/lib/librust_protobuf.so';
 
         $this->libPath = $libPath ?? $defaultPath;
@@ -38,16 +46,18 @@ class ProtoBridge {
         ", $this->libPath);
     }
 
-    public function pack(mixed $content, array $metadata = [], string $binaryPayload = '', bool $outputBinary = true): string {
-        if(!$content)
+    public function pack(mixed $content, array $metadata = [], string $binaryPayload = '', bool $outputBinary = true): string
+    {
+        if (!$content) {
             return null;
+        }
 
         // Convert content to JSON
         $contentData = is_string($content) ? [str_replace(" ", "", $content)] : $content;
         $content = json_encode($contentData, JSON_FORCE_OBJECT);
 
         // Pastikan semua value adalah string agar cocok dengan map<string, string> di Rust
-        $sanitizedMetadata = array_map(fn($value) => (string) $value, $metadata);
+        $sanitizedMetadata = array_map(fn ($value) => (string) $value, $metadata);
         $jsonMetadata = json_encode($sanitizedMetadata, JSON_FORCE_OBJECT);
 
         $payloadLen = strlen($binaryPayload);
@@ -59,33 +69,38 @@ class ProtoBridge {
         }
 
         $buf = $this->ffi->encode_generic(
-            $content, 
-            $jsonMetadata, 
-            $cPayload ? $this->ffi->cast("unsigned char*", $cPayload) : null, 
+            $content,
+            $jsonMetadata,
+            $cPayload ? $this->ffi->cast("unsigned char*", $cPayload) : null,
             $payloadLen
         );
 
         $binary = FFI::string($buf->data, $buf->len);
         $this->ffi->free_proto_buffer($buf);
 
-        if($outputBinary)
+        if ($outputBinary) {
             return $binary;
+        }
 
         return base64_encode($binary);
     }
 
-    public function unpack(string $binaryData, bool $sourceiSBinary = true): array {
+    public function unpack(string $binaryData, bool $sourceiSBinary = true): array
+    {
 
-        if(!$binaryData)
+        if (!$binaryData) {
             return null;
-        
-        if(!$sourceiSBinary) {
+        }
+
+        if (!$sourceiSBinary) {
             $binaryData = base64_decode($binaryData);
             // dd($binaryData);
         }
 
         $len = strlen($binaryData);
-        if ($len === 0) return [];
+        if ($len === 0) {
+            return [];
+        }
 
         // Buat buffer di sisi C untuk menampung binaryData
         $cBuf = $this->ffi->new("unsigned char[$len]", false);
