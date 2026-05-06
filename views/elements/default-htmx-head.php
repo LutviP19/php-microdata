@@ -1,0 +1,1 @@
+<title><?= htmlspecialchars((string) config('app.name')) ?></title>

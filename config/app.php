@@ -20,7 +20,7 @@ return [
      * Application config details.
      */
     'app' => [
-        'name' => env('APP_NAME', 'Backend PHP'),
+        'name' => env('APP_NAME', 'PHP Microdata Server'),
         'url' => env('APP_URL', 'http://localhost'),
         'path' => BASEPATH,
         'env' => env('APP_ENV', 'production'),

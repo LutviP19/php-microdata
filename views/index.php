@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP Microdata Server</title>
+    <title><?= htmlspecialchars((string) config('app.name')) ?></title>
     
     <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
     <script defer src="<?= asset('js/alpinejs-cdn.min.js'); ?>"></script>

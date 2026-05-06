@@ -1,3 +1,4 @@
+<?php include_once(BASEPATH . '/views/elements/default-htmx-head.php'); ?>
 <style>
     @keyframes blink {
         0%, 100% { opacity: 1; }

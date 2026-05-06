@@ -1,3 +1,4 @@
+<?php include_once(BASEPATH . '/views/elements/default-htmx-head.php'); ?>
 <div class="flex flex-col items-center justify-start md:justify-center min-h-[80vh] md:px-4 pt-10 md:pt-0" 
      x-data="{ 
         searching: false, 

@@ -1,3 +1,4 @@
+<?php include_once(BASEPATH . '/views/elements/default-htmx-head.php'); ?>
 <div class="max-w-4xl mx-auto" x-data="{ saved: false }">
     <div class="mb-8">
         <h2 class="text-3xl font-bold text-white">Settings</h2>
