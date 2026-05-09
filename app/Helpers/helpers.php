@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  */
@@ -17,10 +18,10 @@ if (!defined('BASEPATH')) {
 function dd($data = [], $json = false)
 {
     // Debug output JSON
-    if($json) {
+    if ($json) {
         die(json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
     }
-    
+
     // Debug output TEXT/HTML
     echo "<pre>", var_dump($data), "</pre>";
     die();
@@ -96,17 +97,19 @@ function url($uri = '')
  * Helper untuk memanggil file di folder public/assets
  */
 if (!function_exists('asset')) {
-    function asset($path) {
+    function asset($path)
+    {
         $baseUrl = rtrim(config('app.url'), '/');
         return $baseUrl . '/assets/' . ltrim((string) $path, '/');
     }
 }
 
-/** 
+/**
  * Memuat variabel dari file .env ke dalam lingkungan PHP
  */
 if (!function_exists('load_env')) {
-    function load_env($path = null) {
+    function load_env($path = null)
+    {
         if ($path === null) {
             $path = BASEPATH . '/.env';
         }
@@ -118,7 +121,9 @@ if (!function_exists('load_env')) {
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             // Abaikan baris yang dimulai dengan komentar #
-            if (str_starts_with(trim($line), '#')) continue;
+            if (str_starts_with(trim($line), '#')) {
+                continue;
+            }
 
             // Pecah berdasarkan tanda sama dengan (=)
             [$name, $value] = explode('=', $line, 2);
@@ -133,7 +138,7 @@ if (!function_exists('load_env')) {
             // --- LOGIKA SUBSTITUSI VARIABEL ---
             // Mencari pola ${VAR_NAME}
             preg_match_all('/\${([^}]+)}/', $value, $matches);
-            
+
             if (!empty($matches[1])) {
                 foreach ($matches[1] as $embeddedVar) {
                     // Ambil nilai dari $_ENV atau getenv yang sudah diproses sebelumnya
@@ -158,7 +163,8 @@ if (!function_exists('load_env')) {
  * Mengonversi variabel environment pilihan ke format JSON untuk Frontend.
  */
 if (!function_exists('env_to_json')) {
-    function env_to_json(array $keys) {
+    function env_to_json(array $keys)
+    {
         $output = [];
         foreach ($keys as $key) {
             $output[$key] = env($key);
@@ -183,7 +189,8 @@ function config($key)
  * Mengambil nilai dari environment dengan dukungan nilai default
  */
 if (!function_exists('env')) {
-    function env($key, $default = null) {
+    function env($key, $default = null)
+    {
         $value = getenv($key);
         if ($value === false) {
             return $default;
@@ -202,7 +209,8 @@ if (!function_exists('env')) {
  * Cek apakah request JSON.
  */
 if (!function_exists('is_json_request')) {
-    function is_json_request() {
+    function is_json_request()
+    {
         // 1. Cek dari $_SERVER (Standard)
         if (isset($_SERVER['CONTENT_TYPE']) && stripos((string) $_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
             return true;
@@ -233,7 +241,8 @@ if (!function_exists('is_json_request')) {
  * Mendukung string, integer, float, boolean, dan array secara rekursif.
  */
 if (!function_exists('sanitize')) {
-    function sanitize($data) {
+    function sanitize($data)
+    {
         if (is_array($data)) {
             foreach ($data as $key => $value) {
                 $data[$key] = sanitize($value);
@@ -260,8 +269,9 @@ if (!function_exists('sanitize')) {
  * Berguna untuk integrasi API atau library frontend yang mengirim JSON.
  */
 if (!function_exists('handle_json_request')) {
-    function handle_json_request() {
-        // Cek apakah Content-Type adalah application/json        
+    function handle_json_request()
+    {
+        // Cek apakah Content-Type adalah application/json
         if (is_json_request()) {
             // Ambil data mentah dari body
             $rawInput = file_get_contents('php://input');
@@ -275,12 +285,12 @@ if (!function_exists('handle_json_request')) {
             $dataJson = sanitizeJson($rawInput);
             $decoded = json_decode((string) $dataJson, true);
             // dd($decoded);
-            if(isset($decoded['error'])) {
+            if (isset($decoded['error'])) {
                 return false;
             }
 
             // Jika JSON valid, gabungkan ke dalam $_REQUEST
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {                
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 // Opsional: Gabungkan juga ke $_POST jika Anda lebih suka menggunakannya
                 // Gunakan array_replace untuk efisiensi di Worker Mode
                 $_REQUEST = array_replace($_REQUEST, $decoded);
@@ -300,9 +310,10 @@ if (!function_exists('handle_json_request')) {
  * Berguna untuk integrasi API atau library frontend yang mengirim JSON.
  */
 if (!function_exists('handle_response_error')) {
-    function handle_response_error($data, $dataModel) {
+    function handle_response_error($data, $dataModel)
+    {
 
-        if(isset($dataModel['errors'])) {
+        if (isset($dataModel['errors'])) {
             // Parse Errors
             $errors = $dataModel['errors'];
             $status = $errors['status'] ?? 417;
@@ -327,12 +338,13 @@ if (!function_exists('handle_response_error')) {
  * Mengirimkan respons JSON yang standar dan menghentikan eksekusi script.
  */
 if (!function_exists('json_response')) {
-    function json_response($data, $status = 200, $message = '', $errors = []) {
+    function json_response($data, $status = 200, $message = '', $errors = [])
+    {
         header('Content-Type: application/json');
         http_response_code($status);
 
         // Format output JSON
-        if($message !== '') {
+        if ($message !== '') {
             $data = [
                 'statusCode' => $status,
                 'message' => $message,
@@ -345,7 +357,7 @@ if (!function_exists('json_response')) {
             ];
         }
         // Keluarkan errors jika ada
-        if(!empty($errors)) {
+        if (!empty($errors)) {
             unset($data['data']);
             $data['errors'] = $errors;
         }
@@ -364,32 +376,35 @@ if (!function_exists('json_response')) {
  * Mengirimkan respons JSON standar (Support Streaming & Legacy Error Handler)
  */
 if (!function_exists('json_response_stream')) {
-    function json_response_stream($status = 200, $message = '', $data = [], $pagination = [], $extraData = []) {
+    function json_response_stream($status = 200, $message = '', $data = [], $pagination = [], $extraData = [])
+    {
 
         // PAKSA PHP melakukan kompresi di level output buffer
         // Ini lebih stabil daripada ob_gzhandler untuk streaming
         if (!connection_aborted()) {
             ini_set('zlib.output_compression', 'On');
         }
-        
+
         header('Content-Type: application/json');
         header('X-Content-Type-Options: nosniff');
         http_response_code($status);
 
         // Aktifkan streaming
         set_time_limit(0);
-        if (ob_get_level()) ob_end_clean();
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
 
         // 1. Root JSON
         echo '{';
         echo '"statusCode":' . $status . ',';
         echo '"message":"' . addslashes((string) $message) . '",';
-        
+
         // 2. Buka object "data"
-        if(!empty($pagination)) {
+        if (!empty($pagination)) {
             echo '"data":{';
         }
-        
+
         // 3. Masukkan Extra Data (request, table, title, dll)
         if (!empty($extraData)) {
             foreach ($extraData as $key => $value) {
@@ -398,44 +413,48 @@ if (!function_exists('json_response_stream')) {
         }
 
         // 4. Buka "pagination_data"
-        if(!empty($pagination)) {
+        if (!empty($pagination)) {
             echo '"pagination_data":{';
         } else {
             echo '"chunk_data":{';
         }
-        
-        
+
+
         echo '"data":[';
 
         // 5. Stream data utama (Generator)
         $first = true;
         $counter = 0;
         foreach ($data as $item) {
-            if (!$first) echo ',';
+            if (!$first) {
+                echo ',';
+            }
             echo json_encode($item, JSON_UNESCAPED_SLASHES);
             $first = false;
 
             // Flush data ke Caddy setiap 100 baris
             if (++$counter % 100 === 0) {
-                flush(); 
+                flush();
             }
-            if (connection_aborted()) break;
+            if (connection_aborted()) {
+                break;
+            }
         }
 
         // 6. Tutup array data utama
-        if(!empty($pagination)) {
-            echo '],'; 
+        if (!empty($pagination)) {
+            echo '],';
             // 7. Masukkan object "meta"
             echo '"meta":' . json_encode($pagination, JSON_UNESCAPED_SLASHES);
         } else {
-             echo ']'; 
+            echo ']';
         }
-        
+
 
         // 8. Tutup semua wrapper (pagination_data -> data -> root)
         echo '}'; // tutup pagination_data
 
-        if(!empty($pagination)) {
+        if (!empty($pagination)) {
             echo '}'; // tutup data
         }
 
@@ -450,7 +469,8 @@ if (!function_exists('json_response_stream')) {
  * Mengecek apakah request saat ini mengharapkan atau mengirimkan JSON.
  */
 if (!function_exists('expects_json')) {
-    function expects_json(): bool {
+    function expects_json(): bool
+    {
         // Ambil header dengan fallback string kosong
         $contentType = $_SERVER["CONTENT_TYPE"] ?? '';
         $accept = $_SERVER["HTTP_ACCEPT"] ?? '';
@@ -464,13 +484,13 @@ if (!function_exists('expects_json')) {
 
         // Validasi Accept (untuk request yang meminta data seperti GET)
         // Menambahkan pengecekan */json untuk menangani wildcard dari beberapa library
-        $isJsonAccept = stripos((string) $accept, 'application/json') !== false || 
+        $isJsonAccept = stripos((string) $accept, 'application/json') !== false ||
                         stripos((string) $accept, '+json') !== false;
 
-        // Validasi Tambahan: Jika method adalah POST/PUT tapi Content-Type kosong, 
+        // Validasi Tambahan: Jika method adalah POST/PUT tapi Content-Type kosong,
         // kita bisa lebih ketat (opsional tergantung arsitektur bisnis).
-        
-        
+
+
         return $isJsonInput || $isJsonAccept || $isAjax;
     }
 }
@@ -479,7 +499,8 @@ if (!function_exists('expects_json')) {
  * Kompres data JSON
  */
 if (!function_exists('compress_payload')) {
-    function compress_payload($data) {
+    function compress_payload($data)
+    {
         $json = json_encode($data);
         // gzencode menghasilkan format yang kompatibel dengan browser (.gz)
         return gzencode($json, 9); // Level 9 adalah kompresi maksimal
@@ -498,7 +519,8 @@ if (!function_exists('compress_payload')) {
  * Dekompres data
  */
 if (!function_exists('decompress_payload')) {
-    function decompress_payload($payload) {
+    function decompress_payload($payload)
+    {
         return json_decode(gzdecode($payload), true);
     }
 }
@@ -507,9 +529,10 @@ if (!function_exists('decompress_payload')) {
  * Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
  * reserve "v1-dashboard" menjadi "Dashboard/v1"
  */
-function formatRoutePath(string $path, bool $reserve = false): string {
+function formatRoutePath(string $path, bool $reserve = false): string
+{
     // 1. Pecah string
-    $parts = explode( $reserve ? '-' : '/', $path);
+    $parts = explode($reserve ? '-' : '/', $path);
 
     if (count($parts) < 2) {
         return strtolower($path); // Fallback jika tidak ada separator
@@ -523,7 +546,7 @@ function formatRoutePath(string $path, bool $reserve = false): string {
     $module = ucwords($parts[1]);
 
     // 4. Gabungkan kembali
-    if($reserve) {
+    if ($reserve) {
         return $module . '/' . $version;
     } else {
         return $version . '-' . $module;
@@ -533,7 +556,8 @@ function formatRoutePath(string $path, bool $reserve = false): string {
 /**
  * Mengubah path file menjadi format Namespace PHP
  */
-function pathToNamespace(string $path): string {
+function pathToNamespace(string $path): string
+{
     // 1. Hilangkan ekstensi .php
     $path = str_replace('.php', '', $path);
 
@@ -541,12 +565,12 @@ function pathToNamespace(string $path): string {
     $segments = explode('/', str_replace('\\', '/', $path));
 
     // 3. Format setiap segmen (Kapitalisasi)
-    $formattedSegments = array_map(function($segment) {
+    $formattedSegments = array_map(function ($segment) {
         // Jika segmen adalah versi (misal: v1), ubah jadi V1
         if (preg_match('/^v\d+$/i', $segment)) {
             return strtoupper($segment);
         }
-        
+
         // Ubah jadi PascalCase (dashboard -> Dashboard)
         return ucwords($segment);
     }, $segments);
@@ -556,42 +580,46 @@ function pathToNamespace(string $path): string {
 }
 
 /**
- * Sistem log sederhana dengan level kategori.
+ * toggle Logging
+ */
+function toggleLog(bool $logThis, mixed $message, ?string $moduleName = '', ?string $level = 'info', ?string $file = null)
+{
+    if ($logThis) {
+        write_log($message, $moduleName, $level, $file);
+    }
+}
+
+/**
+ * Simple log system with category levels.
  */
 if (!function_exists('write_log')) {
-    function write_log($message, ?string $moduleName = '', ?string $level = 'info', ?string $file = null) {
-        // Tentukan path folder log
+    function write_log(mixed $message, ?string $moduleName = '', ?string $level = 'info', ?string $file = null)
+    {
+        // Specify the log folder path
         $logDir = BASEPATH . '/storage/logs/';
 
-        $message = (string) is_array($message) ? json_encode($message) : $message;
-        
-        // Pastikan pilihan nama file diisolasi dalam kurung
         $fileName = ($file ?? 'app_' . str_replace(" ", "_", $level) . '.log');
         $logFile = $logDir . $fileName;
 
-        // Buat direktori jika belum ada
         if (!is_dir($logDir)) {
             mkdir($logDir, 0755, true);
         }
 
-        if(!file_exists($logFile)) {
+        if (!file_exists($logFile)) {
             touch($logFile);
             chmod($logFile, 0666);
         }
 
-        // Format pesan log: [2026-01-30 20:00:00] [LEVEL] Message
         $timestamp = date('Y-m-d H:i:s');
         $levelUpper = strtoupper((string) $level);
         $datatype = gettype($message);
-        
-        // Jika pesan berupa array atau objek, konversi ke JSON agar terbaca
+
         if (is_array($message) || is_object($message)) {
-            $message = json_encode($message);
+            $message = json_encode($message, JSON_UNESCAPED_SLASHES);
         }
 
         $formattedMessage = sprintf("[%s][%s][%s](%s): %s" . PHP_EOL, date('Y-m-d H:i:s'), $levelUpper, $moduleName, $datatype, $message);
 
-        // Gunakan LOCK_EX agar antar worker tidak bentrok saat menulis file yang sama
         file_put_contents($logFile, $formattedMessage, FILE_APPEND | LOCK_EX);
     }
 }
@@ -600,7 +628,8 @@ if (!function_exists('write_log')) {
  * Helper untuk format angka atau status agar lebih cantik di log dashboard.
  */
 if (!function_exists('format_log_status')) {
-    function format_log_status($status) {
+    function format_log_status($status)
+    {
         $colors = [
             'error'   => 'text-red-500',
             'success' => 'text-green-500',
@@ -616,14 +645,15 @@ if (!function_exists('format_log_status')) {
  * Menghasilkan inisial dari nama (misal: "John Doe" -> "JD")
  */
 if (!function_exists('get_initials')) {
-    function get_initials($name) {
+    function get_initials($name)
+    {
         $words = explode(' ', strtoupper((string) $name));
         $initials = '';
-        
+
         foreach ($words as $w) {
             $initials .= $w[0] ?? '';
         }
-        
+
         return substr($initials, 0, 2);
     }
 }
@@ -635,31 +665,35 @@ if (!function_exists('get_initials')) {
  * @return string
  */
 if (!function_exists('clean_newlines')) {
-    function clean_newlines($text, $max_newlines = 2) {
+    function clean_newlines($text, $max_newlines = 2)
+    {
         // Regex untuk mencari baris baru (\r\n atau \n)
         // {{$max_newlines + 1},} artinya cari yang jumlahnya lebih dari batas
         $pattern = "/(\r?\n){" . ($max_newlines + 1) . ",}/";
-        
+
         // Ganti dengan jumlah newline yang diinginkan
         $replacement = str_repeat("\n", $max_newlines);
-        
+
         return preg_replace($pattern, $replacement, trim((string) $text));
     }
 }
 
 // Pecah raw text menjadi Array
 if (!function_exists('parse_crawler_logs')) {
-    function parse_crawler_logs($raw_text) {
+    function parse_crawler_logs($raw_text)
+    {
         // 1. Bersihkan noise log sistem di awal (Opsional)
         $clean_text = preg_replace('/\[\d{4}-\d{2}-\d{2}.*?\].*?\n/s', '', (string) $raw_text);
-        
+
         // 2. Pecah berdasarkan pemisah END URL
         $blocks = explode('===========================END URL============================', $clean_text);
         $results = [];
 
         foreach ($blocks as $block) {
             $block = trim($block);
-            if (empty($block) || strlen($block) < 5) continue;
+            if (empty($block) || strlen($block) < 5) {
+                continue;
+            }
 
             $results[] = parse_scraped_content($block);
         }
@@ -670,7 +704,8 @@ if (!function_exists('parse_crawler_logs')) {
 
 // Untuk memproses teks mentah hasil scraping atau log tersebut menjadi data terstruktur (Array/JSON)
 if (!function_exists('parse_scraped_content')) {
-    function parse_scraped_content($block) {
+    function parse_scraped_content($block)
+    {
         $entry = [
             'url'      => null,
             'status'   => null,
@@ -695,7 +730,7 @@ if (!function_exists('parse_scraped_content')) {
         if (preg_match('/Diposting pada (.*?) oleh ([^\s\xA0]+)/u', (string) $block, $matches)) {
             $entry['metadata']['posted_at'] = trim($matches[1]);
             $entry['metadata']['author']    = trim($matches[2]);
-            
+
             // Tentukan "Anchor" atau titik potong
             $authorName = $matches[2];
             $searchAnchor = "oleh " . $authorName;
@@ -705,11 +740,11 @@ if (!function_exists('parse_scraped_content')) {
             if ($contentStartPos !== false) {
                 // Ambil sisa teks setelah 'oleh Lutvi'
                 $rawContent = substr((string) $block, $contentStartPos + strlen($searchAnchor));
-                
+
                 // Bersihkan Content dari noise sisa
                 $rawContent = preg_replace('/\x{00a0}/u', ' ', $rawContent); // Bersihkan &nbsp;
                 $rawContent = preg_replace('/\s+Daftar Isi\s+/u', ' ', (string) $rawContent); // Buang Daftar Isi
-                
+
                 // Ambil teks sampai sebelum bagian "Labels:" atau "Link found:"
                 if (preg_match('/^(.*?)(?=Labels:|Link found:|Bagikan :|$)/s', (string) $rawContent, $contentMatches)) {
                     $entry['content'] = trim((string) preg_replace('/\s+/', ' ', $contentMatches[1]));
