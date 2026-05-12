@@ -14,8 +14,8 @@ if (!defined("BASEPATH_FFI")) {
 }
 
 // only level Deprecated & User Deprecated
-error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
-// error_reporting(E_ALL);
+// error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
+error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
 /**
@@ -64,10 +64,7 @@ set_exception_handler(function (\Throwable $exception) {
 // Mendaftarkan konfigurasi ke aplikasi.
 use App\Core\Support\App;
 App::register("config", require BASEPATH . "/config/app.php");
-App::register(
-    "routing_external_api",
-    require BASEPATH . "/config/external-api.php",
-);
+App::register("routing_external_api", require BASEPATH . "/config/external-api.php");
 
 // INI Set Session
 if (session_status() == PHP_SESSION_NONE) {
@@ -85,10 +82,7 @@ if (session_status() == PHP_SESSION_NONE) {
                     "?auth" .
                     config("redis.default.password"),
             );
-            ini_set(
-                "session.gc_maxlifetime",
-                (int) (config("session.lifetime") * 60),
-            ); // Set default to 2 hours
+            ini_set("session.gc_maxlifetime", (int) (config("session.lifetime") * 60)); // Set default to 2 hours
         } else {
             ini_set("session.save_handler", "files");
             ini_set("session.save_path", storage_path("framework/sessions"));

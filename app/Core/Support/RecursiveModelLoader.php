@@ -11,7 +11,7 @@ class RecursiveModelLoader
     protected $moduleConfig;
     protected $dataMapping;
 
-    public function __construct(private readonly array $config = [])
+    public function __construct(private readonly ?array $config = [])
     {
         $this->basePath = realpath(config("app.path") . "/app");
         // Load konfigurasi modul
@@ -158,7 +158,7 @@ class RecursiveModelLoader
     private function determineParentFolder($name, $baseModelPath, $version = null)
     {
         foreach ($this->moduleConfig as $folder => $pattern) {
-            if ($version) {
+            if ($version && isset($this->moduleConfig[$version][$name])) {
                 $pattern = $this->moduleConfig[$version][$name];
             }
 
