@@ -11,8 +11,6 @@ use App\Core\Database\Model;
 use App\Core\Auth\SodiumAuth;
 use App\Core\Auth\JWT;
 use PDO;
-use Exception;
-use PDOException;
 use App\Core\Database\Connection;
 
 class BaseModel extends Model
@@ -24,7 +22,7 @@ class BaseModel extends Model
      */
     protected static $tableM;
 
-    protected $primaryKey = 'id';
+    protected $primaryKey = "id";
 
     protected $jwt;
     protected $auth;
@@ -37,85 +35,85 @@ class BaseModel extends Model
         $conn = $pdo ?? Connection::make();
         parent::__construct($conn);
 
-        $this->expToken = (int) (config('session.lifetime') / 2); // 1 hour
+        $this->expToken = (int) (config("session.lifetime") / 2); // 1 hour
         $this->refreshTokenTimeout = 7; // X days
         $this->jwt = new JWT();
         $this->auth = new SodiumAuth();
     }
 
-    protected function setRatelimiter($identifier, $perSeconds = 120, $limit = 10)
+    protected function setRatelimiter(?string $identifier, int $perSeconds = 120, int $limit = 10): void
     {
         $identifier = str_replace(" ", "_", $identifier);
-        $identifier = $identifier.'-'.\clientIP();
+        $identifier = $identifier . "-" . \clientIP();
         if (false === checkRateLimit($identifier, $limit, $perSeconds)) {
             $after = $perSeconds / 60;
             $afteText = $after > 1 ? "{$after} minutes" : "{$after} minute";
             $errors = [
-                'busy' => ["Please try again after {$afteText}."]
+                "busy" => ["Please try again after {$afteText}."],
             ];
 
-            json_response([], 429, 'Too many requests', $errors);
+            json_response([], 429, "Too many requests", $errors);
         }
     }
 
-    protected function generateTokenJWT(array $payload = [])
+    protected function generateTokenJWT(?array $payload = []): array
     {
         // Saat register/login karyawan baru
 
-        $expirationTime = 60 * config('session.lifetime');
-        $jwtId = Session::get('jwtId') ?? generateUlid();
+        $expirationTime = 60 * config("session.lifetime");
+        $jwtId = Session::get("jwtId") ?? generateUlid();
         $issuer = get_device_fingerprint();
-        $audience = config('app.url');
+        $audience = config("app.url");
 
         // Simpan ke DB jika belum ada ulid
         // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
 
         // Default payload
-        $expToken = time() + (60 * $this->expToken);
-        $secret = Session::get('secret') ?? generateRandomString(32, true);
-        $uid = Session::get('uid') ?? $payload['uid'];
+        $expToken = time() + 60 * $this->expToken;
+        $secret = Session::get("secret") ?? generateRandomString(32, true);
+        $uid = Session::get("uid") ?? $payload["uid"];
         $payloadDefault = [
             // 'uid'  => $user->ulid,
-            'uid'  => 12345,
-            'jti' => $jwtId,
-            'role' => 'access_backend',
-            'fingerprint' => get_device_fingerprint(),
-            'iat'  => time(),
-            'iss' => 'php-microdata',
-            'aud' => config('app.url'),
-            'user_permissions' => [
+            "uid" => 12345,
+            "jti" => $jwtId,
+            "role" => "access_backend",
+            "fingerprint" => get_device_fingerprint(),
+            "iat" => time(),
+            "iss" => "php-microdata",
+            "aud" => config("app.url"),
+            "user_permissions" => [
                 // "asset-create",
                 // "asset-view",
                 // "asset-edit",
                 // "asset-delete",
                 // "user-manage",
                 // "report-view"
-            ]
+            ],
         ];
         $fullPayload = array_merge($payloadDefault, $payload);
         // dd($fullPayload, true);
         // dd($timestamp, true);
 
         $accessTokenPayload = array_merge($fullPayload, [
-            'type' => 'access',
-            'exp'  => $expToken // default: 1 Jam
+            "type" => "access",
+            "exp" => $expToken, // default: 1 Jam
         ]);
 
         $refreshTokenPayload = array_merge($fullPayload, [
-            'type' => 'refresh',
-            'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
+            "type" => "refresh",
+            "exp" => time() + 3600 * 24 * $this->refreshTokenTimeout, // 7 Hari
         ]);
 
         $dataToken = [
-            'access_token'  => $this->jwt->encode(cleanSodiumPayload($accessTokenPayload, 'access')),
-            'refresh_token' => $this->jwt->encode(cleanSodiumPayload($refreshTokenPayload, 'refresh'))
+            "access_token" => $this->jwt->encode(cleanSodiumPayload($accessTokenPayload, "access")),
+            "refresh_token" => $this->jwt->encode(cleanSodiumPayload($refreshTokenPayload, "refresh")),
         ];
 
         // Generate Token JWT
         return $dataToken;
     }
 
-    protected function validateJWT($token, ?string $permission = null)
+    protected function validateJWT(string $token, ?string $permission = null): mixed
     {
         // Cara Mengecek Permission di Sisi Server
         $decoded = $this->jwt->decode($token);
@@ -125,7 +123,7 @@ class BaseModel extends Model
         }
 
         if ($decoded && $permission) {
-            $permissions = $decoded['user_permissions'] ?? [];
+            $permissions = $decoded["user_permissions"] ?? [];
 
             // Cek dengan Gate
             if (\App\Core\Auth\Gate::authorizeJwt($permission)) {
@@ -136,7 +134,7 @@ class BaseModel extends Model
         return $decoded;
     }
 
-    protected function generateTokenSodium(array $payload = [])
+    protected function generateTokenSodium(?array $payload = []): array
     {
         $newUlid = generateUlid();
         // dd($newUlid);
@@ -145,43 +143,42 @@ class BaseModel extends Model
         // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
 
         // Default payload
-        $expToken = time() + (60 * $this->expToken);
+        $expToken = time() + 60 * $this->expToken;
         $payloadDefault = [
             // 'uid'  => $user->ulid,
-            'uid'  => 12345,
-            'jti' => $newUlid,
-            'role' => 'access_backend',
-            'fingerprint' => get_device_fingerprint(),
-            'iat'  => time(),
-            'iss' => 'php-microdata',
-            'aud' => 'users',
+            "uid" => 12345,
+            "jti" => $newUlid,
+            "role" => "access_backend",
+            "fingerprint" => get_device_fingerprint(),
+            "iat" => time(),
+            "iss" => "php-microdata",
+            "aud" => "users",
         ];
         $fullPayload = array_merge($payloadDefault, $payload);
         // dd($fullPayload, true);
         // dd($timestamp, true);
 
         $accessTokenPayload = array_merge($fullPayload, [
-            'type' => 'access',
-            'exp'  => $expToken // default: 1 Jam
+            "type" => "access",
+            "exp" => $expToken, // default: 1 Jam
         ]);
 
         $refreshTokenPayload = array_merge($fullPayload, [
-            'type' => 'refresh',
-            'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
+            "type" => "refresh",
+            "exp" => time() + 3600 * 24 * $this->refreshTokenTimeout, // 7 Hari
         ]);
 
         $dataToken = [
-            'access_token'  => $this->auth->encode(cleanSodiumPayload($accessTokenPayload, 'access')),
-            'refresh_token' => $this->auth->encode(cleanSodiumPayload($refreshTokenPayload, 'refresh'))
+            "access_token" => $this->auth->encode(cleanSodiumPayload($accessTokenPayload, "access")),
+            "refresh_token" => $this->auth->encode(cleanSodiumPayload($refreshTokenPayload, "refresh")),
         ];
 
         // Generate Token Sodium
         return $dataToken;
     }
 
-    protected function authorizeSodium(?string $token = null, ?string $permission = null)
+    protected function authorizeSodium(?string $token = null, ?string $permission = null): mixed
     {
-
         $bearerToken = $this->getBearerToken();
 
         $token ??= $bearerToken;
@@ -189,22 +186,22 @@ class BaseModel extends Model
         // Cara Mengecek Permission di Sisi Server
         $decoded = $this->auth->decode($token);
 
-        if (!$decoded || !isset($decoded['exp'])) {
+        if (!$decoded || !isset($decoded["exp"])) {
             // Middleware - Rate limiter
-            $identifier = 'testing:authorizeSodium';
+            $identifier = "testing:authorizeSodium";
             $this->setRatelimiter($identifier, 60, 5);
 
             return null;
         }
 
-        if ($decoded && isset($decoded['exp'])) {
-            if (time() > (int)$decoded['exp']) {
+        if ($decoded && isset($decoded["exp"])) {
+            if (time() > (int) $decoded["exp"]) {
                 \App\Core\Auth\Gate::unauthorized_response("Session has expired please re-login.");
             }
         }
 
-        if ($decoded && $permission && isset($decoded['user_permissions'])) {
-            $permissions = $decoded['user_permissions'] ?? [];
+        if ($decoded && $permission && isset($decoded["user_permissions"])) {
+            $permissions = $decoded["user_permissions"] ?? [];
 
             // Cek dengan Gate
             if (\App\Core\Auth\Gate::authorize($permission)) {
@@ -215,7 +212,18 @@ class BaseModel extends Model
         return $decoded;
     }
 
-    protected function generateTokenSodiumV4(array $payload = [])
+    protected function getBearerToken(): mixed
+    {
+        $headers = getallheaders();
+
+        if (!isset($headers["Authorization"])) {
+            return false;
+        }
+
+        return str_replace("Bearer ", "", $headers["Authorization"]);
+    }
+
+    protected function generateTokenSodiumV4(array $payload = []): array
     {
         // Sodium v4
         $this->auth = new \App\Core\Auth\SodiumAuthV4();
@@ -227,41 +235,41 @@ class BaseModel extends Model
         // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
 
         // Default payload
-        $expToken = time() + (60 * $this->expToken);
+        $expToken = time() + 60 * $this->expToken;
         $payloadDefault = [
             // 'uid'  => $user->ulid,
-            'uid'  => 12345,
-            'jti' => $newUlid,
-            'role' => 'access_backend',
-            'fingerprint' => get_device_fingerprint(),
-            'iat'  => time(),
-            'iss' => 'php-microdata',
-            'aud' => 'users',
+            "uid" => 12345,
+            "jti" => $newUlid,
+            "role" => "access_backend",
+            "fingerprint" => get_device_fingerprint(),
+            "iat" => time(),
+            "iss" => "php-microdata",
+            "aud" => "users",
         ];
         $fullPayload = array_merge($payloadDefault, $payload);
         // dd($fullPayload, true);
         // dd($timestamp, true);
 
         $accessTokenPayload = array_merge($fullPayload, [
-            'type' => 'access',
-            'exp'  => $expToken // default: 1 Jam
+            "type" => "access",
+            "exp" => $expToken, // default: 1 Jam
         ]);
 
         $refreshTokenPayload = array_merge($fullPayload, [
-            'type' => 'refresh',
-            'exp'  => time() + (3600 * 24 * $this->refreshTokenTimeout) // 7 Hari
+            "type" => "refresh",
+            "exp" => time() + 3600 * 24 * $this->refreshTokenTimeout, // 7 Hari
         ]);
 
         $dataToken = [
-            'access_token'  => $this->auth->encode(cleanSodiumPayload($accessTokenPayload, 'access')),
-            'refresh_token' => $this->auth->encode(cleanSodiumPayload($refreshTokenPayload, 'refresh'))
+            "access_token" => $this->auth->encode(cleanSodiumPayload($accessTokenPayload, "access")),
+            "refresh_token" => $this->auth->encode(cleanSodiumPayload($refreshTokenPayload, "refresh")),
         ];
 
         // Generate Token Sodium
         return $dataToken;
     }
 
-    protected function authorizeSodiumV4($token, ?string $permission = null)
+    protected function authorizeSodiumV4(?string $token, ?string $permission = null)
     {
         // Sodium v4
         $this->auth = new \App\Core\Auth\SodiumAuthV4();
@@ -269,22 +277,22 @@ class BaseModel extends Model
         // Cara Mengecek Permission di Sisi Server
         $decoded = $this->auth->decode($token);
 
-        if (!$decoded || !isset($decoded['exp'])) {
+        if (!$decoded || !isset($decoded["exp"])) {
             // Middleware - Rate limiter
-            $identifier = 'testing:authorizeSodium';
+            $identifier = "testing:authorizeSodium";
             $this->setRatelimiter($identifier, 60, 5);
 
             return null;
         }
 
-        if ($decoded && isset($decoded['exp'])) {
-            if (time() > (int)$decoded['exp']) {
+        if ($decoded && isset($decoded["exp"])) {
+            if (time() > (int) $decoded["exp"]) {
                 \App\Core\Auth\Gate::unauthorized_response("Session has expired please re-login.");
             }
         }
 
-        if ($decoded && $permission && isset($decoded['user_permissions'])) {
-            $permissions = $decoded['user_permissions'] ?? [];
+        if ($decoded && $permission && isset($decoded["user_permissions"])) {
+            $permissions = $decoded["user_permissions"] ?? [];
 
             // Cek dengan Gate
             if (\App\Core\Auth\Gate::authorize($permission)) {
@@ -298,7 +306,7 @@ class BaseModel extends Model
     /**
      * Ambil semua data
      */
-    public function all($columns = '*')
+    public function all(string $columns = "*"): array
     {
         $stmt = $this->pdo->prepare("SELECT $columns FROM {$this->table}");
         $stmt->execute();
@@ -308,7 +316,7 @@ class BaseModel extends Model
     /**
      * Ambil satu data berdasarkan ID
      */
-    public function find($id)
+    public function find(?int $id)
     {
         $stmt = $this->pdo->prepare("SELECT * FROM {$this->table} WHERE {$this->primaryKey} = ?");
         $stmt->execute([$id]);
@@ -318,11 +326,11 @@ class BaseModel extends Model
     /**
      * Insert data secara dinamis berdasarkan array
      */
-    public function insertData(array $data)
+    public function insertData(?array $data)
     {
         $keys = array_keys($data);
-        $fields = implode(', ', $keys);
-        $placeholders = implode(', ', array_fill(0, count($keys), '?'));
+        $fields = implode(", ", $keys);
+        $placeholders = implode(", ", array_fill(0, count($keys), "?"));
 
         $sql = "INSERT INTO {$this->table} ($fields) VALUES ($placeholders)";
         $stmt = $this->pdo->prepare($sql);
@@ -334,13 +342,13 @@ class BaseModel extends Model
     /**
      * Update data berdasarkan ID
      */
-    public function updateData($id, array $data)
+    public function updateData(int $id, ?array $data): bool
     {
         $fields = "";
         foreach ($data as $key => $value) {
             $fields .= "$key = ?, ";
         }
-        $fields = rtrim($fields, ', ');
+        $fields = rtrim($fields, ", ");
 
         $sql = "UPDATE {$this->table} SET $fields WHERE {$this->primaryKey} = ?";
         $values = array_values($data);
@@ -353,10 +361,12 @@ class BaseModel extends Model
     /**
      * Soft Delete atau Hard Delete
      */
-    public function deleteData($id)
+    public function deleteData(int $id): bool
     {
         $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey} = ?";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([$id]);
     }
+
+    private function request(): void {}
 }

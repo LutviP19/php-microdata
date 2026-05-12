@@ -707,7 +707,7 @@ function validateApiKey($headerName = "X-API-KEY")
  *
  * @return void
  */
-function checkRateLimit($identifier, $limit, $timeframeSeconds)
+function checkRateLimit(?string $identifier, ?int $limit, ?int $timeframeSeconds): bool
 {
     $key = "rate_limit:" . md5($identifier);
 
@@ -745,7 +745,7 @@ function checkRateLimit($identifier, $limit, $timeframeSeconds)
  *
  * @return void
  */
-function rateLimitFallbackFile($identifier, $limit, $timeframeSeconds)
+function rateLimitFallbackFile(?string $identifier, ?int $limit, ?int $timeframeSeconds): bool
 {
     $dirPath = storage_path("framework/tmp/rate_limits");
     $filePath = $dirPath . "/" . md5($identifier) . ".txt";

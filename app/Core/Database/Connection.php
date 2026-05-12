@@ -19,7 +19,7 @@ class Connection
      *
      * @return void
      */
-    public static function make()
+    public static function make(): PDO
     {
         try {
             $driver = Config::get("default_db");
@@ -62,14 +62,14 @@ class Connection
      * @return void
      */
     public static function custom(
-        $driver = "",
-        $dbname = "",
-        $host = "",
-        $port = "",
-        $username = "",
-        $password = "",
-        $options = [],
-    ) {
+        string $driver = "",
+        string $dbname = "",
+        string $host = "",
+        string $port = "",
+        string $username = "",
+        string $password = "",
+        ?array $options = [],
+    ): PDO {
         try {
             $driver = $driver ?: Config::get("default_db");
             $options = array_merge($options, Config::get("database.{$driver}.options"));

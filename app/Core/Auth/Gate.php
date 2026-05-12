@@ -18,7 +18,7 @@ class Gate
     /**
      * Inisialisasi izin user ke dalam static property
      */
-    public static function loadAbilities($userId, $groupId)
+    public static function loadAbilities($userId, $groupId): void
     {
         $cache = new Cache();
         $cacheKey = "user_abilities_{$userId}_{$groupId}";
@@ -41,7 +41,7 @@ class Gate
     /**
      * Cek apakah user punya izin spesifik
      */
-    public static function allows($permission)
+    public static function allows($permission): array
     {
         return in_array($permission, self::$abilities);
     }
@@ -49,7 +49,7 @@ class Gate
     /**
      * Kebalikan dari allows
      */
-    public static function denies($permission)
+    public static function denies($permission): bool
     {
         return !self::allows($permission);
     }
@@ -57,7 +57,7 @@ class Gate
     /**
      * Proteksi di level Model (langsung stop jika tidak punya akses)
      */
-    public static function authorize($permission)
+    public static function authorize($permission): bool
     {
         if (self::denies($permission)) {
             self::forbidden_response($permission);
@@ -70,7 +70,7 @@ class Gate
      * Middleware untuk memvalidasi akses user menggunakan JWT
      * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
      */
-    public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null)
+    public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null): ?array
     {
         $headers = getallheaders();
         $authHeader = $headers["Authorization"] ?? ($headers["authorization"] ?? "");
@@ -113,7 +113,7 @@ class Gate
      * Middleware untuk memvalidasi akses user menggunakan Sodium
      * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
      */
-    public static function authorizeSodium(?string $requiredPermission = null, ?string $hexKey = null)
+    public static function authorizeSodium(?string $requiredPermission = null, ?string $hexKey = null): ?array
     {
         $headers = getallheaders();
         $authHeader = $headers["Authorization"] ?? ($headers["authorization"] ?? "");
@@ -166,7 +166,7 @@ class Gate
         return $userData;
     }
 
-    public static function refreshSodiumAuth(string $refreshToken, ?string $hexKey = null): string
+    public static function refreshSodiumAuth(string $refreshToken, ?string $hexKey = null): ?array
     {
         $hexKey ??= config("app.sodium_key");
         $sodiumAuth = new SodiumAuth($hexKey);
@@ -225,7 +225,7 @@ class Gate
     /**
      * Response Helper jika tidak login (401)
      */
-    private static function unauthorized_response($msg)
+    public static function unauthorized_response(?string $msg)
     {
         if (is_json_request()) {
             $message = "Unauthorized";
@@ -243,7 +243,7 @@ class Gate
     /**
      * Response Helper jika tidak punya izin (403)
      */
-    private static function forbidden_response($permission)
+    public static function forbidden_response(?string $permission)
     {
         if (is_json_request()) {
             $message = "You don't have access[$permission]";
