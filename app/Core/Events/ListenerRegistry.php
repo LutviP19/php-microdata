@@ -1,21 +1,24 @@
-<?php 
+<?php
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  */
 
 namespace App\Core\Events;
 
-class ListenerRegistry {
+class ListenerRegistry
+{
     private static $listeners = [];
 
     /**
      * Daftarkan fungsi listener untuk event tertentu
      */
-    public static function listen(string $eventName, callable $callback) {
+    public static function listen(string $eventName, callable $callback)
+    {
         self::$listeners[$eventName][] = $callback;
     }
 
-    public static function getListeners(string $eventName) {
+    public static function getListeners(string $eventName)
+    {
         return self::$listeners[$eventName] ?? [];
     }
 
@@ -43,10 +46,10 @@ class ListenerRegistry {
         }
 
         // Siapkan metadata tambahan untuk dikirim ke listener
-        $payload['_metadata'] = [
-            'event_name'   => $eventName,
-            'user_id'      => $userId ?? null, // Default null jika tidak ada
-            'executed_at'  => date('Y-m-d H:i:s'),
+        $payload["_metadata"] = [
+            "event_name" => $eventName,
+            "user_id" => $userId ?? null, // Default null jika tidak ada
+            "executed_at" => date("Y-m-d H:i:s"),
         ];
 
         foreach ($listeners as $callback) {
@@ -63,15 +66,20 @@ class ListenerRegistry {
                 } else {
                     dd("Listener for {$eventName} is not callable.");
                 }
-                
+
                 echo "[✔] Success: Listener for '{$eventName}' executed.\n";
             } catch (\Exception $e) {
                 // Catat error jika salah satu listener gagal agar tidak menghentikan worker
                 $messageErr = "Listener Error ({$eventName}): " . $e->getMessage();
-                if (config('app.debug')) {
-                    \write_log([
-                        'message' => $messageErr 
-                    ], 'App\Core\Events\ListenerRegistry.executeListener', 'error', 'error_EventLib.log');
+                if (config("app.debug")) {
+                    \write_log(
+                        [
+                            "message" => $messageErr,
+                        ],
+                        "App\Core\Events\ListenerRegistry.executeListener",
+                        "error",
+                        "error_EventLib.log",
+                    );
                 }
                 echo "[✘] Failed: Error in listener for '{$eventName}': " . $e->getMessage() . "\n";
             }

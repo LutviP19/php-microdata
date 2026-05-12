@@ -21,9 +21,7 @@ if (!function_exists("ensure_minimum_php_version")) {
     function ensure_minimum_php_version(string $version = "8.4.0")
     {
         if (version_compare(PHP_VERSION, $version, "<")) {
-            $message =
-                "ERROR: PHP $version or higher is required. Current: " .
-                PHP_VERSION;
+            $message = "ERROR: PHP $version or higher is required. Current: " . PHP_VERSION;
 
             if (PHP_SAPI === "cli") {
                 fwrite(STDERR, $message . PHP_EOL);
@@ -89,11 +87,8 @@ if (!function_exists("tail_logs")) {
  * @param int $keepDays Jumlah hari file backup disimpan (default 7 hari)
  */
 if (!function_exists("rotate_log_if_large")) {
-    function rotate_log_if_large(
-        string $logFile,
-        int $maxSizeBytes = 5242880,
-        int $keepDays = 7,
-    ) {
+    function rotate_log_if_large(string $logFile, int $maxSizeBytes = 5242880, int $keepDays = 7)
+    {
         // 1. PROSES ROTASI (Jika file terlalu besar)
         if (file_exists($logFile) && filesize($logFile) > $maxSizeBytes) {
             $backupPath = $logFile . "." . date("Ymd_His") . ".bak";
@@ -168,9 +163,7 @@ if (!function_exists("formatReqId")) {
     function formatReqId($reqId = null, $encryption = false, $key = null)
     {
         // Default flag encrpytion_id dari config
-        $encryption = boolval(
-            config("app.encrpytion_id") ?: (is_null($key) ? $encryption : true),
-        );
+        $encryption = boolval(config("app.encrpytion_id") ?: (is_null($key) ? $encryption : true));
         // dd($encryption);
         // dd($reqId);
 
@@ -183,11 +176,7 @@ if (!function_exists("formatReqId")) {
             }
 
             // Pastikan ID bukan type integer agar bisa di decrypt
-            if (
-                $reqId &&
-                $encryption &&
-                !filter_var($reqId, FILTER_VALIDATE_INT)
-            ) {
+            if ($reqId && $encryption && !filter_var($reqId, FILTER_VALIDATE_INT)) {
                 $reqId = decryptData($reqId, $key);
             }
             // dd($reqId);
@@ -305,9 +294,7 @@ if (!function_exists("parseStructToRules")) {
 
         foreach ($reflection->getProperties() as $property) {
             // FIX: Use the fully qualified class name for the attribute
-            $attributes = $property->getAttributes(
-                \App\Core\Database\SchemaProperty::class,
-            );
+            $attributes = $property->getAttributes(\App\Core\Database\SchemaProperty::class);
 
             if (empty($attributes)) {
                 continue;
@@ -367,9 +354,7 @@ function getCastRules(string $structClass): array
     $casts = [];
 
     foreach ($reflection->getProperties() as $property) {
-        $attributes = $property->getAttributes(
-            \App\Core\Database\SchemaProperty::class,
-        );
+        $attributes = $property->getAttributes(\App\Core\Database\SchemaProperty::class);
         if (empty($attributes)) {
             continue;
         }
@@ -380,9 +365,7 @@ function getCastRules(string $structClass): array
         // Tentukan tipe casting berdasarkan attribute
         if ($attr->numeric) {
             // Cek apakah ada desimal (misal via custom rule atau logic lain)
-            $casts[$propName] = str_contains($attr->custom ?? "", "float")
-                ? "float"
-                : "int";
+            $casts[$propName] = str_contains($attr->custom ?? "", "float") ? "float" : "int";
         } elseif ($attr->boolean) {
             $casts[$propName] = "bool";
         } else {
@@ -427,8 +410,7 @@ function generateAppKey($len = 32)
 
 function isHtmx()
 {
-    return isset($_SERVER["HTTP_HX_REQUEST"]) &&
-        $_SERVER["HTTP_HX_REQUEST"] === "true";
+    return isset($_SERVER["HTTP_HX_REQUEST"]) && $_SERVER["HTTP_HX_REQUEST"] === "true";
 }
 
 /**
@@ -562,18 +544,29 @@ function generateUlid($lowercased = false, $timestamp = null): string
  *
  * @return string
  */
-function generateRandomString(
-    $len = 64,
-    $base64 = false,
-    $special = true,
-): string {
+function generateRandomString($len = 64, $base64 = false, $special = true): string
+{
     if ($base64) {
-        return base64_encode(
-            \App\Core\Support\Hash::randomString($len, $special),
-        );
+        return base64_encode(\App\Core\Support\Hash::randomString($len, $special));
     }
 
     return \App\Core\Support\Hash::randomString($len, $special);
+}
+
+function recursive_unset(&$array, $unwanted_key = "")
+{
+    // Check if the unwanted key exists at the current level and unset it
+    if (array_key_exists($unwanted_key, $array)) {
+        unset($array[$unwanted_key]);
+    }
+
+    // Iterate through the current array's values
+    foreach ($array as &$value) {
+        // If a value is an array, call the function recursively
+        if (is_array($value)) {
+            recursive_unset($value, $unwanted_key);
+        }
+    }
 }
 
 // Mendapatkan Header Origin
@@ -614,10 +607,7 @@ function handle_cors()
 
     // 2. Ambil string dari .env, pecah jadi array, dan bersihkan spasi
     $envOrigins = env("ALLOWED_ORIGINS", "*");
-    $allowedOrigins =
-        $envOrigins !== "*"
-            ? array_map(trim(...), explode(",", $envOrigins))
-            : ["*"];
+    $allowedOrigins = $envOrigins !== "*" ? array_map(trim(...), explode(",", $envOrigins)) : ["*"];
 
     // if (isHtmx()) {
     //     dd($allowedOrigins);
@@ -632,10 +622,7 @@ function handle_cors()
         $isAllowed = true;
     } else {
         // Cek apakah host (localhost) ada di daftar whitelist
-        if (
-            in_array($cleanHost, $allowedOrigins) ||
-            in_array($currentOrigin, $allowedOrigins)
-        ) {
+        if (in_array($cleanHost, $allowedOrigins) || in_array($currentOrigin, $allowedOrigins)) {
             $isAllowed = true;
         }
     }
@@ -695,8 +682,7 @@ function validateApiKey($headerName = "X-API-KEY")
 
     // 1. Dapatkan header dari server
     // PHP mengubah "X-API-KEY" menjadi "HTTP_X_API_KEY" di $_SERVER
-    $serverKey =
-        "HTTP_" . str_replace("-", "_", strtoupper((string) $headerName));
+    $serverKey = "HTTP_" . str_replace("-", "_", strtoupper((string) $headerName));
     $apiKeyInput = $_SERVER[$serverKey] ?? null;
     // dd($apiKeyInput);
 
@@ -739,10 +725,7 @@ function checkRateLimit($identifier, $limit, $timeframeSeconds)
 
         $redis->connect();
 
-        $responses = $redis->transaction(function ($tx) use (
-            $key,
-            $timeframeSeconds,
-        ) {
+        $responses = $redis->transaction(function ($tx) use ($key, $timeframeSeconds) {
             $tx->incr($key);
             $tx->expire($key, $timeframeSeconds);
         });
@@ -804,11 +787,7 @@ function rateLimitFallbackFile($identifier, $limit, $timeframeSeconds)
 // --- Base64URL Encoding Functions ---
 function base64url_encode($data)
 {
-    return str_replace(
-        ["+", "/", "="],
-        ["-", "_", ""],
-        base64_encode((string) $data),
-    );
+    return str_replace(["+", "/", "="], ["-", "_", ""], base64_encode((string) $data));
 }
 
 // --- Base64URL Decoding Functions ---
@@ -835,22 +814,14 @@ function checkSession()
 
         $ignoredLocal = ["::1"];
         if (
-            \App\Core\Support\Session::get("IPaddress") !==
-                $_SERVER["REMOTE_ADDR"] &&
+            \App\Core\Support\Session::get("IPaddress") !== $_SERVER["REMOTE_ADDR"] &&
             !in_array($_SERVER["REMOTE_ADDR"], $ignoredLocal)
         ) {
-            throw new Exception(
-                "IP Address mixmatch (possible session hijacking attempt).",
-            );
+            throw new Exception("IP Address mixmatch (possible session hijacking attempt).");
         }
 
-        if (
-            \App\Core\Support\Session::get("userAgent") !==
-            ($_SERVER["HTTP_USER_AGENT"] ?? "Unknown")
-        ) {
-            throw new Exception(
-                "Useragent mixmatch (possible session hijacking attempt).",
-            );
+        if (\App\Core\Support\Session::get("userAgent") !== ($_SERVER["HTTP_USER_AGENT"] ?? "Unknown")) {
+            throw new Exception("Useragent mixmatch (possible session hijacking attempt).");
         }
 
         // if(!$this->loadUser($_SESSION['user_id']))
@@ -950,9 +921,7 @@ if (!function_exists("get_short_ua")) {
             $browser = "Chrome" . (int) $m[1];
         } elseif (preg_match("/Firefox\/([\d\.]+)/i", (string) $ua, $m)) {
             $browser = "Firefox" . (int) $m[1];
-        } elseif (
-            preg_match("/Version\/([\d\.]+).*Safari/i", (string) $ua, $m)
-        ) {
+        } elseif (preg_match("/Version\/([\d\.]+).*Safari/i", (string) $ua, $m)) {
             $browser = "Safari" . (int) $m[1];
         }
 
@@ -960,11 +929,7 @@ if (!function_exists("get_short_ua")) {
 
         // Jika gagal deteksi, gunakan string asli yang dibersihkan sedikit
         if ($shortUa === "Unknown_Unknown") {
-            $shortUa = substr(
-                (string) preg_replace("/[^a-zA-Z0-0]/", "", (string) $ua),
-                0,
-                20,
-            );
+            $shortUa = substr((string) preg_replace("/[^a-zA-Z0-0]/", "", (string) $ua), 0, 20);
         }
 
         return $is_hash ? md5($shortUa) : $shortUa;
@@ -982,15 +947,7 @@ function cleanSodiumPayload(array $payload, string $type): array
     }
 
     // Daftar key yang diperbolehkan ada di Refresh Token
-    $allowedForRefresh = [
-        "uid",
-        "jti",
-        "type",
-        "exp",
-        "iat",
-        "iss",
-        "fingerprint",
-    ];
+    $allowedForRefresh = ["uid", "jti", "type", "exp", "iat", "iss", "fingerprint"];
 
     return array_intersect_key($payload, array_flip($allowedForRefresh));
 }
@@ -1023,10 +980,7 @@ function bp_session_start()
         // dd($valid);
 
         // Do not allow to use too old session ID
-        if (
-            !empty($_SESSION["destroyed"]) &&
-            $_SESSION["destroyed"] < time() - $ttl
-        ) {
+        if (!empty($_SESSION["destroyed"]) && $_SESSION["destroyed"] < time() - $ttl) {
             // Regenerate SessioId
             $oldSessionId = session_id();
             $headers = bp_session_regenerate_id($oldSessionId);
@@ -1090,12 +1044,7 @@ function bp_session_regenerate_id($oldSessionId)
     } else {
         // Delete data redis PHPREDIS_SESSION
         if ($saveHandler === "redis") {
-            delDataFromRedis(
-                $oldSessionId,
-                "PHPREDIS_SESSION",
-                config("redis.default.database"),
-                true,
-            );
+            delDataFromRedis($oldSessionId, "PHPREDIS_SESSION", config("redis.default.database"), true);
         }
     }
 
@@ -1112,45 +1061,25 @@ function bp_session_regenerate_id($oldSessionId)
  *
  * @return void
  */
-function slug(
-    $title,
-    $separator = "-",
-    $language = "en",
-    $dictionary = ["@" => "at"],
-) {
+function slug($title, $separator = "-", $language = "en", $dictionary = ["@" => "at"])
+{
     // Convert all dashes/underscores into separator
     $flip = $separator === "-" ? "_" : "-";
 
-    $title = preg_replace(
-        "![" . preg_quote($flip) . "]+!u",
-        $separator,
-        (string) $title,
-    );
+    $title = preg_replace("![" . preg_quote($flip) . "]+!u", $separator, (string) $title);
 
     // Replace dictionary words
     foreach ($dictionary as $key => $value) {
         $dictionary[$key] = $separator . $value . $separator;
     }
 
-    $title = str_replace(
-        array_keys($dictionary),
-        array_values($dictionary),
-        $title,
-    );
+    $title = str_replace(array_keys($dictionary), array_values($dictionary), $title);
 
     // Remove all characters that are not the separator, letters, numbers, or whitespace
-    $title = preg_replace(
-        "![^" . preg_quote($separator) . "\pL\pN\s]+!u",
-        "",
-        strtolower($title),
-    );
+    $title = preg_replace("![^" . preg_quote($separator) . "\pL\pN\s]+!u", "", strtolower($title));
 
     // Replace all separator characters and whitespace by a single separator
-    $title = preg_replace(
-        "![" . preg_quote($separator) . "\s]+!u",
-        $separator,
-        (string) $title,
-    );
+    $title = preg_replace("![" . preg_quote($separator) . "\s]+!u", $separator, (string) $title);
 
     return trim((string) $title, $separator);
 }
@@ -1214,12 +1143,7 @@ function cleanTmpFiles($tmpDir, $daysOld = 3)
 
         // Logging
         if (config("app.debug") && $message !== "") {
-            write_log(
-                $message,
-                "InjectHelper.cleanTmpFiles",
-                "info",
-                "cleanTmp_" . date("d-m-Y") . ".log",
-            );
+            write_log($message, "InjectHelper.cleanTmpFiles", "info", "cleanTmp_" . date("d-m-Y") . ".log");
         }
 
         closedir($handle);

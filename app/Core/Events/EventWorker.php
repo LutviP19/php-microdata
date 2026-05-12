@@ -1,11 +1,10 @@
 <?php
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
- * 
- *  EventWorker yang mencoba menyimpan ke Redis terlebih dahulu, 
+ *
+ *  EventWorker yang mencoba menyimpan ke Redis terlebih dahulu,
  *  Class ini bertugas menangani koneksi dan perulangan antrean (looping).
  */
-
 
 namespace App\Core\Events;
 
@@ -19,18 +18,18 @@ class EventWorker
 {
     protected $db;
     protected $redis = null;
-    protected $table = 'event_queue'; // Tabel MySQL
-    protected $queueKey = 'event_queue_list'; // Redis KEY
+    protected $table = "event_queue"; // Tabel MySQL
+    protected $queueKey = "event_queue_list"; // Redis KEY
     protected $sleepTime = 500000; // 0.5 detik
     protected $lastCleanupTime;
     protected $cleanupInterval = 3600; // Jalankan cleaner setiap 1 jam (3600 detik)
-    protected $retentionDays = 3;      // Simpan history selama 3 hari
-    protected $logToDatabase = true;   // riwayat (log) di MySQL
+    protected $retentionDays = 3; // Simpan history selama 3 hari
+    protected $logToDatabase = true; // riwayat (log) di MySQL
     protected $logBuffer = [];
     protected $batchSize = 50; // Kirim ke DB setiap 50 log
     protected $lastBatchFlush;
     protected $timePerListener = 5; // Berikan waktu eksekusi 5 detik per listener (bisa disesuaikan)
-    protected $baseTimeout = 30;    // Timeout dasar minimal
+    protected $baseTimeout = 30; // Timeout dasar minimal
 
     public function __construct(?PDO $db = null, array $redisConfig = [])
     {
@@ -48,32 +47,31 @@ class EventWorker
     protected function initRedis(array $config = [])
     {
         // Ambil driver dari env/config, default ke file/mysql jika bukan redis
-        if (config('app.queue_driver') !== 'redis') {
+        if (config("app.queue_driver") !== "redis") {
             $this->redis = null;
             return;
         }
 
         try {
-            if(!empty($config)) {
+            if (!empty($config)) {
                 $this->redis = new PredisClient([
                     // 'scheme'   => 'tcp',
-                    'host'     => $config['host'],
-                    'port'     => $config['port'],
-                    'database' => $config['database'],
-                    'password' => $config['password'] ?: null,
+                    "host" => $config["host"],
+                    "port" => $config["port"],
+                    "database" => $config["database"],
+                    "password" => $config["password"] ?: null,
                     // 'timeout'  => 1.0,
                 ]);
             } else {
                 $this->redis = new PredisClient([
                     // 'scheme'   => 'tcp',
-                    'host' => config('redis.default.host'),
-                    'port' => config('redis.default.port'),
-                    'database' => config('redis.default.database'),
-                    'password' => config('redis.default.password') ?: null,
+                    "host" => config("redis.default.host"),
+                    "port" => config("redis.default.port"),
+                    "database" => config("redis.default.database"),
+                    "password" => config("redis.default.password") ?: null,
                     // 'timeout'  => 1.0, // Connection timeout
                 ]);
             }
-            
 
             $this->redis->ping();
         } catch (Exception $e) {
@@ -96,16 +94,16 @@ class EventWorker
         try {
             echo "[*] Cleaning up old events..." . PHP_EOL;
 
-            $sql = "DELETE FROM {$this->table} 
-                    WHERE status IN ('completed', 'failed') 
+            $sql = "DELETE FROM {$this->table}
+                    WHERE status IN ('completed', 'failed')
                     AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$this->retentionDays]);
-            
+
             $count = $stmt->rowCount();
             echo "[✔] Cleanup finished. {$count} rows deleted." . PHP_EOL;
-            
+
             $this->lastCleanupTime = time();
         } catch (Exception $e) {
             $this->logError("Cleanup Error: " . $e->getMessage());
@@ -125,7 +123,7 @@ class EventWorker
         }
 
         // Hitung timeout: (jumlah listener * estimasi waktu) + buffer dasar
-        $dynamicTimeout = ($totalListenerCount * $this->timePerListener) + $this->baseTimeout;
+        $dynamicTimeout = $totalListenerCount * $this->timePerListener + $this->baseTimeout;
 
         // Set limit waktu eksekusi PHP (0 jika daemon agar tidak mati, atau X detik jika once)
         if ($once) {
@@ -144,23 +142,23 @@ class EventWorker
 
             // Reset timeout setiap kali loop mulai agar tidak timeout di tengah jalan (untuk Daemon)
             if (!$once) {
-                set_time_limit($this->baseTimeout); 
+                set_time_limit($this->baseTimeout);
             }
 
             // --- MAINTENANCE LOGIC ---
             // Cek Cleanup berkala (hanya relevan di Daemon Mode)
-            if (!$once && (time() - $this->lastCleanupTime) > $this->cleanupInterval) {
+            if (!$once && time() - $this->lastCleanupTime > $this->cleanupInterval) {
                 $this->cleanUp();
             }
 
             // Cek Force Flush Batch Log
-            if (!empty($this->logBuffer) && (time() - $this->lastBatchFlush) > 30) {
+            if (!empty($this->logBuffer) && time() - $this->lastBatchFlush > 30) {
                 $this->flushLogs();
             }
 
             // --- PROCESSING LOGIC ---
             // 1. Coba Redis
-            if (config('app.queue_driver') === 'redis' && $this->redis) {
+            if (config("app.queue_driver") === "redis" && $this->redis) {
                 $itemProcessed = $this->processRedis();
             }
 
@@ -174,7 +172,7 @@ class EventWorker
                 // Jika dalam mode 'once', kita berhenti jika tidak ada item lagi yang diproses
                 if (!$itemProcessed) {
                     echo "[*] No more events to process. Shutting down..." . PHP_EOL;
-                    break; 
+                    break;
                 }
             } else {
                 // Jika dalam mode 'daemon', tidur sebentar jika tidak ada kerjaan
@@ -182,7 +180,6 @@ class EventWorker
                     usleep($this->sleepTime);
                 }
             }
-
         } while (!$once || $itemProcessed);
 
         // TERAKHIR: Pastikan semua log yang tersisa di buffer terkirim sebelum script mati
@@ -202,22 +199,22 @@ class EventWorker
 
                 try {
                     ListenerRegistry::executeListener(
-                        $event['event_name'],
-                        $event['payload'],
-                        $event['user_id'] ?? null
+                        $event["event_name"],
+                        $event["payload"],
+                        $event["user_id"] ?? null,
                     );
 
                     if ($this->logToDatabase) {
                         $executionTime = round(microtime(true) - $startTime, 4);
-                        $this->addToBatch($event, 'completed', $executionTime);
+                        $this->addToBatch($event, "completed", $executionTime);
                     }
                     return true;
                 } catch (Exception $e) {
                     if ($this->logToDatabase) {
                         $executionTime = round(microtime(true) - $startTime, 4);
-                        $this->addToBatch($event, 'failed', $executionTime);
+                        $this->addToBatch($event, "failed", $executionTime);
                     }
-                    throw $e; 
+                    throw $e;
                 }
             }
         } catch (Exception $e) {
@@ -236,43 +233,38 @@ class EventWorker
             // Gunakan prepare untuk keamanan
             $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE status = 'pending' LIMIT 1 FOR UPDATE");
             $stmt->execute();
-            
+
             // Mengambil data sebagai Object (stdClass)
             $event = $stmt->fetch(PDO::FETCH_OBJ);
 
             if (!$event) {
-                if ($this->db->inTransaction()) $this->db->rollBack();
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
                 return false;
             }
 
             // Akses menggunakan properti object ->bukan ['id']
-            $this->db->prepare("UPDATE {$this->table} SET status = 'processing' WHERE id = ?")
-                    ->execute([$event->id]);
-            
+            $this->db->prepare("UPDATE {$this->table} SET status = 'processing' WHERE id = ?")->execute([$event->id]);
+
             $this->db->commit();
 
             try {
                 // Parsing payload dari object
                 $payloadData = json_decode((string) $event->payload, true);
 
-                ListenerRegistry::executeListener(
-                    $event->event_name,
-                    $payloadData,
-                    $event->user_id ?? null
-                );
+                ListenerRegistry::executeListener($event->event_name, $payloadData, $event->user_id ?? null);
 
-                $this->db->prepare("UPDATE {$this->table} SET status = 'completed' WHERE id = ?")
-                        ->execute([$event->id]);
+                $this->db
+                    ->prepare("UPDATE {$this->table} SET status = 'completed' WHERE id = ?")
+                    ->execute([$event->id]);
 
                 echo "[✔] Event {$event->event_name} ID:{$event->id} processed." . PHP_EOL;
                 return true;
-
             } catch (Exception $e) {
-                $this->db->prepare("UPDATE {$this->table} SET status = 'failed' WHERE id = ?")
-                        ->execute([$event->id]);
+                $this->db->prepare("UPDATE {$this->table} SET status = 'failed' WHERE id = ?")->execute([$event->id]);
                 throw $e;
             }
-
         } catch (Exception $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
@@ -283,18 +275,18 @@ class EventWorker
         return false;
     }
 
-   /**
+    /**
      * Menambahkan log ke dalam buffer sementara
      */
     protected function addToBatch(array $event, string $status, float $executionTime)
     {
         $this->logBuffer[] = [
-            'user_id'    => $event['user_id'] ?? null,
-            'event_name' => $event['event_name'] ?? 'unknown',
-            'payload'    => is_array($event['payload']) ? json_encode($event['payload']) : $event['payload'],
-            'status'     => $status,
-            'created_at' => $event['created_at'] ?? date('Y-m-d H:i:s'),
-            'exec_time'  => $executionTime // Tambahan info performa
+            "user_id" => $event["user_id"] ?? null,
+            "event_name" => $event["event_name"] ?? "unknown",
+            "payload" => is_array($event["payload"]) ? json_encode($event["payload"]) : $event["payload"],
+            "status" => $status,
+            "created_at" => $event["created_at"] ?? date("Y-m-d H:i:s"),
+            "exec_time" => $executionTime, // Tambahan info performa
         ];
 
         // Jika buffer penuh, kirim ke database
@@ -308,36 +300,39 @@ class EventWorker
      */
     public function flushLogs()
     {
-        if (empty($this->logBuffer)) return;
+        if (empty($this->logBuffer)) {
+            return;
+        }
 
         try {
             $rowCount = count($this->logBuffer);
-            
+
             // Membangun query Multi-Insert: INSERT INTO table (...) VALUES (...), (...), (...)
             $placeholders = [];
             $values = [];
 
             foreach ($this->logBuffer as $log) {
                 $placeholders[] = "(?, ?, ?, ?, ?, ?)";
-                $values[] = $log['user_id'];
-                $values[] = $log['event_name'];
-                $values[] = $log['payload'];
-                $values[] = $log['status'];
-                $values[] = $log['created_at'];
-                $values[] = $log['exec_time'];
+                $values[] = $log["user_id"];
+                $values[] = $log["event_name"];
+                $values[] = $log["payload"];
+                $values[] = $log["status"];
+                $values[] = $log["created_at"];
+                $values[] = $log["exec_time"];
             }
 
-            $sql = "INSERT INTO {$this->table} 
-                    (user_id, event_name, payload, status, created_at, execution_time) 
-                    VALUES " . implode(', ', $placeholders);
-            
+            $sql =
+                "INSERT INTO {$this->table}
+                    (user_id, event_name, payload, status, created_at, execution_time)
+                    VALUES " . implode(", ", $placeholders);
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute($values);
 
             // Kosongkan buffer setelah sukses
             $this->logBuffer = [];
             $this->lastBatchFlush = time();
-            
+
             echo "[B] Batch log saved ({$rowCount} rows)." . PHP_EOL;
         } catch (Exception $e) {
             $this->logError("Batch Flush Failed: " . $e->getMessage());
@@ -346,8 +341,8 @@ class EventWorker
 
     protected function logError($message)
     {
-        if (config('app.debug')) {
-            \write_log(['message' => $message], 'EventWorker', 'error', 'error_EventLib.log');
+        if (config("app.debug")) {
+            \write_log(["message" => $message], "EventWorker", "error", "error_EventLib.log");
         }
         echo "[!] " . $message . PHP_EOL;
     }

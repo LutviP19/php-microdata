@@ -5,11 +5,9 @@
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
- 
 namespace App\Core\Support;
 
 use Throwable;
-use Exception;
 
 /**
  * Config values from config directory.
@@ -25,8 +23,8 @@ class Config
     public static function get($key, $config = null)
     {
         try {
-            $config ??= App::get('config');
-            $keys = explode('.', $key);
+            $config ??= App::get("config");
+            $keys = explode(".", $key);
             foreach ($keys as $key) {
                 if (isset($config[$key])) {
                     $config = $config[$key];

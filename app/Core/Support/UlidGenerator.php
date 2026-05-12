@@ -10,7 +10,7 @@ namespace App\Core\Support;
 
 class UlidGenerator
 {
-    private const ENCODING_ULID_CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    private const ENCODING_ULID_CHARS = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
     /**
      * Generate ULID baru
@@ -32,7 +32,7 @@ class UlidGenerator
     private static function encodeTime(int $time, int $length): string
     {
         $chars = self::ENCODING_ULID_CHARS;
-        $output = '';
+        $output = "";
 
         for ($i = $length - 1; $i >= 0; $i--) {
             $output = $chars[$time % 32] . $output;
@@ -45,7 +45,7 @@ class UlidGenerator
     private static function encodeRandom(int $length): string
     {
         $chars = self::ENCODING_ULID_CHARS;
-        $output = '';
+        $output = "";
 
         // Menggunakan random_bytes agar aman secara kriptografi
         $bytes = random_bytes($length);
@@ -62,7 +62,6 @@ class UlidGenerator
      */
     public static function isValid(string $ulid): bool
     {
-        return strlen($ulid) === 26 &&
-               strspn(strtoupper($ulid), self::ENCODING_ULID_CHARS) === 26;
+        return strlen($ulid) === 26 && strspn(strtoupper($ulid), self::ENCODING_ULID_CHARS) === 26;
     }
 }

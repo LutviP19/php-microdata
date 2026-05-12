@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * Model class
  * @package Backend-PHP
@@ -11,9 +11,8 @@ use Exception;
 use PDO;
 use PDOException;
 
-class Model 
+class Model
 {
-
     /**
      * static instance so we can modify the table
      * and primary key property with extending to
@@ -31,7 +30,7 @@ class Model
     // private $pdo = null;
 
     /**
-     * Deklarasikan properti secara eksplisit untuk menghindari 
+     * Deklarasikan properti secara eksplisit untuk menghindari
      * error Dynamic Property di PHP 8.2+
      */
     protected ?\PDO $pdo;
@@ -68,7 +67,7 @@ class Model
     }
 
     // Destructor to close the database connection.
-    public function __destruct() 
+    public function __destruct()
     {
         // Assigning null to the connection variable closes the PDO connection
         $this->pdo = null;
@@ -84,12 +83,21 @@ class Model
      * @param bool $lastInsertId
      * @return mixed
      */
-    public function execQuery($query, array $params, $lastInsertId = false, $fetch = false, $fetchAll = false, $stream = false, $chunk = false)
-    {
+    public function execQuery(
+        $query,
+        array $params,
+        $lastInsertId = false,
+        bool $fetch = false,
+        bool $fetchAll = false,
+        bool $stream = false,
+        bool $chunk = false,
+    ) {
         $this->setParams($params);
         $exec = $this->setSQL($query)->query();
 
-        if (!$exec) return false;
+        if (!$exec) {
+            return false;
+        }
 
         // --- FITUR BARU: CHUNK-FFI
         // dd($chunk);
@@ -97,7 +105,7 @@ class Model
         // Ambil nilai atribut untuk flag CHUNK-FFI
         $rawAttr = $this->pdo->getAttribute(1001);
         // Logika deteksi: jika rawAttr adalah 0 atau false, berarti Unbuffered AKTIF
-        $isUnbuffered = ($rawAttr === false || $rawAttr === 0);
+        $isUnbuffered = $rawAttr === false || $rawAttr === 0;
         if ($isUnbuffered && $fetchAll && $chunk) {
             // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
             $exec->setFetchMode(\PDO::FETCH_ASSOC);
@@ -105,7 +113,6 @@ class Model
             // dd('FITUR BARU: CHUNK-FFI');
             return $this->handleFFIChunking($exec);
         } else {
-
             if ($lastInsertId) {
                 return $this->getPDO()->lastInsertId();
             }
@@ -114,9 +121,9 @@ class Model
                 return $exec->fetch();
             }
 
-            // --- FITUR BARU: STREAMING ---        
+            // --- FITUR BARU: STREAMING ---
             if ($stream) {
-                return (function() use ($exec) {
+                return (function () use ($exec) {
                     while ($row = $exec->fetch()) {
                         yield $row;
                     }
@@ -131,7 +138,6 @@ class Model
         return true;
     }
 
-
     private function handleFFIChunking(\PDOStatement $exec): mixed
     {
         // Ambil aturan casting secara dinamis berdasarkan class struct yang sedang digunakan
@@ -140,21 +146,20 @@ class Model
         // dd($this->structClass);
         // dd($castRules);
 
-        $this->rustEngine = (new \App\Core\FFI\DataEngine());
+        $this->rustEngine = new \App\Core\FFI\DataEngine();
         $this->rustEngine->clear();
 
         $chunkSize = 50000;
         $currentChunk = [];
         try {
             while ($row = $exec->fetch()) {
-                
                 // --- DYNAMIC CASTING ---
                 foreach ($castRules as $column => $type) {
                     if (isset($row[$column])) {
-                        $row[$column] = match($type) {
-                            'int'   => (int) $row[$column],
-                            'float' => (float) $row[$column],
-                            'bool'  => (bool) $row[$column],
+                        $row[$column] = match ($type) {
+                            "int" => (int) $row[$column],
+                            "float" => (float) $row[$column],
+                            "bool" => (bool) $row[$column],
                             default => (string) $row[$column],
                         };
                     }
@@ -292,17 +297,16 @@ class Model
     {
         try {
             $query = $this->getPDO()->prepare($this->getSQL());
-            
+
             // write_log($query, 'Database.Model.query.query', 'debug', 'debug-model.log');
             // write_log($this->getSQL(), 'Database.Model.query.getSQL', 'debug', 'debug-model.log');
 
-            if($query->execute($this->getParams())) {
+            if ($query->execute($this->getParams())) {
                 $this->params = [];
                 return $query;
             }
 
             return false;
-
         } catch (PDOException $e) {
             throw $e;
         }
@@ -321,55 +325,57 @@ class Model
     {
         // dd($this->table);
         // Offset Calculation
-        $page = (int)$page > 0 ? (int)$page : 1;
-        $limit = $limit <= 0 ? 1 : (int)$limit;
+        $page = (int) $page > 0 ? (int) $page : 1;
+        $limit = $limit <= 0 ? 1 : (int) $limit;
         $offset = ($page - 1) * $limit;
 
         // Add LIMIT and OFFSET in Query
         $paginatedQuery = $query . " LIMIT $limit OFFSET $offset";
 
         // Eksekusi Data dengan Mode STREAM otomatis sesuai limitToStream
-        $shouldStream = ($limit > $this->limitToStream);
+        $shouldStream = $limit > $this->limitToStream;
         $dataGenerator = $this->execQuery($paginatedQuery, $params, false, false, !$shouldStream, $shouldStream);
         // dd($shouldStream, true);
 
-
         // Cache data
-        $cache = new \App\Core\Support\Cache();        
-        $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+        $cache = new \App\Core\Support\Cache();
+        $cleanQuery = preg_replace("/\s+/", " ", trim($query));
         $queryString = md5((string) $cleanQuery);
         ksort($params);
-        $paramSignature = !empty($params) ? md5(json_encode($params).$queryString) : $queryString;
+        $paramSignature = !empty($params) ? md5(json_encode($params) . $queryString) : $queryString;
         $cacheKeyId = "paginate_count:{$this->table}:p{$page}:l{$limit}:{$paramSignature}";
-        $paginationMeta = $cache->remember($cacheKeyId, function() use ($query, $params, $page, $limit, $offset) {
+        $paginationMeta = $cache->remember(
+            $cacheKeyId,
+            function () use ($query, $params, $page, $limit, $offset) {
+                // Calculate Total Data (for info pagination)
+                $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
+                $total = $this->execQuery($countQuery, $params, false, true);
 
-            // Calculate Total Data (for info pagination)
-            $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
-            $total = $this->execQuery($countQuery, $params, false, true);
+                // Parsing data (Supports Objects and Arrays)
+                if ($total) {
+                    $totalRows = is_object($total) ? (int) $total->total_count : (int) $total["total_count"];
+                }
 
-            // Parsing data (Supports Objects and Arrays)
-            if ($total) {
-                $totalRows = is_object($total) ? (int)$total->total_count : (int)$total['total_count'];
-            }
+                // Metadata calculations
+                $lastPage = ceil($totalRows / $limit);
 
-            // Metadata calculations
-            $lastPage = ceil($totalRows / $limit);
-            
-            return [
-                'total' => $totalRows,
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'limit' => $limit,
-                'from' => $offset + 1,
-                'to' => min($offset + $limit, $totalRows)
-            ];
-        }, $this->timeCachedCount);
+                return [
+                    "total" => $totalRows,
+                    "current_page" => $page,
+                    "last_page" => $lastPage,
+                    "limit" => $limit,
+                    "from" => $offset + 1,
+                    "to" => min($offset + $limit, $totalRows),
+                ];
+            },
+            $this->timeCachedCount,
+        );
         // dd($paginationMeta, true);
 
         // Kembalikan metadata DAN generator datanya
         return [
-            'data' => $dataGenerator,
-            'meta' => $paginationMeta
+            "data" => $dataGenerator,
+            "meta" => $paginationMeta,
         ];
     }
 
@@ -380,9 +386,10 @@ class Model
      * @param array $params Parameters for the query
      * @param int|null $expiry Expiry time in seconds (600 = 5min)
      */
-    public function getCachedData($key, $query, $params = [], $expiry = 600) {
+    public function getCachedData($key, $query, $params = [], $expiry = 600)
+    {
         $cache = new \App\Core\Support\Cache();
-        
+
         return $cache->remember($key, fn() => $this->execQuery($query, $params, false, false, true), $expiry);
     }
 }

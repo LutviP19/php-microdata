@@ -27,6 +27,22 @@ function dd($data = [], $json = false)
 }
 
 /**
+ * Convert specialchars to html entities.
+ *
+ * @param string $str
+ * @return string
+ */
+function e($str, $doubleEncode = true)
+{
+    if (is_array($str)) {
+        return json_encode($str);
+    }
+
+    return htmlentities($str, ENT_QUOTES, "UTF-8");
+    // return htmlspecialchars($str ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', $doubleEncode);
+}
+
+/**
  * default database path for sqlite
  *
  * @param  string $key
@@ -138,22 +154,14 @@ if (!function_exists("load_env")) {
             if (!empty($matches[1])) {
                 foreach ($matches[1] as $embeddedVar) {
                     // Ambil nilai dari $_ENV atau getenv yang sudah diproses sebelumnya
-                    $replacement =
-                        $_ENV[$embeddedVar] ?? (getenv($embeddedVar) ?? "");
-                    $value = str_replace(
-                        '${' . $embeddedVar . "}",
-                        $replacement,
-                        $value,
-                    );
+                    $replacement = $_ENV[$embeddedVar] ?? (getenv($embeddedVar) ?? "");
+                    $value = str_replace('${' . $embeddedVar . "}", $replacement, $value);
                 }
             }
             // ----------------------------------
 
             // Masukkan ke dalam environment PHP
-            if (
-                !array_key_exists($name, $_SERVER) &&
-                !array_key_exists($name, $_ENV)
-            ) {
+            if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
                 putenv(sprintf("%s=%s", $name, $value));
                 $_ENV[$name] = $value;
                 $_SERVER[$name] = $value;
@@ -218,8 +226,7 @@ if (!function_exists("is_json_request")) {
         // 1. Cek dari $_SERVER (Standard)
         if (
             isset($_SERVER["CONTENT_TYPE"]) &&
-            stripos((string) $_SERVER["CONTENT_TYPE"], "application/json") !==
-                false
+            stripos((string) $_SERVER["CONTENT_TYPE"], "application/json") !== false
         ) {
             return true;
         }
@@ -227,10 +234,7 @@ if (!function_exists("is_json_request")) {
         // 2. Cek dari HTTP_CONTENT_TYPE (Fallback beberapa konfigurasi FastCGI/Worker)
         if (
             isset($_SERVER["HTTP_CONTENT_TYPE"]) &&
-            stripos(
-                (string) $_SERVER["HTTP_CONTENT_TYPE"],
-                "application/json",
-            ) !== false
+            stripos((string) $_SERVER["HTTP_CONTENT_TYPE"], "application/json") !== false
         ) {
             return true;
         }
@@ -274,11 +278,7 @@ if (!function_exists("sanitize")) {
                 $data = htmlspecialchars($data, ENT_QUOTES, "UTF-8");
             } elseif (is_numeric($data)) {
                 // Jika numeric, pastikan tidak ada karakter aneh
-                $data = filter_var(
-                    $data,
-                    FILTER_SANITIZE_NUMBER_FLOAT,
-                    FILTER_FLAG_ALLOW_FRACTION,
-                );
+                $data = filter_var($data, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
         }
         return $data;
@@ -337,9 +337,7 @@ if (!function_exists("handle_response_error")) {
             // Parse Errors
             $errors = $dataModel["errors"];
             $status = $errors["status"] ?? 417;
-            $message =
-                $errors["message"] ??
-                "Your expectations not match to server capabilities.";
+            $message = $errors["message"] ?? "Your expectations not match to server capabilities.";
 
             // clean data
             unset($dataModel);
@@ -397,13 +395,8 @@ if (!function_exists("json_response")) {
  * Mengirimkan respons JSON standar (Support Streaming & Legacy Error Handler)
  */
 if (!function_exists("json_response_stream")) {
-    function json_response_stream(
-        $status = 200,
-        $message = "",
-        $data = [],
-        $pagination = [],
-        $extraData = [],
-    ) {
+    function json_response_stream($status = 200, $message = "", $data = [], $pagination = [], $extraData = [])
+    {
         // PAKSA PHP melakukan kompresi di level output buffer
         // Ini lebih stabil daripada ob_gzhandler untuk streaming
         if (!connection_aborted()) {
@@ -433,11 +426,7 @@ if (!function_exists("json_response_stream")) {
         // 3. Masukkan Extra Data (request, table, title, dll)
         if (!empty($extraData)) {
             foreach ($extraData as $key => $value) {
-                echo '"' .
-                    $key .
-                    '":' .
-                    json_encode($value, JSON_UNESCAPED_SLASHES) .
-                    ",";
+                echo '"' . $key . '":' . json_encode($value, JSON_UNESCAPED_SLASHES) . ",";
             }
         }
 
@@ -507,14 +496,12 @@ if (!function_exists("expects_json")) {
         $isAjax = strtolower((string) $ajax) === "xmlhttprequest";
 
         // Validasi Content-Type (untuk request yang membawa data seperti POST/PUT)
-        $isJsonInput =
-            stripos((string) $contentType, "application/json") !== false;
+        $isJsonInput = stripos((string) $contentType, "application/json") !== false;
 
         // Validasi Accept (untuk request yang meminta data seperti GET)
         // Menambahkan pengecekan */json untuk menangani wildcard dari beberapa library
         $isJsonAccept =
-            stripos((string) $accept, "application/json") !== false ||
-            stripos((string) $accept, "+json") !== false;
+            stripos((string) $accept, "application/json") !== false || stripos((string) $accept, "+json") !== false;
 
         // Validasi Tambahan: Jika method adalah POST/PUT tapi Content-Type kosong,
         // kita bisa lebih ketat (opsional tergantung arsitektur bisnis).
@@ -626,12 +613,8 @@ function toggleLog(
  * Simple log system with category levels.
  */
 if (!function_exists("write_log")) {
-    function write_log(
-        mixed $message,
-        ?string $moduleName = "",
-        ?string $level = "info",
-        ?string $file = null,
-    ) {
+    function write_log(mixed $message, ?string $moduleName = "", ?string $level = "info", ?string $file = null)
+    {
         // Specify the log folder path
         $logDir = BASEPATH . "/storage/logs/";
 
@@ -681,9 +664,7 @@ if (!function_exists("format_log_status")) {
             "info" => "text-blue-500",
         ];
         $colorClass = $colors[strtolower($status)] ?? "text-gray-400";
-        return "<span class='font-bold $colorClass'>" .
-            strtoupper($status) .
-            "</span>";
+        return "<span class='font-bold $colorClass'>" . strtoupper($status) . "</span>";
     }
 }
 
@@ -729,17 +710,10 @@ if (!function_exists("parse_crawler_logs")) {
     function parse_crawler_logs($raw_text)
     {
         // 1. Bersihkan noise log sistem di awal (Opsional)
-        $clean_text = preg_replace(
-            '/\[\d{4}-\d{2}-\d{2}.*?\].*?\n/s',
-            "",
-            (string) $raw_text,
-        );
+        $clean_text = preg_replace('/\[\d{4}-\d{2}-\d{2}.*?\].*?\n/s', "", (string) $raw_text);
 
         // 2. Pecah berdasarkan pemisah END URL
-        $blocks = explode(
-            "===========================END URL============================",
-            $clean_text,
-        );
+        $blocks = explode("===========================END URL============================", $clean_text);
         $results = [];
 
         foreach ($blocks as $block) {
@@ -773,36 +747,18 @@ if (!function_exists("parse_scraped_content")) {
         ];
 
         // 1. Ekstrak Status & URL Awal
-        if (
-            preg_match(
-                "/^(https?:\/\/[^\s]+):\s+(\d+)/m",
-                (string) $block,
-                $matches,
-            )
-        ) {
+        if (preg_match("/^(https?:\/\/[^\s]+):\s+(\d+)/m", (string) $block, $matches)) {
             $entry["url"] = $matches[1];
             $entry["status"] = (int) $matches[2];
         }
 
         // 2. Ekstrak Title secara spesifik
-        if (
-            preg_match(
-                '/Title:\s+(.*?)(?:\s+\||$)/m',
-                (string) $block,
-                $matches,
-            )
-        ) {
+        if (preg_match('/Title:\s+(.*?)(?:\s+\||$)/m', (string) $block, $matches)) {
             $entry["title"] = trim($matches[1]);
         }
 
         // 3. Ekstrak Metadata (Posted & Author)
-        if (
-            preg_match(
-                '/Diposting pada (.*?) oleh ([^\s\xA0]+)/u',
-                (string) $block,
-                $matches,
-            )
-        ) {
+        if (preg_match('/Diposting pada (.*?) oleh ([^\s\xA0]+)/u', (string) $block, $matches)) {
             $entry["metadata"]["posted_at"] = trim($matches[1]);
             $entry["metadata"]["author"] = trim($matches[2]);
 
@@ -814,55 +770,26 @@ if (!function_exists("parse_scraped_content")) {
             $contentStartPos = strpos((string) $block, $searchAnchor);
             if ($contentStartPos !== false) {
                 // Ambil sisa teks setelah 'oleh Lutvi'
-                $rawContent = substr(
-                    (string) $block,
-                    $contentStartPos + strlen($searchAnchor),
-                );
+                $rawContent = substr((string) $block, $contentStartPos + strlen($searchAnchor));
 
                 // Bersihkan Content dari noise sisa
                 $rawContent = preg_replace("/\x{00a0}/u", " ", $rawContent); // Bersihkan &nbsp;
-                $rawContent = preg_replace(
-                    "/\s+Daftar Isi\s+/u",
-                    " ",
-                    (string) $rawContent,
-                ); // Buang Daftar Isi
+                $rawContent = preg_replace("/\s+Daftar Isi\s+/u", " ", (string) $rawContent); // Buang Daftar Isi
 
                 // Ambil teks sampai sebelum bagian "Labels:" atau "Link found:"
-                if (
-                    preg_match(
-                        '/^(.*?)(?=Labels:|Link found:|Bagikan :|$)/s',
-                        (string) $rawContent,
-                        $contentMatches,
-                    )
-                ) {
-                    $entry["content"] = trim(
-                        (string) preg_replace("/\s+/", " ", $contentMatches[1]),
-                    );
+                if (preg_match('/^(.*?)(?=Labels:|Link found:|Bagikan :|$)/s', (string) $rawContent, $contentMatches)) {
+                    $entry["content"] = trim((string) preg_replace("/\s+/", " ", $contentMatches[1]));
                 }
             }
         }
 
         // 5. Ekstrak Labels
-        if (
-            preg_match(
-                "/Labels:\s*(.*?)\s*Bagikan/s",
-                (string) $block,
-                $matches,
-            )
-        ) {
-            $entry["metadata"]["labels"] = array_filter(
-                array_map(trim(...), explode("\n", $matches[1])),
-            );
+        if (preg_match("/Labels:\s*(.*?)\s*Bagikan/s", (string) $block, $matches)) {
+            $entry["metadata"]["labels"] = array_filter(array_map(trim(...), explode("\n", $matches[1])));
         }
 
         // 6. Ekstrak Links
-        if (
-            preg_match_all(
-                "/Link found:\s+(https?:\/\/[^\s]+)/",
-                (string) $block,
-                $matches,
-            )
-        ) {
+        if (preg_match_all("/Link found:\s+(https?:\/\/[^\s]+)/", (string) $block, $matches)) {
             $entry["links"] = $matches[1];
         }
 
