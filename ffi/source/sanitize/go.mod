@@ -1,6 +1,6 @@
 module phpffi.lutvi/sanitize
 
-go 1.25.8
+go 1.24.8
 
 require github.com/microcosm-cc/bluemonday v1.0.27
 

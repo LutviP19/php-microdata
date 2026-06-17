@@ -19,22 +19,24 @@ class SodiumAuthV4
 
     public function __construct(?string $hexPrivateKey = null, ?string $hexPublicKey = null)
     {
-        $hexPrivateKey ??= config('app.sodium_private_key');
+        $hexPrivateKey ??= config("app.sodium_private_key");
         if ($hexPrivateKey) {
             $this->privateKey = hex2bin($hexPrivateKey);
         }
 
-        $hexPublicKey ??= config('app.sodium_public_key');
+        $hexPublicKey ??= config("app.sodium_public_key");
         if ($hexPublicKey) {
             $this->publicKey = hex2bin($hexPublicKey);
         }
 
-        $prefix = config('app.sodium_prefix');
-        $this->basePrefix = str_replace(['v1', 'v2', 'v3'], 'v4', $prefix);
+        $prefix = config("app.sodium_prefix");
+        $this->basePrefix = str_replace(["v1", "v2", "v3"], "v4", $prefix);
     }
 
     /**
      * Membuat Token (Sign)
+     * @param array<int,mixed> $payload Data payload yang akan di-sign
+     * @return string Token yang telah di-sign
      */
     public function encode(array $payload): string
     {
@@ -46,11 +48,11 @@ class SodiumAuthV4
 
         // Bedakan prefix refresh
         $currentPrefix = $this->basePrefix;
-        if (isset($payload['type']) && $payload['type'] === 'refresh') {
-            $currentPrefix = str_replace('access', 'refresh', $currentPrefix);
+        if (isset($payload["type"]) && $payload["type"] === "refresh") {
+            $currentPrefix = str_replace("access", "refresh", $currentPrefix);
         }
 
-        $footer = $currentPrefix . '.';
+        $footer = $currentPrefix . ".";
 
         $signature = sodium_crypto_sign_detached($footer . $message, $this->privateKey);
 
@@ -59,6 +61,8 @@ class SodiumAuthV4
 
     /**
      * Memvalidasi Token (Verify)
+     * @param string $token Token yang akan diverifikasi
+     * @return ?array Data payload yang telah diverifikasi, atau null jika token tidak valid
      */
     public function decode(string $token): ?array
     {
@@ -68,15 +72,15 @@ class SodiumAuthV4
 
         // Deteksi Prefix secara otomatis
         $currentPrefix = $this->basePrefix;
-        $refreshPrefix = str_replace('access', 'refresh', $currentPrefix);
+        $refreshPrefix = str_replace("access", "refresh", $currentPrefix);
 
-        if (str_starts_with($token, $refreshPrefix . '.')) {
+        if (str_starts_with($token, $refreshPrefix . ".")) {
             $currentPrefix = $refreshPrefix;
-        } elseif (!str_starts_with($token, $currentPrefix . '.')) {
+        } elseif (!str_starts_with($token, $currentPrefix . ".")) {
             return null;
         }
 
-        $footer = $currentPrefix . '.';
+        $footer = $currentPrefix . ".";
 
         $rawPayload = substr($token, strlen($footer));
         $decoded = $this->base64UrlDecode($rawPayload);
@@ -88,14 +92,10 @@ class SodiumAuthV4
             return null;
         }
 
-        $message = mb_substr($decoded, 0, $messageSize, '8bit');
-        $signature = mb_substr($decoded, $messageSize, null, '8bit');
+        $message = mb_substr($decoded, 0, $messageSize, "8bit");
+        $signature = mb_substr($decoded, $messageSize, null, "8bit");
 
-        $isValid = sodium_crypto_sign_verify_detached(
-            $signature,
-            $footer . $message,
-            $this->publicKey
-        );
+        $isValid = sodium_crypto_sign_verify_detached($signature, $footer . $message, $this->publicKey);
 
         if (!$isValid) {
             return null;
@@ -103,16 +103,16 @@ class SodiumAuthV4
 
         $payload = json_decode($message, true);
 
-        if (!isset($payload['exp'])) {
+        if (!isset($payload["exp"])) {
             return null;
         }
 
         $leeway = 60;
-        if (time() > ($payload['exp'] + $leeway)) {
+        if (time() > $payload["exp"] + $leeway) {
             return null;
         }
 
-        if (isset($payload['nbf']) && time() < ($payload['nbf'] - $leeway)) {
+        if (isset($payload["nbf"]) && time() < $payload["nbf"] - $leeway) {
             return null;
         }
 
@@ -121,25 +121,28 @@ class SodiumAuthV4
 
     private function base64UrlEncode(string $data): string
     {
-        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+        return str_replace(["+", "/", "="], ["-", "_", ""], base64_encode($data));
     }
 
     private function base64UrlDecode(string $data): string
     {
-        $data = str_replace(['-', '_'], ['+', '/'], $data);
+        $data = str_replace(["-", "_"], ["+", "/"], $data);
         $remainder = strlen($data) % 4;
         if ($remainder) {
-            $data .= str_repeat('=', 4 - $remainder);
+            $data .= str_repeat("=", 4 - $remainder);
         }
         return base64_decode($data);
     }
 
+    /**
+     * @return array<string,string>
+     */
     public static function generateKeys(): array
     {
         $kp = sodium_crypto_sign_keypair();
         return [
-            'private' => bin2hex(sodium_crypto_sign_secretkey($kp)),
-            'public'  => bin2hex(sodium_crypto_sign_publickey($kp))
+            "private" => bin2hex(sodium_crypto_sign_secretkey($kp)),
+            "public" => bin2hex(sodium_crypto_sign_publickey($kp)),
         ];
     }
 }

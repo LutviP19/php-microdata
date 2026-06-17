@@ -7,7 +7,7 @@
 
 namespace App\Core\Http;
 
-class NativeCurlStreamer 
+class NativeCurlStreamer
 {
     /**
      * SINGLE STREAMING - Sekarang mengembalikan Array hasil
@@ -23,19 +23,23 @@ class NativeCurlStreamer
         // echo "[START] Single Streaming: " . $params['url'] . PHP_EOL;
 
         // Menangkap Header (Opsional, berguna untuk cek statusCode)
-        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($ch, $header) use (&$headerContent) {
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $header) use (
+            &$headerContent,
+        ) {
             $headerContent .= $header;
             return strlen($header);
         });
 
         // Menangkap Body via Streaming
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $chunk) use (&$responseBody) {
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (
+            &$responseBody,
+        ) {
             $responseBody .= $chunk; // Simpan ke buffer
-            
+
             // Tetap berikan feedback visual agar tahu streaming jalan
-            // echo "."; 
+            // echo ".";
             $this->flushOutput();
-            
+
             return strlen($chunk);
         });
 
@@ -44,16 +48,16 @@ class NativeCurlStreamer
         $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // Function curl_close() is deprecated since 8.5
-        if (version_compare(PHP_VERSION, '8.5.0', '<')) {
+        if (version_compare(PHP_VERSION, "8.5.0", "<")) {
             curl_close($ch);
         }
 
         // echo PHP_EOL . "[DONE] Status: $statusCode" . PHP_EOL;
 
         return [
-            'body' => $responseBody,
-            'error' => $error ?: null,
-            'statusCode' => $statusCode
+            "body" => $responseBody,
+            "error" => $error ?: null,
+            "statusCode" => $statusCode,
         ];
     }
 
@@ -72,10 +76,13 @@ class NativeCurlStreamer
             $ch = curl_init();
             $this->applyDefaultOpts($ch, $params);
 
-            $results[$i] = ['body' => '', 'error' => null, 'statusCode' => 0];
+            $results[$i] = ["body" => "", "error" => null, "statusCode" => 0];
 
-            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $chunk) use (&$results, $i) {
-                $results[$i]['body'] .= $chunk;
+            curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (
+                &$results,
+                $i,
+            ) {
+                $results[$i]["body"] .= $chunk;
                 // echo "($i)"; // Indikator task mana yang sedang menerima data
                 $this->flushOutput();
                 return strlen($chunk);
@@ -94,29 +101,29 @@ class NativeCurlStreamer
         } while ($active && $status == CURLM_OK);
 
         foreach ($handles as $i => $ch) {
-            $results[$i]['error'] = curl_error($ch) ?: null;
-            $results[$i]['statusCode'] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $results[$i]["error"] = curl_error($ch) ?: null;
+            $results[$i]["statusCode"] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_multi_remove_handle($mh, $ch);
-            
+
             // Function curl_close() is deprecated since 8.5
-            if (version_compare(PHP_VERSION, '8.5.0', '<')) {
+            if (version_compare(PHP_VERSION, "8.5.0", "<")) {
                 curl_close($ch);
             }
         }
 
         curl_multi_close($mh);
         // echo PHP_EOL . "[DONE] All multi-tasks finished." . PHP_EOL;
-        
+
         return $results;
     }
 
     private function applyDefaultOpts($ch, array $params): void
     {
         // dd($params);
-        $url = $params['url'];
-        $method = strtoupper($params['method'] ?? 'GET');
-        $headers = $params['headers'] ?? [];
-        $body = $params['body'] ?? '';
+        $url = $params["url"];
+        $method = strtoupper($params["method"] ?? "GET");
+        $headers = $params["headers"] ?? [];
+        $body = $params["body"] ?? "";
         // dd($body);
         // dd($headers, true);
 
@@ -148,13 +155,15 @@ class NativeCurlStreamer
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $params['timeout'] ?? 60);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $params["timeout"] ?? 60);
     }
 
     private function flushOutput(): void
     {
-        if (php_sapi_name() === 'cli') {
-            if (ob_get_level() > 0) ob_flush();
+        if (php_sapi_name() === "cli") {
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
             flush();
         }
     }

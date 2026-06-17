@@ -1,10 +1,9 @@
-<?php 
+<?php
 
 /**
  * App class
  * @author LutviP19 <lutvip19@gmail.com>
  */
-
 
 namespace App\Core\Support;
 
@@ -60,7 +59,6 @@ class App
         self::$registry[$key] = $value;
     }
 
-
     /**
      * Validate Struct
      * @param $structPath relative path to Struct
@@ -69,14 +67,14 @@ class App
     public static function validateStruct($structPath)
     {
         // $structName = str_replace('.php', '', basename($structPath));
-        $requestMethod = $_SERVER['REQUEST_METHOD'];
-        $structNameSpace = pathToNamespace(str_replace(realpath(config('app.path')), '', $structPath));
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $structNameSpace = pathToNamespace(str_replace(realpath(config("app.path")), "", $structPath));
         // dd($structNameSpace);
 
         switch ($requestMethod) {
-            case 'POST':
-            case 'PUT':
-            case 'PATCH':
+            case "POST":
+            case "PUT":
+            case "PATCH":
                 $structClass = new $structNameSpace();
                 $rules = parseStructToRules($structClass::class);
                 // dd($rules);
@@ -85,7 +83,7 @@ class App
                 $safeData = refineRequest($_REQUEST, $rules);
                 // dd($safeData);
 
-                if(isset($_REQUEST['id'])) {
+                if (isset($_REQUEST["id"])) {
                     $rules += ["id" => "required,numeric,gte=1"];
                     // Refine the raw $_REQUEST data into native types
                     // $id =  $_POST['id'] ?? $_GET['id'];
@@ -97,9 +95,9 @@ class App
                 $result = validateStructData($safeData, $rules);
                 // dd($result);
                 break;
-            case 'GET':
+            case "GET":
                 // Process GET data
-                if(isset($_REQUEST['id'])) {
+                if (isset($_REQUEST["id"])) {
                     $rules = ["id" => "required,numeric,gte=1"];
                     // Refine the raw $_REQUEST data into native types
                     // $id =  $_POST['id'] ?? $_GET['id'];
@@ -111,17 +109,17 @@ class App
                 } else {
                     // Validate Pagination params
                     $rules = $safeData = [];
-                    if(isset($_REQUEST['page'])) {
-                        $rules['page'] = "omitempty,numeric,min=1";
-                        $safeData += refineRequest(["page" => $_REQUEST['page']], $rules);
+                    if (isset($_REQUEST["page"])) {
+                        $rules["page"] = "omitempty,numeric,min=1";
+                        $safeData += refineRequest(["page" => $_REQUEST["page"]], $rules);
                     }
-                    if(isset($_REQUEST['limit'])) {
-                        $rules['limit'] = "omitempty,numeric,min=1";
-                        $safeData += refineRequest(["limit" => $_REQUEST['limit']], $rules);
+                    if (isset($_REQUEST["limit"])) {
+                        $rules["limit"] = "omitempty,numeric,min=1";
+                        $safeData += refineRequest(["limit" => $_REQUEST["limit"]], $rules);
                     }
-                    if(isset($_REQUEST['total'])) {
-                        $rules['total'] = "omitempty,numeric,min=0";
-                        $safeData += refineRequest(["total" => $_REQUEST['total']], $rules);
+                    if (isset($_REQUEST["total"])) {
+                        $rules["total"] = "omitempty,numeric,min=0";
+                        $safeData += refineRequest(["total" => $_REQUEST["total"]], $rules);
                     }
                     // if(isset($_REQUEST['params'])) {
                     //     $rules['params'] = "omitempty,min=3";
@@ -131,25 +129,31 @@ class App
                     // dd($safeData);
                     // dd($rules);
 
-                    if(!empty($rules)) {
+                    if (!empty($rules)) {
                         // dd($rules);
 
                         // Allow only struct keys
-                        if(isset($_REQUEST['params'])) {
+                        if (isset($_REQUEST["params"])) {
                             $structClass = new $structNameSpace();
                             $structRules = parseStructToRules($structClass::class);
-                            foreach($structRules as $index => $structRule) {
+                            foreach ($structRules as $index => $structRule) {
                                 // dd($index);
                                 // dd($structRule);
                                 // dd(isset($_REQUEST[$index]));
 
-                                // if($index === "website") 
+                                // if($index === "website")
                                 //     dd($structRule);
 
-                                if(isset($_REQUEST['params'][$index]) && (!is_null($_REQUEST['params'][$index]) || $_REQUEST['params'][$index] !== "")) {
-                                    $rules[$index] = rtrim(ltrim(str_replace(['required', 'email', 'url'], '', $structRule), ","), ",");
+                                if (
+                                    isset($_REQUEST["params"][$index]) &&
+                                    (!is_null($_REQUEST["params"][$index]) || $_REQUEST["params"][$index] !== "")
+                                ) {
+                                    $rules[$index] = rtrim(
+                                        ltrim(str_replace(["required", "email", "url"], "", $structRule), ","),
+                                        ",",
+                                    );
                                     // $rules[$index] = "";
-                                    $safeData += refineRequest(["$index" => $_REQUEST['params'][$index]], $rules);
+                                    $safeData += refineRequest(["$index" => $_REQUEST["params"][$index]], $rules);
                                 }
                                 continue;
                             }
@@ -162,8 +166,8 @@ class App
                     }
                 }
                 break;
-            case 'DELETE':
-                if(isset($_REQUEST['id'])) {
+            case "DELETE":
+                if (isset($_REQUEST["id"])) {
                     $rules = ["id" => "numeric,required,gte=1"];
                     // Refine the raw $_REQUEST data into native types
                     // $id =  (int)($_POST['id'] ?? $_GET['id']);
@@ -187,8 +191,8 @@ class App
                     // dd($safeData);
                     $result = validateStructData($safeData, $rules);
                 } else {
-                    $result['errors'] = [
-                        "id"  =>  "Empty ID."
+                    $result["errors"] = [
+                        "id" => "Empty ID.",
                     ];
                 }
                 break;
@@ -198,8 +202,8 @@ class App
         }
 
         // Validation errors
-        if(isset($result['errors']) && is_json_request() && handle_json_request()) {
-            json_response([], 406, 'Validation errors', $result['errors']);
+        if (isset($result["errors"]) && is_json_request() && handle_json_request()) {
+            json_response([], 406, "Validation errors", $result["errors"]);
             die();
         }
 
@@ -209,7 +213,6 @@ class App
         return $safeData;
     }
 
-
     /**
      * Load Model
      * @param $modelPath relative path to Model
@@ -217,57 +220,59 @@ class App
     public static function loadModel($modelPath)
     {
         // dd($_REQUEST);
-        $requestMethod = $_SERVER['REQUEST_METHOD'];
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
         $dataModel = [];
 
         // Create a new instance from $className
-        $className = pathToNamespace(str_replace(realpath(config('app.path')), '', $modelPath));
+        $className = pathToNamespace(str_replace(realpath(config("app.path")), "", $modelPath));
         // dd($className);
         $modelClass = new $className();
 
         // Check $modelClass is has default validMethods
-        $validMethods = (method_exists($modelClass,'index') && 
-                            method_exists($modelClass,'store') && 
-                            method_exists($modelClass,'edit') && 
-                            method_exists($modelClass,'update') && 
-                            method_exists($modelClass,'destroy')
-                        );
-        if(false === $validMethods) {
-            throw new Exception("modelClass $className not valid, must have methods 'index', 'store', 'edit', 'update' and 'destroy'.");
+        $validMethods =
+            method_exists($modelClass, "index") &&
+            method_exists($modelClass, "store") &&
+            method_exists($modelClass, "edit") &&
+            method_exists($modelClass, "update") &&
+            method_exists($modelClass, "destroy");
+        if (false === $validMethods) {
+            throw new Exception(
+                "modelClass $className not valid, must have methods 'index', 'store', 'edit', 'update' and 'destroy'.",
+            );
         }
 
         // Get Safe request data
         $request = &$_REQUEST;
         switch ($requestMethod) {
-            case 'GET':
+            case "GET":
                 // Process GET data
-                if(isset($_REQUEST['id'])) {
-                    $request['id'] = $_POST['id'] ?? $_GET['id'];
+                if (isset($_REQUEST["id"])) {
+                    $request["id"] = $_POST["id"] ?? $_GET["id"];
                     // dd($request);
                     $dataModel = $modelClass->edit($request);
                 } else {
                     $dataModel = $modelClass->index($request);
                 }
                 break;
-            case 'POST':
+            case "POST":
                 // Process POST data
                 $dataModel = $modelClass->store($request);
                 break;
-            case 'PUT':
-            case 'PATCH':
+            case "PUT":
+            case "PATCH":
                 // Handle PUT & PATCH request
                 $dataModel = $modelClass->update($request);
                 break;
-            case 'DELETE':
+            case "DELETE":
                 // Handle DELETE request
-                $request['id'] = $_POST['id'] ?? $_GET['id'];
+                $request["id"] = $_POST["id"] ?? $_GET["id"];
                 $dataModel = $modelClass->destroy($request);
                 break;
             default:
                 // Handle other methods or an error
                 $dataModel = [
-                    'status' => 400,
-                    'message' => 'Method not allowed.'
+                    "status" => 400,
+                    "message" => "Method not allowed.",
                 ];
                 break;
         }
@@ -278,7 +283,7 @@ class App
     public static function bootListeners()
     {
         // Tentukan path ke folder Listeners
-        $path = BASEPATH . '/app/Listeners';
+        $path = BASEPATH . "/app/Listeners";
         self::loadListeners($path);
     }
 
@@ -288,14 +293,16 @@ class App
      */
     protected static function loadListeners($path)
     {
-        if (!is_dir($path)) return;
+        if (!is_dir($path)) {
+            return;
+        }
 
         $directory = new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS);
         $iterator = new \RecursiveIteratorIterator($directory);
         $collectedListeners = [];
 
         foreach ($iterator as $file) {
-            if ($file->getExtension() === 'php') {
+            if ($file->getExtension() === "php") {
                 require_once $file->getRealPath();
 
                 // Ambil path relatif dari folder Listeners
@@ -304,15 +311,11 @@ class App
 
                 // Konversi path menjadi format Namespace
                 // Kita hapus .php dan ubah "/" atau "\" menjadi "\"
-                $namespacePath = str_replace(
-                    ['.php', '/', DIRECTORY_SEPARATOR], 
-                    ['', '\\', '\\'], 
-                    $relative
-                );
+                $namespacePath = str_replace([".php", "/", DIRECTORY_SEPARATOR], ["", "\\", "\\"], $relative);
 
                 // Full Class Name
                 // Hasil: App\Listeners\Order\ProcessPayment
-                $className = 'App\\Listeners\\' . $namespacePath;
+                $className = "App\\Listeners\\" . $namespacePath;
 
                 // Debug: Uncomment baris di bawah jika masih gagal untuk melihat class apa yang dicari
                 // echo "Checking class: " . $className . PHP_EOL;
@@ -323,13 +326,13 @@ class App
                     if ($reflection->implementsInterface(\App\Core\Events\ListenerInterface::class)) {
                         $instance = new $className();
 
-                        $event    = $instance->event ?? null;
+                        $event = $instance->event ?? null;
                         $priority = $instance->priority ?? 0;
 
                         if ($event) {
                             $collectedListeners[$event][] = [
-                                'priority' => $priority,
-                                'callback' => [$instance, 'handle']
+                                "priority" => $priority,
+                                "callback" => [$instance, "handle"],
                             ];
                         }
                     }
@@ -341,11 +344,11 @@ class App
         // dd($collectedListeners, true);
         foreach ($collectedListeners as $eventName => $listeners) {
             // ASC: Priority 1 tampil sebelum Priority 10
-            usort($listeners, fn($a, $b) => $a['priority'] <=> $b['priority']);
+            usort($listeners, fn($a, $b) => $a["priority"] <=> $b["priority"]);
 
             // dd($listeners, true);
             foreach ($listeners as $item) {
-                ListenerRegistry::listen($eventName, $item['callback']);
+                ListenerRegistry::listen($eventName, $item["callback"]);
             }
         }
     }
@@ -360,26 +363,36 @@ class App
     {
         try {
             // 1. Ambil semua config routing (config/external-api.php)
-            $configs = self::get('routing_external_api');
+            $configs = self::get("routing_external_api");
 
             if (!$configs) {
                 $messageErr = "App::registy[routing_external_api] was not registered." . PHP_EOL;
-                if (config('app.debug')) {
-                    \write_log([
-                        'key' => $key,
-                        'message' => $messageErr                    
-                    ], 'App\Core\Support\App.externalApi', 'error', 'error_APP_externalApi.log');
+                if (config("app.debug")) {
+                    \write_log(
+                        [
+                            "key" => $key,
+                            "message" => $messageErr,
+                        ],
+                        "App\Core\Support\App.externalApi",
+                        "error",
+                        "error_APP_externalApi.log",
+                    );
                 }
                 throw new \Exception($messageErr);
             }
 
             if (!isset($configs[$key])) {
                 $messageErr = "External API configuration with key [$key] was not found." . PHP_EOL;
-                if (config('app.debug')) {
-                    \write_log([
-                        'key' => $key,
-                        'message' => $messageErr                    
-                    ], 'App\Core\Support\App.externalApi', 'error', 'error_APP_externalApi.log');
+                if (config("app.debug")) {
+                    \write_log(
+                        [
+                            "key" => $key,
+                            "message" => $messageErr,
+                        ],
+                        "App\Core\Support\App.externalApi",
+                        "error",
+                        "error_APP_externalApi.log",
+                    );
                 }
                 throw new \Exception($messageErr);
             }
@@ -387,20 +400,19 @@ class App
             $base = $configs[$key];
 
             // 2. Satukan Headers (Config Base + Dinamis dari argumen)
-            $headers = array_merge(
-                $base['headers'] ?? [],
-                $dynamicOptions['headers'] ?? []
-            );
+            $headers = array_merge($base["headers"] ?? [], $dynamicOptions["headers"] ?? []);
 
             // 3. Build Result untuk GoHttpClient
             return [
-                'method'  => strtoupper($base['method'] ?? 'GET'),
-                'url'     => $base['url'] ?? '',
-                'headers' => $headers,
-                'body'    => isset($dynamicOptions['body']) 
-                             ? (is_array($dynamicOptions['body']) ? json_encode($dynamicOptions['body']) : $dynamicOptions['body']) 
-                             : ($base['body'] ?? ''),
-                'timeout' => $dynamicOptions['timeout'] ?? $base['timeout'] ?? 30
+                "method" => strtoupper($base["method"] ?? "GET"),
+                "url" => $base["url"] ?? "",
+                "headers" => $headers,
+                "body" => isset($dynamicOptions["body"])
+                    ? (is_array($dynamicOptions["body"])
+                        ? json_encode($dynamicOptions["body"])
+                        : $dynamicOptions["body"])
+                    : $base["body"] ?? "",
+                "timeout" => $dynamicOptions["timeout"] ?? ($base["timeout"] ?? 30),
             ];
         } catch (Throwable $e) {
             // Re-throw agar error detail (seperti typo function) muncul di log global
@@ -409,14 +421,14 @@ class App
     }
 
     // REMOVED CANDIDAT :
-    // public function getUserAbilities($userId, $groupId) 
+    // public function getUserAbilities($userId, $groupId)
     // {
     //     $cache = new \App\Core\Support\Cache();
     //     $cacheKey = "user_abilities_{$userId}_{$groupId}";
 
     //     return $cache->remember($cacheKey, function() use ($userId, $groupId) {
     //         $db = new \App\Core\Database\Model();
-    //         $sql = "SELECT DISTINCT p.slug 
+    //         $sql = "SELECT DISTINCT p.slug
     //                 FROM user_roles ur
     //                 JOIN role_permissions rp ON ur.role_id = rp.role_id
     //                 JOIN permissions p ON rp.permission_id = p.id

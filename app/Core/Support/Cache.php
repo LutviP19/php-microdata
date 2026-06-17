@@ -1,51 +1,49 @@
 <?php
 
 /**
- * Cache class 
+ * Cache class
  * Supported drivers: files(default) and redis
  * @author LutviP19 <lutvip19@gmail.com>
  * @package PHP-Microdata
  */
 
- 
 namespace App\Core\Support;
-
 
 use Exception;
 use Predis\Client as PredisClient;
 
-class Cache 
+class Cache
 {
     // Object class
     private $redisClient;
     private $storagePath;
     private $defaultExpiry = 3600;
 
-    public function __construct() 
+    public function __construct()
     {
         $this->redisClient = null;
-        
+
         // Lazy Initialization of Redis (Only if set as CACHE_DRIVER)
-        if(Config::get('app.cache_driver') === 'redis') {
+        if (Config::get("app.cache_driver") === "redis") {
             try {
                 $this->redisClient = new PredisClient([
-                    'host' => Config::get('redis.cache.host'),
-                    'port' => Config::get('redis.cache.port'),
-                    'database' => Config::get('redis.cache.database')
+                    "host" => Config::get("redis.cache.host"),
+                    "port" => Config::get("redis.cache.port"),
+                    "database" => Config::get("redis.cache.database"),
                 ]);
             } catch (Exception) {
                 $this->redisClient = null;
             }
         } else {
             // Define cache folder (Adapt to your folder structure)
-            $this->storagePath = storage_path('/framework/cache/');
+            $this->storagePath = storage_path("/framework/cache/");
         }
     }
 
     /**
      * Remember Pattern: Fetch cache or save if it doesn't exist
      */
-    public function remember($key, $callback, $expiry = null) 
+    public function remember($key, $callback, $expiry = null)
     {
         $expiry = $expiry ?: $this->defaultExpiry;
         $data = $this->get($key);
@@ -63,23 +61,25 @@ class Cache
     /**
      * Retrieve Data
      */
-    public function get($key) 
+    public function get($key)
     {
         if ($this->redisClient) {
             try {
                 $data = $this->redisClient->get($key);
-                if ($data) return unserialize($data);
+                if ($data) {
+                    return unserialize($data);
+                }
             } catch (Exception) {
                 $this->redisClient = null; // Fallback ke file
             }
         }
 
         // Strategy 2: Fallback Files
-        $file = $this->storagePath . md5((string) $key) . '.cache';
+        $file = $this->storagePath . md5((string) $key) . ".cache";
         if (file_exists($file)) {
             $content = unserialize(file_get_contents($file));
-            if (time() < $content['expiry']) {
-                return unserialize($content['data']);
+            if (time() < $content["expiry"]) {
+                return unserialize($content["data"]);
             }
             unlink($file); // Delete if expired
         }
@@ -90,11 +90,10 @@ class Cache
     /**
      * Save Data
      */
-    public function set($key, $data, $expiry = 3600) 
+    public function set($key, $data, $expiry = 3600)
     {
         //  Only cache if data is not empty
-        if(!empty($data)) {
-
+        if (!empty($data)) {
             // //  Only cache if total data not 0
             // if (is_array($data)) {
             //     $total = $data['total'] ?? $data['data']['total'] ?? null;
@@ -107,7 +106,7 @@ class Cache
             if (is_array($data) && count($data) <= 0) {
                 return;
             }
-        
+
             $serialized = serialize($data);
 
             // Save to Redis
@@ -121,27 +120,34 @@ class Cache
             }
 
             // Save to File (Fallback)
-            if (!is_dir($this->storagePath)) mkdir($this->storagePath, 0775, true);
+            if (!is_dir($this->storagePath)) {
+                mkdir($this->storagePath, 0775, true);
+            }
             $content = serialize([
-                'expiry' => time() + $expiry,
-                'data'   => $serialized
+                "expiry" => time() + $expiry,
+                "data" => $serialized,
             ]);
-            file_put_contents($this->storagePath . md5((string) $key) . '.cache', $content);
+            file_put_contents($this->storagePath . md5((string) $key) . ".cache", $content);
         }
     }
 
     /**
      * Hapus Cache (Flush)
      */
-    public function flush($key) 
+    public function flush($key)
     {
         // Delete in Redis
         if ($this->redisClient) {
-            try { $this->redisClient->del($key); } catch (Exception) {}
+            try {
+                $this->redisClient->del($key);
+            } catch (Exception) {
+            }
         }
 
         // Delete in Files
-        $file = $this->storagePath . md5((string) $key) . '.cache';
-        if (file_exists($file)) unlink($file);
+        $file = $this->storagePath . md5((string) $key) . ".cache";
+        if (file_exists($file)) {
+            unlink($file);
+        }
     }
 }

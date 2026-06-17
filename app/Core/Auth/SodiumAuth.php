@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * SodiumAuth Library
  * PASETO (Platform-Agnostic Security Tokens)
@@ -21,15 +20,17 @@ class SodiumAuth
 
     public function __construct(?string $hexKey = null)
     {
-        $hexKey ??= config('app.sodium_key');
+        $hexKey ??= config("app.sodium_key");
         $this->key = hex2bin($hexKey);
 
         // Simpan prefix dasar (misal: "v1.access")
-        $this->basePrefix = config('app.sodium_prefix');
+        $this->basePrefix = config("app.sodium_prefix");
     }
 
     /**
      * Membuat Token (Encrypt)
+     * @param array<int,mixed> $payload Data payload yang akan di-encrypt
+     * @return string Token yang telah di-encrypt
      */
     public function encode(array $payload): string
     {
@@ -37,17 +38,17 @@ class SodiumAuth
 
         // Bedakan prefix refresh
         $currentPrefix = $this->basePrefix;
-        if (isset($payload['type']) && $payload['type'] === 'refresh') {
-            $currentPrefix = str_replace('access', 'refresh', $currentPrefix);
+        if (isset($payload["type"]) && $payload["type"] === "refresh") {
+            $currentPrefix = str_replace("access", "refresh", $currentPrefix);
         }
 
-        $footer = $currentPrefix . '.';
+        $footer = $currentPrefix . ".";
 
         $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(
             json_encode($payload),
             $footer,
             $nonce,
-            $this->key
+            $this->key,
         );
 
         return $footer . $this->base64UrlEncode($nonce . $ciphertext);
@@ -55,21 +56,23 @@ class SodiumAuth
 
     /**
      * Memvalidasi & Dekripsi Token
+     * @param string $token Token yang akan didekripsi
+     * @return ?array Data payload yang telah didekripsi, atau null jika token tidak valid
      */
     public function decode(string $token): ?array
     {
         // Deteksi Prefix secara otomatis dari string token
         // Mencari apakah token mengandung '.access.' atau '.refresh.'
         $currentPrefix = $this->basePrefix;
-        $refreshPrefix = str_replace('access', 'refresh', $currentPrefix);
+        $refreshPrefix = str_replace("access", "refresh", $currentPrefix);
 
-        if (str_starts_with($token, $refreshPrefix . '.')) {
+        if (str_starts_with($token, $refreshPrefix . ".")) {
             $currentPrefix = $refreshPrefix;
-        } elseif (!str_starts_with($token, $currentPrefix . '.')) {
+        } elseif (!str_starts_with($token, $currentPrefix . ".")) {
             return null; // Prefix tidak dikenal
         }
 
-        $footer = $currentPrefix . '.';
+        $footer = $currentPrefix . ".";
         $payloadPart = substr($token, strlen($footer));
         $raw = $this->base64UrlDecode($payloadPart);
 
@@ -78,16 +81,11 @@ class SodiumAuth
             return null;
         }
 
-        $nonce = mb_substr($raw, 0, $nonceSize, '8bit');
-        $ciphertext = mb_substr($raw, $nonceSize, null, '8bit');
+        $nonce = mb_substr($raw, 0, $nonceSize, "8bit");
+        $ciphertext = mb_substr($raw, $nonceSize, null, "8bit");
 
         try {
-            $decrypted = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt(
-                $ciphertext,
-                $footer,
-                $nonce,
-                $this->key
-            );
+            $decrypted = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt($ciphertext, $footer, $nonce, $this->key);
 
             if (!$decrypted) {
                 return null;
@@ -95,7 +93,7 @@ class SodiumAuth
 
             $payload = json_decode($decrypted, true);
 
-            if (isset($payload['exp']) && time() > $payload['exp']) {
+            if (isset($payload["exp"]) && time() > $payload["exp"]) {
                 return null; // Expired
             }
 
@@ -107,15 +105,15 @@ class SodiumAuth
 
     private function base64UrlEncode(string $data): string
     {
-        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+        return str_replace(["+", "/", "="], ["-", "_", ""], base64_encode($data));
     }
 
     private function base64UrlDecode(string $data): string
     {
-        $data = str_replace(['-', '_'], ['+', '/'], $data);
+        $data = str_replace(["-", "_"], ["+", "/"], $data);
         $remainder = strlen($data) % 4;
         if ($remainder) {
-            $data .= str_repeat('=', 4 - $remainder);
+            $data .= str_repeat("=", 4 - $remainder);
         }
         return base64_decode($data);
     }

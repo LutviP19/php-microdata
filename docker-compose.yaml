@@ -1,0 +1,97 @@
+services:
+  php:
+    # image: dunglas/frankenphp
+    # uncomment the following line if you want to use a custom Dockerfile
+    build: .
+    # uncomment the following line if you want to run this in a production environment
+    restart: always
+    ports:
+      - "8000:8000" # HTTP
+      #- "443:443" # HTTPS
+      #- "443:443/udp" # HTTP/3
+    volumes:
+      - .:/app
+      - ./Caddyfile-docker:/etc/caddy/Caddyfile # Mount Caddyfile-docker untuk development
+      - ./php.ini:/usr/local/etc/php/php.ini # Mount php.ini agar dinamis saat dev
+      - ./storage/logs/docker:/data/logs # <- TAMBAHKAN BARIS INI
+      - caddy_data:/data
+      - caddy_config:/config
+    # comment the following line in production, it provides nice human-readable logs in dev
+    tty: true
+    environment:
+      - SERVER_NAME=:8000 --encapsulate # Mengunci FrankenPHP di mode HTTP polos tanpa mencoba mengaktifkan QUIC/UDP
+      - WATCH_VERSION=1 # Membantu watcher mendeteksi perubahan file di beberapa OS
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+
+  # Database (MySQL)
+  mysql:
+    image: mysql:8.0
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes" # Mengizinkan password root kosong
+      MYSQL_DATABASE: php_microdata_server
+      MYSQL_USER: dev_user
+      MYSQL_PASSWORD: dev_password # Password untuk dev_user tetap diisi
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # Web-based MySQL Administration (Otomatis Login)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: always
+    ports:
+      - "8080:80" # Akses di http://localhost:8080
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: "" # Ikut dikosongkan jika MySQL menggunakan EMPTY_PASSWORD
+      PMA_AUTH_TYPE: config # Mengaktifkan mode auto-login tanpa prompt password
+      UPLOAD_LIMIT: 300M
+    depends_on:
+      - mysql
+
+  # Cache & Session (Redis)
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6378:6379"
+    volumes:
+      - redis_data:/data
+
+  # Web-based Redis Administration (Redis Commander)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: always
+    ports:
+      - "8081:8081" # Akses di http://localhost:8081
+    environment:
+      - REDIS_HOSTS=local-redis:redis:6379 # Label:NamaService:PortInternal
+    depends_on:
+      - redis
+
+  # Message Broker (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    ports:
+      - "5673:5672"   # Port Aplikasi AMQP
+      - "15673:15672" # Port Dashboard Management (Web UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+# Volumes needed for Caddy certificates and configuration
+volumes:
+  caddy_data:
+  caddy_config:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:

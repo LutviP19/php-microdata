@@ -1,28 +1,33 @@
-<?php 
+<?php
 
 /**
- * Identity class 
+ * Identity class
  * Class Identity ini dirancang khusus untuk FrankenPHP Worker Mode.
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
-
 namespace App\Core\Auth;
 
-class Identity {
+class Identity
+{
     private static ?array $user = null;
 
     /**
      * Set data user dari hasil decode SodiumAuth
+     * @param array<int,mixed> $data
      */
-    public static function set(array $data): void {
+    public static function set(array $data): void
+    {
         self::$user = $data;
     }
 
     /**
      * Ambil data user atau field spesifik
+     * @param string|null $key Nama field yang ingin diambil (opsional)
+     * @return mixed|null
      */
-    public static function get(?string $key = null) {
+    public static function get(?string $key = null)
+    {
         if ($key) {
             return self::$user[$key] ?? null;
         }
@@ -31,8 +36,10 @@ class Identity {
 
     /**
      * Cek apakah user sudah terautentikasi
+     * @return bool
      */
-    public static function check(): bool {
+    public static function check(): bool
+    {
         return self::$user !== null;
     }
 
@@ -40,7 +47,8 @@ class Identity {
      * CRITICAL: Wajib dipanggil di akhir loop FrankenPHP
      * Untuk mengosongkan memori agar tidak bocor ke request selanjutnya
      */
-    public static function clear(): void {
+    public static function clear(): void
+    {
         self::$user = null;
     }
 }

@@ -18,20 +18,22 @@ class JWT
 
     public function __construct(?string $secret = null)
     {
-        $this->secret = $secret ?? config('app.jwt_secret');
+        $this->secret = $secret ?? config("app.jwt_secret");
     }
 
     /**
      * Membuat Token JWT
+     * @param array<int,mixed> $payload Data payload yang akan di-encode
+     * @return string Token JWT yang telah di-encode
      */
     public function encode(array $payload): string
     {
-        $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+        $header = json_encode(["typ" => "JWT", "alg" => "HS256"]);
 
         $base64UrlHeader = $this->base64UrlEncode($header);
         $base64UrlPayload = $this->base64UrlEncode(json_encode($payload));
 
-        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $this->secret, true);
+        $signature = hash_hmac("sha256", $base64UrlHeader . "." . $base64UrlPayload, $this->secret, true);
         $base64UrlSignature = $this->base64UrlEncode($signature);
 
         return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
@@ -42,7 +44,7 @@ class JWT
      */
     public function decode(string $token): ?array
     {
-        $parts = explode('.', $token);
+        $parts = explode(".", $token);
         if (count($parts) !== 3) {
             return null;
         }
@@ -50,7 +52,7 @@ class JWT
         [$header, $payload, $signature] = $parts;
 
         // Verifikasi Signature
-        $validSignature = hash_hmac('sha256', $header . "." . $payload, $this->secret, true);
+        $validSignature = hash_hmac("sha256", $header . "." . $payload, $this->secret, true);
         if (!hash_equals($this->base64UrlEncode($validSignature), $signature)) {
             return null;
         }
@@ -58,7 +60,7 @@ class JWT
         $decodedPayload = json_decode($this->base64UrlDecode($payload), true);
 
         // Cek Expiration (exp) jika ada
-        if (isset($decodedPayload['exp']) && time() > $decodedPayload['exp']) {
+        if (isset($decodedPayload["exp"]) && time() > $decodedPayload["exp"]) {
             return null; // Token kadaluarsa
         }
 
@@ -72,7 +74,7 @@ class JWT
     public function hasPermission(string $token, string $requiredPermission): bool
     {
         $data = $this->decode($token);
-        return $data && isset($data['user_permissions']) && in_array($requiredPermission, $data['user_permissions']);
+        return $data && isset($data["user_permissions"]) && in_array($requiredPermission, $data["user_permissions"]);
     }
 
     /**
@@ -80,7 +82,7 @@ class JWT
      */
     private function base64UrlEncode(string $data): string
     {
-        return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
+        return str_replace(["+", "/", "="], ["-", "_", ""], base64_encode($data));
     }
 
     /**
@@ -90,8 +92,8 @@ class JWT
     {
         $remainder = strlen($data) % 4;
         if ($remainder) {
-            $data .= str_repeat('=', 4 - $remainder);
+            $data .= str_repeat("=", 4 - $remainder);
         }
-        return base64_decode(str_replace(['-', '_'], ['+', '/'], $data));
+        return base64_decode(str_replace(["-", "_"], ["+", "/"], $data));
     }
 }

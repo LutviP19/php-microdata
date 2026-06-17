@@ -1,44 +1,47 @@
-<?php 
+<?php
 
 /**
- * Gate class 
+ * Gate class
  * This class functions as a wrapper to check whether the logged in user has certain permissions.
  * @author LutviP19 <lutvip19@gmail.com>
  */
-
 
 namespace App\Core\Auth;
 
 use App\Core\Support\Cache;
 use App\Core\Database\Model;
 
-class Gate 
+class Gate
 {
     protected static $abilities = [];
 
     /**
      * Inisialisasi izin user ke dalam static property
      */
-    public static function loadAbilities($userId, $groupId)
+    public static function loadAbilities($userId, $groupId): void
     {
         $cache = new Cache();
         $cacheKey = "user_abilities_{$userId}_{$groupId}";
 
-        self::$abilities = $cache->remember($cacheKey, function() use ($userId, $groupId) {
-            $db = new Model();
-            $sql = "SELECT permission_slug AS slug FROM v_user_permissions 
+        self::$abilities = $cache->remember(
+            $cacheKey,
+            function () use ($userId, $groupId) {
+                $db = new Model();
+                $sql = "SELECT permission_slug AS slug FROM v_user_permissions
                     WHERE user_id = ? AND group_id = ?";
 
-            $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
-            return array_column($rows, 'slug');
-        }, (int)(config('session.lifetime') * 30));
+                $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
+                return array_column($rows, "slug");
+            },
+            (int) (config("session.lifetime") * 30),
+        );
         // dd(self::$abilities);
     }
 
     /**
      * Cek apakah user punya izin spesifik
      */
-    public static function allows($permission)
+    public static function allows($permission): array
     {
         return in_array($permission, self::$abilities);
     }
@@ -46,7 +49,7 @@ class Gate
     /**
      * Kebalikan dari allows
      */
-    public static function denies($permission)
+    public static function denies($permission): bool
     {
         return !self::allows($permission);
     }
@@ -54,7 +57,7 @@ class Gate
     /**
      * Proteksi di level Model (langsung stop jika tidak punya akses)
      */
-    public static function authorize($permission)
+    public static function authorize($permission): bool
     {
         if (self::denies($permission)) {
             self::forbidden_response($permission);
@@ -67,26 +70,26 @@ class Gate
      * Middleware untuk memvalidasi akses user menggunakan JWT
      * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
      */
-    public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null) {
-        
+    public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null): ?array
+    {
         $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-        
-        $token = '';
-        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        $authHeader = $headers["Authorization"] ?? ($headers["authorization"] ?? "");
+
+        $token = "";
+        if (preg_match("/Bearer\s(\S+)/", $authHeader, $matches)) {
             $token = $matches[1];
         }
 
         // Jika token kosong, cek dari Cookie (fallback umum)
-        if (!$token && isset($_COOKIE['auth_token'])) {
-            $token = $_COOKIE['auth_token'];
+        if (!$token && isset($_COOKIE["auth_token"])) {
+            $token = $_COOKIE["auth_token"];
         }
 
         if (!$token) {
             self::unauthorized_response("Invalid token.");
         }
-        
-        $secret ??= config('app.jwt_secret');
+
+        $secret ??= config("app.jwt_secret");
         $jwt = new JWT($secret);
         $userData = $jwt->decode($token);
 
@@ -97,7 +100,7 @@ class Gate
 
         // Verifikasi Permission (jika diminta)
         if ($requiredPermission) {
-            $permissions = $userData['user_permissions'] ?? [];
+            $permissions = $userData["user_permissions"] ?? [];
             if (!in_array($requiredPermission, $permissions)) {
                 self::forbidden_response($requiredPermission);
             }
@@ -110,39 +113,40 @@ class Gate
      * Middleware untuk memvalidasi akses user menggunakan Sodium
      * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
      */
-    public static function authorizeSodium(?string $requiredPermission = null, ?string $hexKey = null) {
-        
+    public static function authorizeSodium(?string $requiredPermission = null, ?string $hexKey = null): ?array
+    {
         $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-        
-        $token = '';
-        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        $authHeader = $headers["Authorization"] ?? ($headers["authorization"] ?? "");
+
+        $token = "";
+        if (preg_match("/Bearer\s(\S+)/", $authHeader, $matches)) {
             $token = $matches[1];
         }
 
         // Jika token kosong, cek dari Cookie (fallback umum)
-        if (!$token && isset($_COOKIE['auth_token'])) {
-            $token = $_COOKIE['auth_token'];
+        if (!$token && isset($_COOKIE["auth_token"])) {
+            $token = $_COOKIE["auth_token"];
         }
 
         if (!$token) {
             self::unauthorized_response("Invalid token.");
         }
-        
-        $hexKey ??= config('app.sodium_key');
+
+        $hexKey ??= config("app.sodium_key");
         $auth = new SodiumAuth($hexKey);
         $userData = $auth->decode($token);
 
         // Verifikasi Token
-        if (!$userData || !isset($userData['exp'])) {
+        if (!$userData || !isset($userData["exp"])) {
             self::unauthorized_response("Session has expired please re-login.");
         }
 
         // Cek exp
-        if ($userData && isset($userData['exp'])) {
+        if ($userData && isset($userData["exp"])) {
             $leeway = 60; // Toleransi perbedaan waktu antar server (60 detik)
-            if (time() > ($userData['exp'] + $leeway))
+            if (time() > $userData["exp"] + $leeway) {
                 self::unauthorized_response("Session has expired please re-login.");
+            }
         }
 
         // // Cek Type refresh
@@ -153,7 +157,7 @@ class Gate
 
         // Verifikasi Permission (jika diminta)
         if ($requiredPermission) {
-            $permissions = $userData['user_permissions'] ?? [];
+            $permissions = $userData["user_permissions"] ?? [];
             if (!in_array($requiredPermission, $permissions)) {
                 self::forbidden_response($requiredPermission);
             }
@@ -162,16 +166,16 @@ class Gate
         return $userData;
     }
 
-    public static function refreshSodiumAuth(string $refreshToken, ?string $hexKey = null): string 
+    public static function refreshSodiumAuth(string $refreshToken, ?string $hexKey = null): ?array
     {
-        $hexKey ??= config('app.sodium_key');
+        $hexKey ??= config("app.sodium_key");
         $sodiumAuth = new SodiumAuth($hexKey);
 
         // 1. Decode & Verify Signature Refresh Token
         $payload = $sodiumAuth->decode($refreshToken);
-        $isValid = isset($payload['type']) && isset($payload['iis']) && isset($payload['fingerprint']);
+        $isValid = isset($payload["type"]) && isset($payload["iis"]) && isset($payload["fingerprint"]);
 
-        if (!$payload || !$isValid || $payload['type'] !== 'refresh') {
+        if (!$payload || !$isValid || $payload["type"] !== "refresh") {
             self::unauthorized_response("Invalid Refresh Token");
         }
 
@@ -183,35 +187,35 @@ class Gate
         // }
 
         // Default payload
-        $expToken = time() + (60 * (config('session.lifetime') / 2));
+        $expToken = time() + 60 * (config("session.lifetime") / 2);
         $payloadDefault = [
-            'uid'  => $payload['uid'],
-            'role' => $payload['role'],
-            'fingerprint' => get_device_fingerprint(),
-            'iat'  => time(),
-            'iss' => 'php-microdata',
-            'aud' => 'users',
+            "uid" => $payload["uid"],
+            "role" => $payload["role"],
+            "fingerprint" => get_device_fingerprint(),
+            "iat" => time(),
+            "iss" => "php-microdata",
+            "aud" => "users",
         ];
         $fullPayload = array_merge($payloadDefault, $payload);
 
         // 3. Generate Access Token Baru (Pendek: 1 jam)
         $newAccessToken = array_merge($fullPayload, [
-            'type' => 'access',
-            'exp' => $expToken
+            "type" => "access",
+            "exp" => $expToken,
         ]);
 
         // 4. Generate Refresh Token Baru (Rotasi - Opsional tapi disarankan)
         $newRefreshToken = array_merge($fullPayload, [
-            'type' => 'refresh',
-            'exp' => time() + (3600 * 24 * 7) // 7 Hari
+            "type" => "refresh",
+            "exp" => time() + 3600 * 24 * 7, // 7 Hari
         ]);
 
         // // 5. Update Redis Whitelist
         // $this->redis->setex("sso_refresh_map:" . $payload['uid'], 86400 * 7, $newRefreshToken);
 
         $dataNewToken = [
-            'access_token'  => $sodiumAuth->encode(cleanSodiumPayload($newAccessToken, 'access')),
-            'refresh_token' => $sodiumAuth->encode(cleanSodiumPayload($newRefreshToken, 'refresh'))
+            "access_token" => $sodiumAuth->encode(cleanSodiumPayload($newAccessToken, "access")),
+            "refresh_token" => $sodiumAuth->encode(cleanSodiumPayload($newRefreshToken, "refresh")),
         ];
 
         // Generate New Token Sodium
@@ -221,34 +225,36 @@ class Gate
     /**
      * Response Helper jika tidak login (401)
      */
-    private static function unauthorized_response($msg) {
-        if(is_json_request()) {
+    public static function unauthorized_response(?string $msg)
+    {
+        if (is_json_request()) {
             $message = "Unauthorized";
             $errors = [
-                'auth' => 'Unauthorized: ' . $msg
+                "auth" => "Unauthorized: " . $msg,
             ];
             json_response([], 401, $message, $errors);
         } else {
             http_response_code(isHtmx() ? 200 : 401);
             include BASEPATH . "/views/error/401.php";
-            die;
+            die();
         }
     }
 
     /**
      * Response Helper jika tidak punya izin (403)
      */
-    private static function forbidden_response($permission) {
-        if(is_json_request()) {
+    public static function forbidden_response(?string $permission)
+    {
+        if (is_json_request()) {
             $message = "You don't have access[$permission]";
             $errors = [
-                'auth' => 'Forbidden to access: ' . $permission
+                "auth" => "Forbidden to access: " . $permission,
             ];
             json_response([], 403, $message, $errors);
         } else {
             http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "/views/error/403.php";
-            die;
+            die();
         }
     }
 }

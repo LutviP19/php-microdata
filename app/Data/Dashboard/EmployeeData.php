@@ -24,7 +24,8 @@ class EmployeeData extends DashboardData {
         // Global Set Custom connection
         $driver = 'mysql';
         $dbname = 'employees';
-        $host = '127.0.0.1';
+        // $host = '127.0.0.1';
+        $host = env('DB_HOST');
         $port = '3306';
         $username = 'root';
         $password = '';

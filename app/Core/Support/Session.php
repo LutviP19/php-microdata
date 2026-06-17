@@ -20,10 +20,23 @@ class Session
     {
         $sessions = [];
         $escaped = [
-            Config::get('session.csrf_token'), 'OBSOLETE', 'EXPIRES', 'nonce', 
-            'new_session_id', 'destroyed', 'userAgent', 'IPaddress', 'password', 
-            'pin', 'errors', 'secret', 'jwtId', 'tokenJwt', 'gnr', 
-            '_previous_uri', '_old_input'
+            Config::get("session.csrf_token"),
+            "OBSOLETE",
+            "EXPIRES",
+            "nonce",
+            "new_session_id",
+            "destroyed",
+            "userAgent",
+            "IPaddress",
+            "password",
+            "pin",
+            "errors",
+            "secret",
+            "jwtId",
+            "tokenJwt",
+            "gnr",
+            "_previous_uri",
+            "_old_input",
         ];
 
         foreach ($_SESSION as $key => $value) {
@@ -31,22 +44,24 @@ class Session
                 continue;
             }
 
-            $data = config('session.encrypt') ? decryptData($value) : $value;
-            if(empty($data))
+            $data = config("session.encrypt") ? decryptData($value) : $value;
+            if (empty($data)) {
                 continue;
+            }
 
             // 2. Fitur Array to String Conversion (Handling JSON)
             if (is_string($data)) {
                 $decoded = json_decode($data, true);
-                $sessions[$key] = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $data;
+                $sessions[$key] = json_last_error() === JSON_ERROR_NONE ? $decoded : $data;
             } else {
-                $sessions[$key] = is_array(json_decode((string) $data, true)) ? json_decode((string) $data, true) : $data;;
+                $sessions[$key] = is_array(json_decode((string) $data, true))
+                    ? json_decode((string) $data, true)
+                    : $data;
             }
         }
 
         return $sessions;
     }
-
 
     /**
      * Get a session value by key.
@@ -57,16 +72,16 @@ class Session
     public static function get($key)
     {
         if (!self::has($key)) {
-            return '';
+            return "";
         }
 
         $value = $_SESSION[$key];
 
-        if (config('session.encrypt')) {
+        if (config("session.encrypt")) {
             // Dekripsi data mentah dari session
             $decrypted = decryptData($value);
             $decoded = json_decode((string) $decrypted, true);
-            return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $decrypted;
+            return json_last_error() === JSON_ERROR_NONE ? $decoded : $decrypted;
         }
 
         return is_array(json_decode((string) $value, true)) ? json_decode((string) $value, true) : $value;
@@ -82,16 +97,14 @@ class Session
     public static function set($key, $value)
     {
         // Jika value adalah array, ubah menjadi JSON string agar bisa dienkripsi
-        $processedValue = is_array($value) || is_object($value) 
-            ? json_encode($value) 
-            : $value;
+        $processedValue = is_array($value) || is_object($value) ? json_encode($value) : $value;
 
-        if (config('session.encrypt')) {
+        if (config("session.encrypt")) {
             $processedValue = encryptData($processedValue);
         }
 
         $_SESSION[$key] = $processedValue;
-        
+
         return true;
     }
 
@@ -114,10 +127,11 @@ class Session
      */
     public static function unset($key, $recursive_unset = false)
     {
-        if($recursive_unset)
+        if ($recursive_unset) {
             recursive_unset($_SESSION, $key);
-        else
+        } else {
             unset($_SESSION[$key]);
+        }
     }
 
     /**
@@ -127,15 +141,14 @@ class Session
      */
     public static function destroy()
     {
-        $key = Config::get('session.csrf_token');
+        $key = Config::get("session.csrf_token");
         $csrfToken = self::get($key);
         session_unset();
         $_SESSION = [];
-        
+
         if (session_status() == PHP_SESSION_ACTIVE) {
             session_destroy();
         }
-
 
         self::set($key, $csrfToken);
     }
@@ -147,11 +160,11 @@ class Session
      */
     public static function softDestroy()
     {
-
-        $ignoreKeys = [Config::get('session.csrf_token'), '_previous_uri', 'IPaddress', 'userAgent'];
-        foreach($_SESSION as $key =>$value) {
-            if(! in_array($key, $ignoreKeys))
+        $ignoreKeys = [Config::get("session.csrf_token"), "_previous_uri", "IPaddress", "userAgent"];
+        foreach ($_SESSION as $key => $value) {
+            if (!in_array($key, $ignoreKeys)) {
                 unset($_SESSION[$key]);
+            }
         }
     }
 
@@ -183,7 +196,7 @@ class Session
      */
     public static function getPreviousUri()
     {
-        return self::get('_previous_uri');
+        return self::get("_previous_uri");
     }
 
     /**
@@ -194,7 +207,7 @@ class Session
      */
     public static function setPreviousUri($uri)
     {
-        self::set('_previous_uri', $uri);
+        self::set("_previous_uri", $uri);
     }
 
     /**
@@ -205,8 +218,7 @@ class Session
      */
     public static function getOldInput($key)
     {
-        return isset(self::get('_old_input')[$key])
-            ? self::flash('_old_input')[$key] : '';
+        return isset(self::get("_old_input")[$key]) ? self::flash("_old_input")[$key] : "";
     }
 
     /**
@@ -221,6 +233,6 @@ class Session
             $inputs[e($input)] = e($value);
         }
 
-        self::set('_old_input', $inputs);
+        self::set("_old_input", $inputs);
     }
 }
