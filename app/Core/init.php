@@ -5,8 +5,16 @@
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
-if (!defined("BASEPATH")) {
-    define("BASEPATH", __DIR__ . "/../..");
+ if (!defined("BASEPATH")) {
+    // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
+    $calculatedPath = realpath(__DIR__ . "/../..");
+    
+    // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
+    if (str_contains($calculatedPath, '/app/app')) {
+        $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
+    }
+    
+    define("BASEPATH", $calculatedPath);
 }
 
 if (!defined("BASEPATH_FFI")) {

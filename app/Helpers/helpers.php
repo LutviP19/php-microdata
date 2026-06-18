@@ -569,7 +569,8 @@ function formatRoutePath(string $path, bool $reserve = false): string
 }
 
 /**
- * Mengubah path file menjadi format Namespace PHP
+ * Mengubah path file menjadi format Namespace PHP, memastikan diawali dengan App\,
+ * mempertahankan format huruf kecil untuk versi (v1), dan membersihkan backslash ganda.
  */
 function pathToNamespace(string $path): string
 {
@@ -579,19 +580,33 @@ function pathToNamespace(string $path): string
     // 2. Pecah berdasarkan slash (baik / maupun \)
     $segments = explode("/", str_replace("\\", "/", $path));
 
-    // 3. Format setiap segmen (Kapitalisasi)
+    // 3. Format setiap segmen
     $formattedSegments = array_map(function ($segment) {
-        // Jika segmen adalah versi (misal: v1), ubah jadi V1
+        // Jika segmen adalah versi (misal: v1, v2), paksa jadi huruf kecil (v1)
         if (preg_match('/^v\d+$/i', $segment)) {
-            return strtoupper($segment);
+            return strtolower($segment);
         }
 
-        // Ubah jadi PascalCase (dashboard -> Dashboard)
+        // Selain versi, ubah jadi PascalCase (authModel -> AuthModel)
         return ucwords($segment);
     }, $segments);
 
     // 4. Gabungkan kembali dengan Backslash
-    return implode("\\", $formattedSegments);
+    $namespace = implode("\\", $formattedSegments);
+
+    // 5. Tambahkan handler App\ jika belum ada di awal string
+    if (!preg_match('/^app\\\\/i', $namespace)) {
+        $namespace = 'App\\' . $namespace;
+    } else {
+        // Jika sudah ada kata 'app' di awal, pastikan formatnya kapital 'App\'
+        $namespace = preg_replace('/^app\\\\/i', 'App\\', $namespace);
+    }
+
+    // 6. PERBAIKAN UTAMA: Bersihkan semua double backslash (\\) menjadi single backslash (\)
+    // Gunakan preg_replace untuk mencari dua atau lebih backslash berturut-turut
+    $namespace = preg_replace('/\\\\+/', '\\', $namespace);
+
+    return $namespace;
 }
 
 /**

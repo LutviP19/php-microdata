@@ -12,6 +12,9 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Throwable;
 use Exception;
+use Closure;
+use ReflectionClass;
+use ReflectionException;
 
 /**
  * App Container.
@@ -31,9 +34,48 @@ class App
      * @param string $key
      * @return mixed
      */
-    public static function get($key)
+    public static function get(string $key): mixed
     {
-        return self::has($key) ? self::$registry[$key] : false;
+        // return self::has($key) ? self::$registry[$key] : false;
+
+        // // PERBAIKAN UTAMA: Menggunakan array_key_exists alih-alih isset.
+        // // Ini memastikan jika service terdaftar sebagai null (karena RabbitMQ/Redis down di Docker lokal),
+        // // fungsi ini tetap mengembalikan nilai null asli, bukan mereturn nilai boolean false.
+        // return array_key_exists($key, self::$registry) ? self::$registry[$key] : null;
+
+        // if (!array_key_exists($key, self::$registry)) {
+        //     return null;
+        // }
+
+        // // === FITUR SINGLETON AUTOMATIC RESOLUTION ===
+        // // Jika service yang disimpan berupa instance dari Closure (Fungsi),
+        // // eksekusi fungsi tersebut untuk membuat objek aslinya, 
+        // // lalu timpa registry dengan hasil objek asli tersebut agar menjadi static instansiasi tunggal.
+        // if (self::$registry[$key] instanceof Closure) {
+        //     self::$registry[$key] = self::$registry[$key]();
+        // }
+
+        // return self::$registry[$key];
+
+        // 1. Jika service sudah terdaftar langsung di container
+        if (array_key_exists($key, self::$registry)) {
+            if (self::$registry[$key] instanceof Closure) {
+                self::$registry[$key] = self::$registry[$key]();
+            }
+            return self::$registry[$key];
+        }
+
+        // 2. JALUR AUTOWIRING: Jika key merupakan nama sebuah Class yang valid, 
+        // lakukan resolusi otomatis menggunakan Reflection API
+        if (class_exists($key)) {
+            try {
+                return self::resolve($key);
+            } catch (ReflectionException $e) {
+                throw new Exception("Gagal melakukan autowiring untuk kelas [{$key}]: " . $e->getMessage());
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -42,9 +84,12 @@ class App
      * @param string $key
      * @return bool
      */
-    public static function has($key)
+    public static function has(string $key): bool
     {
-        return isset(self::$registry[$key]) ? true : false;
+        // return isset(self::$registry[$key]) ? true : false;
+
+        // Menggunakan array_key_exists agar kolom yang bernilai null tetap dianggap "ada" kuncinya
+        return array_key_exists($key, self::$registry);
     }
 
     /**
@@ -54,9 +99,140 @@ class App
      * @param mixed $value
      * @return void
      */
-    public static function register($key, $value)
+    public static function register(string $key, mixed $value): void
     {
         self::$registry[$key] = $value;
+    }
+
+     /**
+     * Menghapus service tertentu dari container jika dibutuhkan (Opsional/Utilitas)
+     * 
+     * @param string $key
+     * @return void
+     */
+    public static function unregister(string $key): void
+    {
+        if (self::has($key)) {
+            unset(self::$registry[$key]);
+        }
+    }
+
+    /**
+     * Fitur Baru: Mendaftarkan service dengan skema Singleton (Lazy Loading)
+     * Objek tidak akan dibuat sebelum fungsi App::get() dipanggil pertama kali.
+     * 
+     * @param string $key Nama alias service
+     * @param Closure $callback Fungsi pembuat objek instansiasi
+     * @return void
+     */
+    public static function singleton(string $key, Closure $callback): void
+    {
+        self::$registry[$key] = $callback;
+    }
+
+    /**
+     * Logika utama Autowiring menggunakan Reflection API (Resolusi Dependensi Otomatis)
+     */
+    private static function resolve(string $className): mixed
+    {
+        $reflector = new ReflectionClass($className);
+
+        // Jika kelas tidak bisa di-instansiasi (misal: Interface atau Abstract Class)
+        if (!$reflector->isInstantiable()) {
+            throw new Exception("Kelas [{$className}] bukan merupakan kelas yang dapat di-instansiasi.");
+        }
+
+        // Ambil konstruktor dari kelas tersebut
+        $constructor = $reflector->getConstructor();
+
+        // Jika tidak memiliki konstruktor, langsung buat objek baru tanpa argumen
+        if (is_null($constructor)) {
+            return new $className();
+        }
+
+        // Ambil daftar parameter dari konstruktor
+        $parameters = $constructor->getParameters();
+        $dependencies = [];
+
+        foreach ($parameters as $parameter) {
+            // Ambil tipe data class dari parameter (PHP 8 ReflectionType)
+            $type = $parameter->getType();
+
+            // Jika parameter tidak memiliki tipe data (type-hint) kelas, atau merupakan tipe primitif (string, int, dll)
+            if (!$type || $type->isBuiltin()) {
+                if ($parameter->isDefaultValueAvailable()) {
+                    $dependencies[] = $parameter->getDefaultValue();
+                    continue;
+                }
+                throw new Exception("Tidak dapat menyelesaikan parameter [{$parameter->getName()}] di kelas [{$className}] karena tidak memiliki tipe kelas yang valid.");
+            }
+
+            // Ambil nama lengkap kelas dari parameter tersebut
+            $dependencyClassName = $type->getName();
+
+            // Panggil App::get() secara rekursif untuk menyelesaikan dependensi ini
+            $dependencies[] = self::get($dependencyClassName);
+        }
+
+        // Buat objek baru dengan menyuntikkan seluruh dependensi yang berhasil di-resolve
+        return $reflector->newInstanceArgs($dependencies);
+    }
+
+    /**
+     * Mengeksekusi (Invoke) sebuah method pada objek tertentu dengan autowiring parameter.
+     * 
+     * @param array|callable $callback Format: [$objectInstance, 'methodName']
+     * @param array $routeParams Parameter dinamis dari URL (misal: ['id' => 77])
+     * @return mixed Hasil eksekusi dari method tersebut
+     * @throws Exception
+     */
+    public static function call(array|callable $callback, array $routeParams = []): mixed
+    {
+        if (!is_array($callback)) {
+            return call_user_func($callback, $routeParams);
+        }
+
+        [$instance, $method] = $callback;
+        
+        try {
+            // Gunakan ReflectionMethod untuk membedah parameter fungsi Controller
+            $reflectionMethod = new \ReflectionMethod($instance, $method);
+            $parameters = $reflectionMethod->getParameters();
+            $arguments = [];
+
+            foreach ($parameters as $parameter) {
+                $type = $parameter->getType();
+                $paramName = $parameter->getName();
+
+                // 1. KONDISI A: Parameter memiliki type-hint sebuah CLASS (seperti Request, UserRepository)
+                if ($type && !$type->isBuiltin()) {
+                    $dependencyClass = $type->getName();
+                    // Resolve otomatis menggunakan fungsi App::get() yang sudah kita buat sebelumnya
+                    $arguments[] = self::get($dependencyClass);
+                    continue;
+                }
+
+                // 2. KONDISI B: Parameter merupakan variabel primitif dari URL (seperti $id atau $slug)
+                if (array_key_exists($paramName, $routeParams)) {
+                    $arguments[] = $routeParams[$paramName];
+                    continue;
+                }
+
+                // 3. KONDISI C: Gunakan nilai default jika tersedia (misal: $status = 1)
+                if ($parameter->isDefaultValueAvailable()) {
+                    $arguments[] = $parameter->getDefaultValue();
+                    continue;
+                }
+
+                throw new \Exception("Tidak dapat menyelesaikan parameter [\${$paramName}] pada metode [{$method}].");
+            }
+
+            // Eksekusi metode Controller dengan seluruh argumen yang sudah dirakit
+            return $reflectionMethod->invokeArgs($instance, $arguments);
+
+        } catch (\ReflectionException $e) {
+            throw new \Exception("Gagal melakukan autowiring pada metode: " . $e->getMessage());
+        }
     }
 
     /**

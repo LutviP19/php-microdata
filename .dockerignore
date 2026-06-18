@@ -1,0 +1,40 @@
+# === File Lingkungan / Kredensial Sensitif ===
+.env
+.env.backup
+
+# === File Konfigurasi Lokal ===
+Caddyfile
+rector.php
+
+# === File Cache, Lock, & Temporary ===
+*.pid
+*.cache
+*.zip
+*.lock
+*.old
+*.bak
+*.sample
+*DS*
+NOTES.txt
+SNIP.txt
+last_run.txt
+cron_log.txt
+*.log
+
+# === Folder Dependensi Lokal ===
+node_modules/
+vendor/
+examples/
+
+# === Folder Konfigurasi Text Editor / IDE ===
+.fleet/
+.idea/
+.nova/
+.vscode/
+.zed/
+
+# === File Sampah macOS (Thumbnail & Metadata) ===
+.DS_Store
+**/.DS_Store
+._*
+**/._*
