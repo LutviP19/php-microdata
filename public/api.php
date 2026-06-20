@@ -8,10 +8,10 @@
 
 if (!defined("BASEPATH")) {
     // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
-    $calculatedPath = realpath(__DIR__ . "/..");
+    $calculatedPath = __DIR__ . "/..";
     
     // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
-    if (str_contains($calculatedPath, '/app/app')) {
+    if (str_contains(realpath($calculatedPath), '/app/app')) {
         $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
     }
     
