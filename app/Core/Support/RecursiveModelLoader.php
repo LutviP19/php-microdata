@@ -17,6 +17,11 @@ class RecursiveModelLoader
         // Load konfigurasi modul
         $this->moduleConfig = $config["modules"] ?? [];
         $this->dataMapping = $config["data_mapping"] ?? [];
+
+        // Fix Docker - App Path
+        if (str_contains($this->basePath, '/app/app')) {
+            $this->basePath = str_replace('/app/app', '/app', $this->basePath);
+        }
     }
 
     /**
@@ -86,7 +91,7 @@ class RecursiveModelLoader
 
         $baseDataPath = str_replace("Models/" . $version, "Data/" . $parentFolder, $baseModelPath);
         $baseStructsPath = str_replace("Models/" . $version, "Structs/" . $parentFolder, $baseModelPath);
-        // dd($baseDataPath);
+        dd($baseDataPath);
 
         return [
             "page" => strtolower((string) $cleanName),
