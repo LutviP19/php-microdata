@@ -5,11 +5,7 @@
  *  main app configurations
  */
 
-// if (!defined('BASEPATH')) {
-//     define('BASEPATH', str_replace('/config', '', __DIR__));
-// }
-
-if (!defined("BASEPATH")) {
+ if (!defined("BASEPATH")) {
     // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
     $calculatedPath = realpath(__DIR__ . "/..");
     

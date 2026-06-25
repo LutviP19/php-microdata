@@ -27,10 +27,6 @@ class RecursiveModelLoader
         $modelName = $version = null;
         $baseModelPath = $this->basePath . "/Models/";
 
-        // // Fix docker path
-        // $baseModelPath = str_starts_with($baseModelPath, '/app') ? substr($baseModelPath, 4) : $baseModelPath;
-        // // dd($baseModelPath);
-
         // Jika input adalah "v1-dashboard"
         if (str_contains((string) $page, "-")) {
             $parts = explode("-", (string) $page, 2); // ['v1', 'dashboard']
@@ -51,7 +47,7 @@ class RecursiveModelLoader
             // Normalisasi slug (e.g., 'dashboard-stats' -> 'DashboardStats')
             $cleanName = str_replace(" ", "", ucwords(str_replace(["-", "_"], " ", $page)));
         }
-        // dd($baseModelPath); //debug: $page | $version | $baseModelPath | $cleanName
+        // dd($page); //debug: $page | $version | $baseModelPath | $cleanName
 
         // 1. Identifikasi Model (Models biasanya di root folder Models)
         $findListedModels = $this->findListedModels($page, $version, $baseModelPath);

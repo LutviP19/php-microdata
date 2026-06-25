@@ -29,3 +29,4 @@ rector.php
 **/.DS_Store
 ._*
 **/._*
+.phpactor.json

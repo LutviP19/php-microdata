@@ -28,7 +28,6 @@ use App\Core\Auth\SodiumAuth;
 // echo bin2hex(random_bytes(32)).PHP_EOL;
 // php -r "echo bin2hex(random_bytes(32)).PHP_EOL;"
 
-
 // // Testing Class
 // class Testing extends \App\Models\BaseModel
 // {
@@ -47,10 +46,8 @@ use App\Core\Auth\SodiumAuth;
 // $testing = new Testing();
 // exit;
 
-
-$isInsomnia = str_contains((string) $_SERVER['HTTP_USER_AGENT'], 'insomnia');
+$isInsomnia = str_contains((string) $_SERVER["HTTP_USER_AGENT"], "insomnia");
 // dd($isInsomnia);
-
 
 // Testing - Protobuf:
 $bridge = new \App\Core\FFI\ProtoBridge();
@@ -82,124 +79,117 @@ $extraPayload = "ini data biner rahasia";
 // dd($dataArray, true);
 // exit;
 
+// // Testing CURL - Client Web
+// $streamer = new NativeCurlStreamer();
+// $start = microtime(true);
 
-// Testing CURL - Client Web
-$streamer = new NativeCurlStreamer();
-$start = microtime(true);
+// try {
+//     // A. TEST SINGLE STREAM
+//     // echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
 
-try {
-    // A. TEST SINGLE STREAM
-    // echo "=== TESTING CURL STREAM - Client Webhook ===<br>" . PHP_EOL;
+//     // // Test JSON
+//     // $singleTask = App::externalApi('microdata_client_web', [
+//     //     'body' => json_encode([
+//     //                 'email' => 'test@microdata.local',
+//     //                 'password' => 'abcde1234',
+//     //                 // List Events should be run
+//     //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
+//     //             ])
+//     // ]);
 
+//     // $single = $streamer->singleStream($singleTask);
+//     // // dd($single, true);
+//     // // dd($single['statusCode'], true);
 
-    // // Test JSON
-    // $singleTask = App::externalApi('microdata_client_web', [
-    //     'body' => json_encode([
-    //                 'email' => 'test@microdata.local',
-    //                 'password' => 'abcde1234',
-    //                 // List Events should be run
-    //                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
-    //             ])
-    // ]);
+//     // Test JSON Protobuf
+//     $singleProtoTask = App::externalApi('microdata_client_web', [
+//         'body' => json_encode([
+//                     'email' => 'test@microdata.local',
+//                     'password' => 'abcde1234',
+//                     // List Events should be run
+//                     'calledEvents' => ['order.created', 'order.payment', 'order.notif']
+//                 ])
+//     ]);
+//     $single = $streamer->singleStream($singleProtoTask);
+//     // dd($single);
+//     // End - Test JSON Protobuf
 
-    // $single = $streamer->singleStream($singleTask);
-    // // dd($single, true);
-    // // dd($single['statusCode'], true);
+//     if ($single['error']) {
+//         // Error ini sudah tercatat di log secara otomatis
+//         echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
+//     } else {
 
+//         $response = $single['body'];
 
+//         // Curl Decode
+//         if (json_validate($response)) {
+//             $dataCurl = json_decode($response, true);
 
-    // Test JSON Protobuf
-    $singleProtoTask = App::externalApi('microdata_client_web', [
-        'body' => json_encode([
-                    'email' => 'test@microdata.local',
-                    'password' => 'abcde1234',
-                    // List Events should be run
-                    'calledEvents' => ['order.created', 'order.payment', 'order.notif']
-                ])
-    ]);
-    $single = $streamer->singleStream($singleProtoTask);
-    // dd($single);
-    // End - Test JSON Protobuf
+//             if($isInsomnia) {
+//                 // unpack - ['data']['content']
+//                 if(isset($dataCurl['data']) && is_string($dataCurl['data'])) {
+//                     // $dataCurl['data'] = json_decode($bridge->unpack(base64_decode($dataCurl['data']))['content'], true);
+//                     $dataCurl['data'] = $bridge->unpack($dataCurl['data'], false);
+//                     $dataCurl['data']['content'] = json_decode($dataCurl['data']['content'], true);
+//                 }
 
-    if ($single['error']) {
-        // Error ini sudah tercatat di log secara otomatis
-        echo "Gagal memproses data: " . $single['error'] ."<br>". PHP_EOL;
-    } else {
+//                 dd($dataCurl, true);
+//             }
+//         }
 
-        $response = $single['body'];
+//         // Test JSON Protobuf
+//         $dataProto = $bridge->unpack($response);
+//         $data = json_decode($dataProto['content'], true);
+//         $metadata = $dataProto['metadata'];
+//         $payload_raw = $dataProto['payload_raw'];
 
-        // Curl Decode
-        if (json_validate($response)) {
-            $dataCurl = json_decode($response, true);
+//         if($isInsomnia) {
+//             $payload_raw = hex2bin($payload_raw);
+//             $responseProto = [
+//                 'status' => true,
+//                 'statusCode' => $single['statusCode'],
+//                 'message' => 'Testing Curl Protobuf',
+//                 'data' => [
+//                     'content' => $data,
+//                     'metadata' => $metadata,
+//                     'payload_raw' => $payload_raw,
+//                     'payload_size' => strlen($payload_raw),
+//                 ]
+//             ];
+//             dd($responseProto, true);
+//         }
 
-            if($isInsomnia) {
-                // unpack - ['data']['content']
-                if(isset($dataCurl['data']) && is_string($dataCurl['data'])) {
-                    // $dataCurl['data'] = json_decode($bridge->unpack(base64_decode($dataCurl['data']))['content'], true);
-                    $dataCurl['data'] = $bridge->unpack($dataCurl['data'], false);
-                    $dataCurl['data']['content'] = json_decode($dataCurl['data']['content'], true);
-                }
+//         // Jika metadata ada isinya
+//         echo "metadata: ";
+//         print_r($metadata);
+//         echo "<br>". PHP_EOL;
 
-                dd($dataCurl, true);
-            }
-        }
+//         // Jika ingin mengambil kembali payload aslinya
+//         $originalPayload = hex2bin($payload_raw);
+//         echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
 
+//         echo "content: ";
+//         print_r($data, true);
+//         // End - Test JSON Protobuf
 
-        // Test JSON Protobuf
-        $dataProto = $bridge->unpack($response);
-        $data = json_decode($dataProto['content'], true);
-        $metadata = $dataProto['metadata'];
-        $payload_raw = $dataProto['payload_raw'];
+//         if ($dataCurl['statusCode'] >= 200 && $dataCurl['statusCode'] < 300) {
+//             // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
+//             echo "Single Response: " . json_encode($dataCurl) ."<br>". PHP_EOL;
+//         } else {
+//             $statusCode = $dataCurl['statusCode'];
+//             echo "Request Single Error: {$statusCode} - " . ($dataCurl['message'] ?? 'N/A') ."<br>". PHP_EOL;
+//         }
+//     }
 
-        if($isInsomnia) {
-            $payload_raw = hex2bin($payload_raw);
-            $responseProto = [
-                'status' => true,
-                'statusCode' => $single['statusCode'],
-                'message' => 'Testing Curl Protobuf',
-                'data' => [
-                    'content' => $data,                    
-                    'metadata' => $metadata,
-                    'payload_raw' => $payload_raw,
-                    'payload_size' => strlen($payload_raw),
-                ]                
-            ];
-            dd($responseProto, true);
-        }
-
-        // Jika metadata ada isinya
-        echo "metadata: ";
-        print_r($metadata);
-        echo "<br>". PHP_EOL;
-
-        // Jika ingin mengambil kembali payload aslinya
-        $originalPayload = hex2bin($payload_raw);
-        echo "payload_raw: " . $originalPayload."<br>". PHP_EOL; // "ini data biner rahasia"
-
-        echo "content: ";
-        print_r($data, true);
-        // End - Test JSON Protobuf
-
-
-        if ($dataCurl['statusCode'] >= 200 && $dataCurl['statusCode'] < 300) {
-            // echo "Single Response: " . json_encode($data['data']['pagination_data']['meta']) . PHP_EOL;
-            echo "Single Response: " . json_encode($dataCurl) ."<br>". PHP_EOL;
-        } else {
-            $statusCode = $dataCurl['statusCode'];
-            echo "Request Single Error: {$statusCode} - " . ($dataCurl['message'] ?? 'N/A') ."<br>". PHP_EOL;
-        }
-    }
-
-} catch (Exception $e) {
-    echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
-} finally {
-    $time = microtime(true) - $start;
-    echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
-    echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
-    echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
-}
-exit;
-
+// } catch (Exception $e) {
+//     echo "Fatal Error: " . $e->getMessage() ."<br>". PHP_EOL;
+// } finally {
+//     $time = microtime(true) - $start;
+//     echo PHP_EOL . "--------------------------------------<br>" . PHP_EOL;
+//     echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
+//     echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
+// }
+// exit;
 
 // // Sodium V4 (Asymmetric - Ed25519)
 // // ----------------
@@ -227,7 +217,6 @@ exit;
 // }
 // exit;
 // // ==============
-
 
 // // Saat register karyawan baru
 // // $newUlid = \App\Core\Support\UlidGenerator::generate(); // Hasil: 01H7XRMZ5W...
@@ -307,7 +296,6 @@ exit;
 // echo "<pre>" . json_encode($dataToken, JSON_PRETTY_PRINT) ."</pre>";
 // echo "<br>-------<br>" . PHP_EOL;
 
-
 // // Validasi - Middleware: Apakah token ada, tipenya 'refresh', dan belum expired?
 // $oldRefreshToken = $dataToken['refresh_token'] ?? '';
 // $data = $auth->decode($oldRefreshToken);
@@ -333,8 +321,6 @@ exit;
 // echo "<br>-------<br>" . PHP_EOL;
 // exit;
 
-
-
 // // Sample Cara Implementasi JWT Permission
 // use App\Core\Auth\JWT;
 
@@ -359,7 +345,6 @@ exit;
 // $token = $jwt->encode($payload);
 // // dd($token);
 
-
 // // Cara Mengecek Permission di Sisi Server
 // $decoded = $jwt->decode($token);
 
@@ -375,7 +360,6 @@ exit;
 // }
 // exit;
 
-
 // echo "Testing script.";
 
 // dd(config('app'));
@@ -385,10 +369,10 @@ $cache = new \App\Core\Support\Cache();
 
 $request = $_GET;
 // Ambil data paginate result dari cache selama 5 menit
-$page = (int) ($request['page'] ?? 3);
-$limit = (int) ($request['limit'] ?? 50); // total data perpage
+$page = (int) ($request["page"] ?? 3);
+$limit = (int) ($request["limit"] ?? 50); // total data perpage
 
-$id = $request['id'] ?? null;
+$id = $request["id"] ?? null;
 
 // Maximum limit to render in browser
 // else using chunk - FFI
@@ -396,10 +380,9 @@ $maxLimitToRender = 10000;
 
 // Dynamic
 if ($limit >= $maxLimitToRender) {
-    $logDebug = "Memory PHP saat ini: " . (memory_get_usage(true) / 1024 / 1024) . " MB";
-    write_log($logDebug, 'static/testing.php', 'debug', 'debug_FFI.log');
+    $logDebug = "Memory PHP saat ini: " . memory_get_usage(true) / 1024 / 1024 . " MB";
+    write_log($logDebug, "static/testing.php", "debug", "debug_FFI.log");
 
-    
     try {
         // dd($limit);
         $options = [
@@ -415,11 +398,11 @@ if ($limit >= $maxLimitToRender) {
         $mainData->structClass = SallaryStruct::class;
 
         $status = 200;
-        $message = 'Testing Chunk FFI';
+        $message = "Testing Chunk FFI";
 
         // Max limit 100000 (untuk di Browser, Agar tidak Crash/Hang)
         // $limit = $limit > 100000 ? 100000 : $limit;
-        $chunkData = $mainData->getAllDataSalaries($id, $limit, '*', true);
+        $chunkData = $mainData->getAllDataSalaries($id, $limit, "*", true);
 
         // Gunakan helper
         if ($isInsomnia) {
@@ -441,7 +424,7 @@ if ($limit >= $maxLimitToRender) {
                 }
             }
             echo "Total data: " . number_format($counter, 0);
-            exit;
+            exit();
         }
 
         // // === MANUAL HANDLER
@@ -450,7 +433,6 @@ if ($limit >= $maxLimitToRender) {
         //         if (!connection_aborted()) {
         //             ini_set('zlib.output_compression', 'On');
         //         }
-
 
         //         header('Content-Type: application/json');
         //         // Matikan buffering Caddy/Nginx
@@ -464,7 +446,6 @@ if ($limit >= $maxLimitToRender) {
 
         //         // Pastikan output buffering PHP kosong
         //         while (ob_get_level()) ob_end_flush();
-
 
         //         echo '{';
         //         echo '"statusCode":' . $status . ',';
@@ -498,10 +479,9 @@ if ($limit >= $maxLimitToRender) {
         //             echo $counter;
         //         }
         // // === END MANUAL HANDLER
-
     } catch (\Throwable $e) {
         // Log error secara detail
-        echo("Gagal inisialisasi StatsData: " . $e->getMessage());
+        echo "Gagal inisialisasi StatsData: " . $e->getMessage();
         // Re-throw agar error detail (seperti typo function) muncul di log global
         throw $e;
     } finally {
@@ -511,7 +491,7 @@ if ($limit >= $maxLimitToRender) {
         // 3. Paksa PHP Engine membuang sampah memori
         gc_collect_cycles();
 
-        exit;
+        exit();
     }
 } else {
     $mainData = new StatsData();
@@ -519,7 +499,7 @@ if ($limit >= $maxLimitToRender) {
 }
 
 // Set table
-$table = 'salaries';
+$table = "salaries";
 $mainData->table($table);
 
 // Set limit agar bisa auto Stream
@@ -527,7 +507,7 @@ $mainData->limitToStream = 100;
 
 // Query Utama
 $dataEmployees = null;
-$query = "SELECT * FROM ".$table." ORDER BY to_date DESC";
+$query = "SELECT * FROM " . $table . " ORDER BY to_date DESC";
 
 // Cek limit agar otomatis masuk ke Mode Stream
 if ($limit > $mainData->limitToStream) {
@@ -535,13 +515,13 @@ if ($limit > $mainData->limitToStream) {
     // dd($dataEmployees['meta']);
 
     // Stream - Output
-    json_response_stream(200, 'testing-stream', $dataEmployees['data'], $dataEmployees['meta']);
+    json_response_stream(200, "testing-stream", $dataEmployees["data"], $dataEmployees["meta"]);
 } else {
-    $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+    $cleanQuery = preg_replace("/\s+/", " ", trim($query));
     $queryString = md5((string) $cleanQuery);
     $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataEmployees = $cache->remember($cacheKeyId, fn () => $mainData->paginate($query, [], $page, $limit), 300);
+    $dataEmployees = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
 }
 dd($dataEmployees, true);
 // echo "<pre>".json_encode($dataEmployees, JSON_PRETTY_PRINT)."</pre>";

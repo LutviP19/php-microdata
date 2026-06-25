@@ -576,6 +576,7 @@ function pathToNamespace(string $path): string
 {
     // 1. Hilangkan ekstensi .php
     $path = str_replace(".php", "", $path);
+    $path = str_replace(".php", "", $path);    
 
     // 2. Pecah berdasarkan slash (baik / maupun \)
     $segments = explode("/", str_replace("\\", "/", $path));
@@ -605,6 +606,7 @@ function pathToNamespace(string $path): string
     // 6. PERBAIKAN UTAMA: Bersihkan semua double backslash (\\) menjadi single backslash (\)
     // Gunakan preg_replace untuk mencari dua atau lebih backslash berturut-turut
     $namespace = preg_replace('/\\\\+/', '\\', $namespace);
+    $namespace = str_replace('App\App', 'App', $namespace);
 
     return $namespace;
 }

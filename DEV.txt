@@ -155,6 +155,26 @@ OR Publish to network:
 php -S 0.0.0.0:8000  -t public/
 
 
+Optional with Docker desktop
+----------------------------
+copy .env.docker -> .env
+run docker compose up -d
+migrate mysql database with phpMyAdmin
+-----
+Microdata App: 
+http://localhost:8000
+
+phpMyAdmin (Auto-login): 
+http://localhost:8080
+
+Redis Commander GUI: 
+http://localhost:8081
+
+RabbitMQ Dashboard: 
+http://localhost:15673 (User/Pass: guest/guest)
+
+------- End Docker
+
 Update composer :
 -----------------
 composer dump-autoload -o
