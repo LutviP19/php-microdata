@@ -2,8 +2,13 @@
 .env
 .env.backup
 
+# Mengabaikan folder git dan log lokal agar build lebih cepat
+.git
+.gitignore
+data/logs/*
+
 # === File Konfigurasi Lokal ===
-Caddyfile
+Caddyfile*
 rector.php
 
 # === File Cache, Lock, & Temporary ===

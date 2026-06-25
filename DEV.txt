@@ -544,3 +544,30 @@ vendor/bin/rector process > rector-master.log
 ######################################################
 ######################################################
 ######################################################
+
+php-microdata/                 # [Root Direktori Proyek di Host & /app di Docker]
+├── app/                       # Tempat logika utama aplikasi (Core & Domain)
+│   ├── Core/                  # Engine framework (Router, DI Container, Request/Response)
+│   ├── Data/                  # Abstraksi database (PDO, SQLite wrapper)
+│   ├── Helpers/               # Fungsi utilitas global
+│   ├── Listeners/             # Event listeners / RabbitMQ Event Handlers
+│   ├── Models/                # Kelas Model (berpasangan dengan modelPath resolver)
+│   └── Structs/               # PHP 8.5 Typed Properties / Data Transfer Object (DTO)
+├── ffi/               	       # Binding/Bridge ke shared library (.so / .dll)
+│   └── lib                    # Tempat shared library (.so / .dll)
+├── config/                    # File konfigurasi yang me-return array (database, redis, amqp)
+├── public/                    # Public Root (Hanya folder ini yang diekspos ke internet)
+│   ├── api.php                # ENTRY POINT UTAMA: Untuk Worker API (/api/*)
+│   └── index.php              # ENTRY POINT KEDUA: Untuk Web/HTMX (UI/Non-Worker)
+├── storage/                   # Tempat file sementara & log
+│   └── logs/  
+│       └── docker/            # Di-mount ke docker host untuk melihat log api/web
+├── cron/                      # Worker CLI / Background Consumer
+│   └── rabbitmq-receiver.php  # Daemon script untuk memproses antrean RabbitMQ via CLI
+├── Caddyfile-docker           # Konfigurasi FrankenPHP Server untuk Docker
+├── Dockerfile                 # Blueprint Image Docker (Alpine/Debian + FFI)
+├── docker-compose.yml         # Orkestrasi container (PHP, MySQL, Redis, RabbitMQ)
+└── php.ini                    # Kustomisasi php.ini (ffi.enable=preload, opcache, dll)
+
+
+

@@ -13,15 +13,10 @@ class RecursiveModelLoader
 
     public function __construct(private readonly ?array $config = [])
     {
-        $this->basePath = realpath(config("app.path") . "/app");
+        $this->basePath = config("app.path");
         // Load konfigurasi modul
         $this->moduleConfig = $config["modules"] ?? [];
         $this->dataMapping = $config["data_mapping"] ?? [];
-
-        // Fix Docker - App Path
-        if (str_contains($this->basePath, '/app/app')) {
-            $this->basePath = str_replace('/app/app', '/app', $this->basePath);
-        }
     }
 
     /**
@@ -31,6 +26,7 @@ class RecursiveModelLoader
     {
         $modelName = $version = null;
         $baseModelPath = $this->basePath . "/Models/";
+        // dd($baseModelPath);
 
         // Jika input adalah "v1-dashboard"
         if (str_contains((string) $page, "-")) {
@@ -69,8 +65,7 @@ class RecursiveModelLoader
             $modelName = $cleanName . "Model";
         }
 
-        $modelPath = $baseModelPath . $modelName . ".php";
-        // dd($modelName); //debug: $modelName | $modelPath
+        $modelPath = $baseModelPath . $modelName . ".php";        
 
         // Jika model tidak ditemukan di root, kita asumsikan $page mungkin mengandung folder
         // Namun sesuai struktur Anda, DashboardModel.php ada di root.
@@ -89,9 +84,21 @@ class RecursiveModelLoader
         $structName = $cleanName . "Struct";
         $dataName = $this->getDataName($cleanName); // e.g., Stats -> StatsData
 
+        // Fix Docker - baseModelPath
+        if (str_contains($baseModelPath, '/app/app')) {
+            $baseModelPath = str_replace('/app/app', '/app', $baseModelPath);
+        }
+        // dd($baseModelPath);
+
+        // Fix Docker - modelPath
+        if (str_contains($modelPath, '/app/app')) {
+            $modelPath = str_replace('/app/app', '/app', $modelPath);
+        }
+        // dd($modelPath);
+
         $baseDataPath = str_replace("Models/" . $version, "Data/" . $parentFolder, $baseModelPath);
-        $baseStructsPath = str_replace("Models/" . $version, "Structs/" . $parentFolder, $baseModelPath);
-        dd($baseDataPath);
+        $baseStructsPath = str_replace("Models/" . $version, "Structs/" . $parentFolder, $baseModelPath);        
+        // dd($baseStructsPath);
 
         return [
             "page" => strtolower((string) $cleanName),

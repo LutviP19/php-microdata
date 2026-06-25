@@ -22,12 +22,12 @@ if (!defined("BASEPATH")) {
 // Bagian ini hanya dijalankan SEKALI saat worker pertama kali naik.
 // Sangat efisien untuk i5-3210M karena load file init & composer dilakukan sekali saja.
 require_once BASEPATH . "/app/Core/init.php";
-// include BASEPATH . "/config/router.php";
 
 // write_log("Api server run", 'api.php', 'debug', 'debug_API.log');
 
 // load router
 $router = require BASEPATH . "/config/router.php";
+dd($router);
 
 // Mapping Models
 $models = require BASEPATH . "/config/models.php";

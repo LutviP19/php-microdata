@@ -1,0 +1,81 @@
+{
+    # Global options
+    frankenphp {
+        num_threads 8
+        php_ini {
+            memory_limit 512M
+            max_execution_time 15
+            opcache.enable 1
+            opcache.enable_cli 1
+            opcache.memory_consumption 256
+            opcache.interned_strings_buffer 16
+            opcache.jit_buffer_size 64M
+            opcache.jit tracing
+        }
+
+        # PERBAIKAN DOCKER: Daftarkan kedua worker di area global dengan PATH ABSOLUT (/app)
+        worker /app/public/api.php {
+            num 4
+            watch /app/app/**/*.php /app/config/**/*.php /app/views/**/*.php /app/static/**/*.php /app/public/api.php
+        }
+        worker /app/public/index.php {
+            num 4
+            watch /app/app/**/*.php /app/views/**/*.php /app/public/index.php
+        }
+    }
+    servers {
+        # PERBAIKAN DOCKER: Tambahkan CIDR /0 agar mencakup semua network internal docker bridge
+        trusted_proxies static 0.0.0.0/0
+    }
+    auto_https off
+}
+
+http://localhost:8000 {
+    # PERBAIKAN DOCKER: Ubah ke path absolut aplikasi di dalam container
+    root * /app/public
+
+    # LOGGING (Format default untuk stdout Docker agar langsung terbaca di `docker logs`)
+    log {
+        format console
+    }
+
+    encode zstd br gzip {
+        minimum_length 1
+    }
+
+    # PERBAIKAN CORS: Validasi multi-domain dinamis menggunakan Regex Matcher Caddy
+    @origin_allowed header_regexp Origin `^https?://(localhost|demo\.test|demo\.local|demo\.app\.com|192\.168\.0\.100|127\.0\.0\.1)(:\d+)?$`
+    header @origin_allowed Access-Control-Allow-Origin "{header.Origin}"
+    header ?Access-Control-Allow-Origin "http://localhost:8000" 
+
+    header {
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, X-Api-Key, HTTP_X_PMD_SIGNATURE, HTTP_X_PMD_TIMESTAMP, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
+        Access-Control-Allow-Credentials "true"
+        Vary Origin
+    }
+
+    @options method OPTIONS
+    respond @options 204
+
+    # PERBAIKAN ROUTING DOCKER: Bungkus dengan route {} untuk mematikan auto-ordering bawaan Caddy
+    route {
+        # PRIORITAS 1: Tangkap semua rute dengan prefix /api
+        @api_routes path /api/*
+        handle @api_routes {
+            # Paksa Caddy menganggap request ini ditargetkan ke file fisik api.php
+            # Tambahkan {uri} di belakangnya agar framework Anda tetap bisa membaca route asli (misal: /api/v1/auth)
+            rewrite * /api.php{uri}
+            
+            frankenphp_server
+        }
+
+        # PRIORITAS 2: Sisanya dilempar ke Web/HTMX (index.php)
+        handle {
+            # Cek apakah file fisik ada (css, js, images). Jika tidak ada, arahkan ke index.php
+            try_files {path} /index.php{uri}
+            
+            frankenphp_server
+        }
+    }
+}
