@@ -5,8 +5,20 @@
  *  main app configurations
  */
 
-if (!defined('BASEPATH')) {
-    define('BASEPATH', str_replace('/config', '', __DIR__));
+// if (!defined('BASEPATH')) {
+//     define('BASEPATH', str_replace('/config', '', __DIR__));
+// }
+
+if (!defined("BASEPATH")) {
+    // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
+    $calculatedPath = realpath(__DIR__ . "/..");
+    
+    // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
+    if (str_contains($calculatedPath, '/app/app')) {
+        $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
+    }
+    
+    define("BASEPATH", $calculatedPath);
 }
 
 /**

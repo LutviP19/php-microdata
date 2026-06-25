@@ -1,6 +1,6 @@
 {
     "name": "lutvip19/php-microdata",
-    "license": "Apache-2.0 license",
+    "license": "Apache-2.0",
     "description": "Micro system of PHP8 with FFi",
     "keywords": ["php8", "ffi", "cronjob", "microservices", "frankenphp"],
     "require": {
