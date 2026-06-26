@@ -47,16 +47,53 @@ function e($str, $doubleEncode = true)
     // return htmlspecialchars($str ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', $doubleEncode);
 }
 
-/**
- * default database path for sqlite
- *
- * @param  string $key
- *
- * @return string
- */
-function storage_path($filePath)
-{
-    return BASEPATH . "storage/" . $filePath;
+
+if (!function_exists('normalize_path')) {
+    /**
+     * Menormalisasi path agar kompatibel dengan Docker, Linux, dan Windows
+     *
+     * @param string $path Path mentah yang ingin diperbaiki
+     * @return string Path yang sudah dinormalisasi sesuai OS
+     */
+    function normalize_path(string $path): string
+    {
+        // 1. Ubah semua backslash (\) dan forward slash (/) menjadi separator bawaan OS saat ini
+        $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+        
+        // 2. Bersihkan separator ganda yang tidak sengaja terbentuk (misal: /// atau \\)
+        $double_separator = DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR;
+        while (strpos($normalized, $double_separator) !== false) {
+            $normalized = str_replace($double_separator, DIRECTORY_SEPARATOR, $normalized);
+        }
+        
+        return $normalized;
+    }
+}
+
+if (!function_exists('storage_path')) {
+    /**
+     * Helper khusus untuk mendapatkan path ke folder storage beserta auto-create folder
+     *
+     * @param string $sub_path Sub-folder atau nama file di dalam storage
+     * @return string Path absolut yang aman
+     */
+    function storage_path(string $sub_path = ''): string
+    {
+        // Gabungkan BASEPATH dengan folder storage dan sub-path-nya
+        $full_path = rtrim(BASEPATH, '/\\') . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . $sub_path;
+        $normalized_path = normalize_path($full_path);
+        
+        // Ambil path direktorinya saja (tanpa nama file di ujung) untuk dicek/dibuat
+        $directory = is_dir($normalized_path) ? $normalized_path : dirname($normalized_path);
+        
+        // Jika folder tujuan belum ada di Ubuntu/Docker, buat otomatis dengan permission yang benar
+        if (!is_dir($directory)) {
+            // 0775 memberikan hak akses tulis (write) bagi PHP/Web Server di Linux
+            mkdir($directory, 0775, true);
+        }
+        
+        return $normalized_path;
+    }
 }
 
 /**
@@ -68,7 +105,7 @@ function storage_path($filePath)
  */
 function database_path($db_name)
 {
-    return BASEPATH . "storage/database/" . $db_name;
+    return storage_path('database' . DIRECTORY_SEPARATOR . $db_name);
 }
 
 /**
@@ -80,7 +117,7 @@ function database_path($db_name)
  */
 function logs_path($log_name)
 {
-    return BASEPATH . "storage/logs/" . $log_name;
+    return storage_path('logs' . DIRECTORY_SEPARATOR . $log_name);
 }
 
 /**
@@ -638,7 +675,7 @@ if (!function_exists("write_log")) {
     function write_log(mixed $message, ?string $moduleName = "", ?string $level = "info", ?string $file = null)
     {
         // Specify the log folder path
-        $logDir = BASEPATH . "storage/logs/";
+        $logDir = logs_path('');
 
         $fileName = $file ?? "app_" . str_replace(" ", "_", $level) . ".log";
         $logFile = $logDir . $fileName;
