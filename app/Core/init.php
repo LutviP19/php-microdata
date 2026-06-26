@@ -5,21 +5,23 @@
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
- if (!defined("BASEPATH")) {
-    // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
-    $calculatedPath = __DIR__ . "/../..";
-    
-    // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
-    if (str_contains(realpath($calculatedPath), '/app/app')) {
-        $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
-    }
-    
-    define("BASEPATH", $calculatedPath);
+if (!defined('BASEPATH')) {
+    // Naik 2 tingkat dari /app/app/Core untuk mencapai /app (Root Proyek)
+    define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
+}
+
+// Opsional: Jika Anda juga mendefinisikan APPPATH (jalur ke folder app internal)
+if (!defined('APPPATH')) {
+    // Naik 1 tingkat dari /app/app/Core untuk mencapai /app/app
+    define('APPPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
 
 if (!defined("BASEPATH_FFI")) {
-    define("BASEPATH_FFI", BASEPATH . "/ffi");
+    define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi");
 }
+
+// echo BASEPATH_FFI;
+// exit(0);
 
 // only level Deprecated & User Deprecated
 // error_reporting(E_DEPRECATED | E_USER_DEPRECATED);

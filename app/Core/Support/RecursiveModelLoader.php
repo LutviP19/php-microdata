@@ -13,7 +13,7 @@ class RecursiveModelLoader
 
     public function __construct(private readonly ?array $config = [])
     {
-        $this->basePath = config("app.path");
+        $this->basePath = path_join(config("app.path"), "app");
         // Load konfigurasi modul
         $this->moduleConfig = $config["modules"] ?? [];
         $this->dataMapping = $config["data_mapping"] ?? [];
@@ -26,7 +26,10 @@ class RecursiveModelLoader
     {
         $modelName = $version = null;
         $baseModelPath = $this->basePath . "/Models/";
-        // dd($baseModelPath);
+
+        // // Fix docker path
+        // $baseModelPath = str_starts_with($baseModelPath, '/app') ? substr($baseModelPath, 4) : $baseModelPath;
+        // // dd($baseModelPath);
 
         // Jika input adalah "v1-dashboard"
         if (str_contains((string) $page, "-")) {
@@ -48,7 +51,7 @@ class RecursiveModelLoader
             // Normalisasi slug (e.g., 'dashboard-stats' -> 'DashboardStats')
             $cleanName = str_replace(" ", "", ucwords(str_replace(["-", "_"], " ", $page)));
         }
-        // dd($page); //debug: $page | $version | $baseModelPath | $cleanName
+        // dd($baseModelPath); //debug: $page | $version | $baseModelPath | $cleanName
 
         // 1. Identifikasi Model (Models biasanya di root folder Models)
         $findListedModels = $this->findListedModels($page, $version, $baseModelPath);
@@ -65,7 +68,8 @@ class RecursiveModelLoader
             $modelName = $cleanName . "Model";
         }
 
-        $modelPath = $baseModelPath . $modelName . ".php";        
+        $modelPath = $baseModelPath . $modelName . ".php";
+        // dd($modelName); //debug: $modelName | $modelPath
 
         // Jika model tidak ditemukan di root, kita asumsikan $page mungkin mengandung folder
         // Namun sesuai struktur Anda, DashboardModel.php ada di root.
@@ -85,19 +89,19 @@ class RecursiveModelLoader
         $dataName = $this->getDataName($cleanName); // e.g., Stats -> StatsData
 
         // Fix Docker - baseModelPath
-        if (str_contains($baseModelPath, '/app/app')) {
+        if (!is_json_request() && str_contains($baseModelPath, '/app/app')) {
             $baseModelPath = str_replace('/app/app', '/app', $baseModelPath);
         }
         // dd($baseModelPath);
 
         // Fix Docker - modelPath
-        if (str_contains($modelPath, '/app/app')) {
+        if (!is_json_request() && str_contains($modelPath, '/app/app')) {
             $modelPath = str_replace('/app/app', '/app', $modelPath);
         }
         // dd($modelPath);
 
         $baseDataPath = str_replace("Models/" . $version, "Data/" . $parentFolder, $baseModelPath);
-        $baseStructsPath = str_replace("Models/" . $version, "Structs/" . $parentFolder, $baseModelPath);        
+        $baseStructsPath = str_replace("Models/" . $version, "Structs/" . $parentFolder, $baseModelPath);
         // dd($baseStructsPath);
 
         return [

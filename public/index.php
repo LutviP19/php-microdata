@@ -3,33 +3,13 @@
  * @author LutviP19 <lutvip19@gmail.com>
  */
 
-//  if (!defined("BASEPATH")) {
-//     // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
-//     $calculatedPath = __DIR__ . "/..";
-    
-//     // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
-//     if (str_contains(realpath($calculatedPath), '/app/app')) {
-//         $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
-//     }
-    
-//     define("BASEPATH", $calculatedPath);
-// }
-
-if (!defined("BASEPATH")) {
-    // __DIR__ adalah lokasi file ini (misal: di /app/src/ atau /app/bootstrap/)
-    // Gunakan dirname() bertingkat sesuai dengan struktur folder Anda.
-    
-    // Asumsi: File ini berada 1 tingkat di bawah root (misal: bootstrap/app.php)
-    // Maka dirname(__DIR__) akan langsung menunjuk ke root folder proyek.
-    $realPath = realpath(dirname(__DIR__));
-
-    // Fallback jika realpath gagal karena masalah permission / symlink di Docker
-    if (!$realPath) {
-        $realPath = rtrim(dirname(__DIR__), DIRECTORY_SEPARATOR);
-    }
-
-    define("BASEPATH", $realPath . DIRECTORY_SEPARATOR);
+if (!defined('BASEPATH')) {
+    // __DIR__ adalah /app/public, naik 1 tingkat menjadi /app
+    define('BASEPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
+
+// echo BASEPATH;
+// exit(0);
 
 require_once BASEPATH . "/app/Core/init.php";
 
@@ -102,7 +82,7 @@ include BASEPATH . "/config/static-router.php";
 $router = require BASEPATH . "/config/router.php";
 $models = require BASEPATH . "/config/models.php";
 // dd($models);
-$loader = new \App\Core\Support\RecursiveModelLoader($models, BASEPATH);
+$loader = new \App\Core\Support\RecursiveModelLoader($models);
 
 // Cek router.php (Main Route to Models)
 if (isset($router[$page])) {
@@ -131,7 +111,7 @@ if ($resolved && file_exists($resolved["modelPath"])) {
     // Load Model Utama
     extract($resolved);
 
-    if ($model && file_exists(realpath(BASEPATH . $modelPath))) {
+    if ($model && file_exists($modelPath)) {
         // Parameter ID untuk edit/detail
         if (is_numeric($lastSegment)) {
             $_GET["id"] = (int) $lastSegment;
@@ -154,29 +134,10 @@ if ($resolved && file_exists($resolved["modelPath"])) {
         $loader->notFoundHandler($page, $modelPath);
     }
 } else {
-    // // Handle 404 - API JSON Only
-    // // $model = $router[$page] ?? $page;
-    // $model = $router[$page] ?? $resolved['page'] ?? $page;
-    // // dd($resolved);
-    // // dd($model);
-    // // $modelPath = "/app/Models/" . $model . "Model.php";
-    // $modelPath = $resolved['modelPath'];
-    // dd($modelPath);
-    // $loader->notFoundHandler($model, $modelPath, true);
-
-    // 1. Tentukan nama model secara fallback (Router -> Resolved -> Default)
-    $model = $router[$page] ?? $resolved['page'] ?? $page;
-
-    // 2. Resolve path model secara dinamis menggunakan BASEPATH yang sudah global
-    // Menghindari hardcode '/app/Models/' agar kompatibel di semua environment
-    $modelPath = BASEPATH . 'app' . DIRECTORY_SEPARATOR . 'Models' . DIRECTORY_SEPARATOR . $model . 'Model.php';
-
-    // 3. Validasi fisik: Pastikan file model ada sebelum didefinisikan/dimuat
-    if (!file_exists($modelPath)) {
-        // Jika file tidak ditemukan, lempar ke notFoundHandler
-        $loader->notFoundHandler($model, $modelPath, true);
-        // exit; // Pastikan eksekusi berhenti jika handler tidak otomatis menghentikannya
-    }
+    // Handle 404 - API JSON Only
+    $model = $router[$page] ?? $page;
+    $modelPath = "/app/Models/" . $model . "Model.php";
+    $loader->notFoundHandler($model, $modelPath, true);
 }
 
 // Load HTMX View

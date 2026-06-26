@@ -6,28 +6,40 @@
 
 // file: public/api.php
 
-if (!defined("BASEPATH")) {
-    // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
-    $calculatedPath = __DIR__ . "/..";
+// if (!defined("BASEPATH")) {
+//     define("BASEPATH", __DIR__ . "/..");
+// }
+
+// if (!defined("BASEPATH")) {
+//     // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
+//     $calculatedPath = realpath(__DIR__ . "/..");
     
-    // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
-    if (str_contains(realpath($calculatedPath), '/app/app')) {
-        $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
-    }
+//     // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
+//     if (str_contains($calculatedPath, '/app/app')) {
+//         $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
+//     }
     
-    define("BASEPATH", $calculatedPath);
+//     define("BASEPATH", $calculatedPath);
+// }
+
+if (!defined('BASEPATH')) {
+    // __DIR__ adalah /app/public, naik 1 tingkat menjadi /app
+    define('BASEPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
+
+// echo BASEPATH;
+// exit(0);
 
 // --- 1. INITIALIZATION (BOOTSTRAP) ---
 // Bagian ini hanya dijalankan SEKALI saat worker pertama kali naik.
 // Sangat efisien untuk i5-3210M karena load file init & composer dilakukan sekali saja.
 require_once BASEPATH . "/app/Core/init.php";
+// include BASEPATH . "/config/router.php";
 
 // write_log("Api server run", 'api.php', 'debug', 'debug_API.log');
 
 // load router
 $router = require BASEPATH . "/config/router.php";
-dd($router);
 
 // Mapping Models
 $models = require BASEPATH . "/config/models.php";
@@ -36,6 +48,7 @@ $loader = new \App\Core\Support\RecursiveModelLoader($models);
 
 // Auto Select middleware
 $privateNetwork = true; // set false jika ingin di publish ke internet
+dd($privateNetwork);
 
 // --- 2. THE HANDLER FUNCTION ---
 // Fungsi ini dipanggil setiap ada request masuk.

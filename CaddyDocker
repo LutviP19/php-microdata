@@ -13,28 +13,30 @@
             opcache.jit tracing
         }
 
-        # PERBAIKAN DOCKER: Daftarkan kedua worker di area global dengan PATH ABSOLUT (/app)
-        worker /app/public/api.php {
+        # DYNAMIC WORKERS: Menggunakan Env Var {$ROOT_PATH} dengan fallback default ke /app
+        # Di Docker akan membaca /app, di Ubuntu lokal Anda bisa set ROOT_PATH jika lokasinya berbeda
+        worker {$ROOT_PATH:/app}/public/api.php {
             num 4
-            watch /app/app/**/*.php /app/config/**/*.php /app/views/**/*.php /app/static/**/*.php /app/public/api.php
+            watch {$ROOT_PATH:/app}/app/**/*.php {$ROOT_PATH:/app}/config/**/*.php {$ROOT_PATH:/app}/views/**/*.php {$ROOT_PATH:/app}/static/**/*.php {$ROOT_PATH:/app}/public/api.php
         }
-        worker /app/public/index.php {
+        worker {$ROOT_PATH:/app}/public/index.php {
             num 4
-            watch /app/app/**/*.php /app/views/**/*.php /app/public/index.php
+            watch {$ROOT_PATH:/app}/app/**/*.php {$ROOT_PATH:/app}/views/**/*.php {$ROOT_PATH:/app}/public/index.php
         }
     }
     servers {
-        # PERBAIKAN DOCKER: Tambahkan CIDR /0 agar mencakup semua network internal docker bridge
+        # Mengizinkan proxy dari manapun (sangat penting untuk Docker Bridge & Ubuntu Reverse Proxy)
         trusted_proxies static 0.0.0.0/0
     }
     auto_https off
 }
 
-http://localhost:8000 {
-    # PERBAIKAN DOCKER: Ubah ke path absolut aplikasi di dalam container
-    root * /app/public
+# DYNAMIC PORT & SERVER NAME: Menggunakan variabel SERVER_NAME dengan fallback http://localhost:8000
+{$SERVER_NAME:http://localhost:8000} {
+    
+    # Menunjuk ke folder public secara dinamis
+    root * {$ROOT_PATH:/app}/public
 
-    # LOGGING (Format default untuk stdout Docker agar langsung terbaca di `docker logs`)
     log {
         format console
     }
@@ -43,7 +45,7 @@ http://localhost:8000 {
         minimum_length 1
     }
 
-    # PERBAIKAN CORS: Validasi multi-domain dinamis menggunakan Regex Matcher Caddy
+    # CORS Dinamis (Mendukung localhost, IP Lokal, dan domain kustom)
     @origin_allowed header_regexp Origin `^https?://(localhost|demo\.test|demo\.local|demo\.app\.com|192\.168\.0\.100|127\.0\.0\.1)(:\d+)?$`
     header @origin_allowed Access-Control-Allow-Origin "{header.Origin}"
     header ?Access-Control-Allow-Origin "http://localhost:8000" 
@@ -58,24 +60,27 @@ http://localhost:8000 {
     @options method OPTIONS
     respond @options 204
 
-    # PERBAIKAN ROUTING DOCKER: Bungkus dengan route {} untuk mematikan auto-ordering bawaan Caddy
+    # UNIVERSAL ROUTING BLOCK
     route {
-        # PRIORITAS 1: Tangkap semua rute dengan prefix /api
-        @api_routes path /api/*
+        # PRIORITAS 1: Tangkap semua rute /api (dengan atau tanpa trailing slash) dan paksa ke api.php Worker
+        @api_routes path /api /api/*
         handle @api_routes {
-            # Paksa Caddy menganggap request ini ditargetkan ke file fisik api.php
-            # Tambahkan {uri} di belakangnya agar framework Anda tetap bisa membaca route asli (misal: /api/v1/auth)
             rewrite * /api.php{uri}
             
-            frankenphp_server
+            php_server {
+                # Mematikan resolve symlink agar Caddy tidak bingung membaca Virtual Volume Docker
+                resolve_root_symlink false 
+            }
         }
 
-        # PRIORITAS 2: Sisanya dilempar ke Web/HTMX (index.php)
+        # PRIORITAS 2: Sisanya (Web / File Statis Asset) dilempar ke index.php
         handle {
-            # Cek apakah file fisik ada (css, js, images). Jika tidak ada, arahkan ke index.php
+            # Cek apakah file fisik ada (CSS/JS). Jika tidak, arahkan ke index.php dengan query string utuh {uri}
             try_files {path} /index.php{uri}
             
-            frankenphp_server
+            php_server {
+                resolve_root_symlink false
+            }
         }
     }
 }

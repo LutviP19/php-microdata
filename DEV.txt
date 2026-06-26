@@ -157,6 +157,11 @@ php -S 0.0.0.0:8000  -t public/
 
 Optional with Docker desktop
 ----------------------------
+images: 
+docker pull dunglas/frankenphp:1.12-builder-php8.5
+
+docker pull dunglas/frankenphp:1.12.4-php8.5
+===========
 copy .env.docker -> .env
 run docker compose up -d
 migrate mysql database with phpMyAdmin
@@ -174,6 +179,11 @@ RabbitMQ Dashboard:
 http://localhost:15673 (User/Pass: guest/guest)
 
 ------- End Docker
+
+Update Caddyfile:
+-----------------
+ROOT_PATH=/var/www/php-microdata frankenphp run --config CaddyfileDocker
+
 
 Update composer :
 -----------------

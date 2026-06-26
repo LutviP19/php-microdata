@@ -10,20 +10,33 @@ services:
       #- "443:443" # HTTPS
       #- "443:443/udp" # HTTP/3
     volumes:
-      - .:/app
-      # Mount CaddyDocker untuk development
-      - ./CaddyDocker:/etc/caddy/Caddyfile 
-      # Mount php.ini agar dinamis saat dev
-      - ./php.ini:/usr/local/etc/php/php.ini 
-      # Menyimpan file log dari container agar bisa dibaca langsung di lokal komputer
-      - ./storage/logs/docker:/data/logs
+      # Menyalin seluruh isi root project (secara rekursif) ke folder /app di container
+      #- .:/app
+
+      # Jika Anda hanya ingin menyalin folder tertentu saja secara rekursif:
+      - ./app:/app/app
+      - ./config:/app/config
+      - ./cron:/app/cron
+      - ./ffi:/app/ffi
+      - ./public:/app/public
+      - ./static:/app/static
+      - ./storage:/app/storage
+      - ./vendor:/app/vendor
+      - ./views:/app/views
+      - ./.env:/app/.env
+      - ./CaddyDocker:/app/Caddyfile
+      - ./worker.php:/app/worker.php
+      - ./worker-event.php:/app/worker-event.php
+
+      # - ./CaddyDocker:/etc/caddy/Caddyfile # Mount CaddyDocker untuk development
+      - ./php.ini:/usr/local/etc/php/php.ini # Mount php.ini agar dinamis saat dev
+      #- ./storage/logs/docker:/data/logs # <- TAMBAHKAN BARIS INI
       - caddy_data:/data
       - caddy_config:/config
     # comment the following line in production, it provides nice human-readable logs in dev
     tty: true
-    environment: 
-      # PERBAIKAN: Gunakan format standard http:// untuk mematikan auto-SSL Let's Encrypt secara total
-      - SERVER_NAME=http://:8000 
+    environment:
+      - SERVER_NAME=http://:8000 # Mengunci FrankenPHP di mode HTTP polos tanpa mencoba mengaktifkan QUIC/UDP
       - WATCH_VERSION=1 # Membantu watcher mendeteksi perubahan file di beberapa OS
     depends_on:
       - mysql

@@ -1,6 +1,6 @@
 # === File Lingkungan / Kredensial Sensitif ===
-.env
-.env.backup
+# .env
+.env.*
 
 # Mengabaikan folder git dan log lokal agar build lebih cepat
 .git
@@ -25,11 +25,17 @@ SNIP.txt
 last_run.txt
 cron_log.txt
 *.log
+# macOS Thumbnail Files
+.DS_Store
+**/.DS_Store
+._*
+**/._*
 
 # === Folder Dependensi Lokal ===
-node_modules/
-vendor/
+# node_modules/
+# vendor/
 examples/
+ffi/source*
 
 # === Folder Konfigurasi Text Editor / IDE ===
 .fleet/

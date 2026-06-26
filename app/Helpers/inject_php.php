@@ -6,12 +6,43 @@
  * @author Lutvi <lutvip19@gmail.com>
  */
 
-if (!defined("BASEPATH")) {
-    define("BASEPATH", __DIR__ . "/../..");
+// if (!defined("BASEPATH")) {
+//     define("BASEPATH", __DIR__ . "/../..");
+// }
+
+// if (!defined("BASEPATH_FFI")) {
+//     define("BASEPATH_FFI", BASEPATH . "/ffi");
+// }
+
+if (!defined('BASEPATH')) {
+    // Naik 2 tingkat dari /app/app/Core untuk mencapai /app (Root Proyek)
+    define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
+}
+
+// Opsional: Jika Anda juga mendefinisikan APPPATH (jalur ke folder app internal)
+if (!defined('APPPATH')) {
+    // Naik 1 tingkat dari /app/app/Core untuk mencapai /app/app
+    define('APPPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
 
 if (!defined("BASEPATH_FFI")) {
-    define("BASEPATH_FFI", BASEPATH . "/ffi");
+    define("BASEPATH_FFI", APPPATH . DIRECTORY_SEPARATOR . "ffi");
+}
+
+// echo BASEPATH_FFI;
+// exit(0);
+
+if (!function_exists('path_join')) {
+    function path_join(...$parts) {
+        // 1. Gabungkan semua argumen menggunakan DIRECTORY_SEPARATOR standar
+        // 2. Gunakan regex untuk mengganti double slash (// atau \\) menjadi single slash
+        $path = implode(DIRECTORY_SEPARATOR, $parts);
+        return preg_replace('#[\\\\/]+#', DIRECTORY_SEPARATOR, $path);
+    }
+
+    // // Otomatis bersih, tidak peduli jika di dalam konstanta ada slash atau tidak
+    // $modelFile = path_join(BASEPATH, 'app', 'Models', $modelName . 'Model.php');
+    // $ffiFile   = path_join(BASEPATH, 'ffi', 'lib', 'sanitize.so');
 }
 
 /**
@@ -136,7 +167,7 @@ if (!function_exists("sanitizeJson")) {
             char* SanitizeJSON(char* input);
             void free(void* ptr);
         ",
-            BASEPATH_FFI . "/lib/sanitize.so",
+            path_join(BASEPATH_FFI, "lib", "sanitize.so"),
         );
 
         $cResult = $ffi->SanitizeJSON($input);
