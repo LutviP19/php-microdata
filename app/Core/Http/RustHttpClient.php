@@ -19,7 +19,7 @@ class RustHttpClient
     public function __construct(?string $libPath = null)
     {
         // Pastikan path menunjuk ke file .so hasil cargo build --release
-        $this->libPath = $libPath ?? realpath(BASEPATH_FFI . "lib/librust_curl_ffi.so");
+        $this->libPath = $libPath ?? path_join(BASEPATH_FFI, 'lib', 'librust_curl_ffi.so');
 
         if (!file_exists($this->libPath)) {
             $errMessage = "Rust Library (.so) not found at: " . $this->libPath;

@@ -98,7 +98,7 @@ class RabbitFFI
 
     private function loadFFI()
     {
-        $libPath = realpath(BASEPATH_FFI . "lib/mq.so");
+        $libPath = path_join(BASEPATH_FFI, 'lib', 'mq.so');
 
         if (!file_exists($libPath)) {
             throw new \Exception("Library Shared Object tidak ditemukan di: " . $libPath);

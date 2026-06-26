@@ -6,14 +6,6 @@
  * @author Lutvi <lutvip19@gmail.com>
  */
 
-// if (!defined("BASEPATH")) {
-//     define("BASEPATH", __DIR__ . "/../..");
-// }
-
-// if (!defined("BASEPATH_FFI")) {
-//     define("BASEPATH_FFI", BASEPATH . "ffi");
-// }
-
 if (!defined('BASEPATH')) {
     // Naik 2 tingkat dari /app/app/Core untuk mencapai /app (Root Proyek)
     define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
@@ -26,7 +18,7 @@ if (!defined('APPPATH')) {
 }
 
 if (!defined("BASEPATH_FFI")) {
-    define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi");
+    define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi" . DIRECTORY_SEPARATOR);
 }
 
 // echo BASEPATH_FFI;
@@ -290,7 +282,7 @@ if (!function_exists("validateStructData")) {
     {
         static $ffi = null;
         if ($ffi === null) {
-            $ffi = FFI::cdef(
+            $ffi = \FFI::cdef(
                 "
                 char* ValidateDynamic(char* input);
                 void free(void* ptr);
@@ -307,7 +299,7 @@ if (!function_exists("validateStructData")) {
         ]);
 
         $cResult = $ffi->ValidateDynamic($payload);
-        $response = json_decode(FFI::string($cResult), true);
+        $response = json_decode(\FFI::string($cResult), true);
         $ffi->free($cResult);
 
         return $response;

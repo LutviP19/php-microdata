@@ -20,7 +20,7 @@ class GoHttpClient
     public function __construct(?string $libPath = null, $debug = null)
     {
         $this->debug = $debug ?? config("app.debug");
-        $this->libPath = $libPath ?? realpath(BASEPATH_FFI . "lib/curlgo.so");
+        $this->libPath = $libPath ?? path_join(BASEPATH_FFI, 'lib', 'curlgo.so');
 
         if (!file_exists($this->libPath)) {
             $errMessage =

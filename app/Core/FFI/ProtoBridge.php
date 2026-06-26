@@ -18,8 +18,9 @@ class ProtoBridge
 
     public function __construct(?string $libPath = null)
     {
+        // Gunakan konstanta BASEPATH_FFI jika tersedia, atau fallback ke direktori saat ini
         $defaultPath = defined("BASEPATH_FFI")
-            ? BASEPATH_FFI . "lib/librust_protobuf.so"
+            ? path_join(BASEPATH_FFI, 'lib', 'librust_protobuf.so') 
             : __DIR__ . "/../../../ffi/lib/librust_protobuf.so";
 
         $this->libPath = $libPath ?? $defaultPath;

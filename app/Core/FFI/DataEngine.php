@@ -15,7 +15,7 @@ class DataEngine
     {
         // Gunakan konstanta BASEPATH_FFI jika tersedia, atau fallback ke direktori saat ini
         $defaultPath = defined("BASEPATH_FFI")
-            ? BASEPATH_FFI . "lib/libdata_engine.so"
+            ? path_join(BASEPATH_FFI, 'lib', 'libdata_engine.so')
             : __DIR__ . "/../../../ffi/lib/libdata_engine.so";
 
         $this->libPath = $libPath ?? $defaultPath;

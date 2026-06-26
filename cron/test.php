@@ -13,9 +13,9 @@ require_once 'bootstrap.php';
 
 
 // Fobonacci
-$ffi1 = FFI::cdef(
+$ffi1 = \FFI::cdef(
     "int Fibonacci(int n);", // using inline header
-    BASEPATH_FFI . '/lib/fibonacci.so',
+    path_join(BASEPATH_FFI, 'lib', 'fibonacci.so'),
 );
 
 function fibonacci(int $n): int
@@ -48,9 +48,9 @@ echo "PHP Native Fibonacci result: {$result}. It took {$time} seconds to compute
 echo "[" . date('Y-m-d H:i:s') . "] Run PHP-FFI Go Concurrent process..." . PHP_EOL;
 
 // 1. Inisialisasi FFI (Pastikan header file valid)
-$ffi3 = FFI::cdef(
-    file_get_contents(BASEPATH_FFI . '/lib/concurrency.h'), // we are using file header on this lib
-    BASEPATH_FFI . '/lib/concurrency.so',
+$ffi3 = \FFI::cdef(
+    file_get_contents(path_join(BASEPATH_FFI, 'lib', 'concurrency.h')), // we are using file header on this lib
+    path_join(BASEPATH_FFI, 'lib', 'concurrency.so'),
 );
 
 $imagePaths = [

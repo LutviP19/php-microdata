@@ -14,11 +14,12 @@ require_once 'bootstrap.php';
 
 // Webcrawler Concurrent process
 echo "[" . date('Y-m-d H:i:s') . "] Run PHP-FFI Go Webcrawler Concurrent process..." . PHP_EOL;
-$ffi = FFI::cdef("
+$ffi = \FFI::cdef("
     char* crawler(char* filePath);
     void FreeString(char* ptr);
     ",
-    BASEPATH_FFI . '/lib/crawler.so',
+    // BASEPATH_FFI . '/lib/crawler.so',
+    path_join(BASEPATH_FFI, 'lib', 'crawler.so'),
 );
 
 $start = microtime(true);
@@ -35,7 +36,7 @@ $rawMode = false; // rawMode: true || false: output JSON
 
 // Pass the absolute path to Go
 $ptr = $ffi->crawler($path);
-$raw_input = FFI::string($ptr);
+$raw_input = \FFI::string($ptr);
 if($rawMode) {
     $result = clean_newlines($raw_input); // Test raw-ouput
 } else {

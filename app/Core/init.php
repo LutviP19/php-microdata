@@ -17,7 +17,7 @@ if (!defined('APPPATH')) {
 }
 
 if (!defined("BASEPATH_FFI")) {
-    define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi");
+    define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi" . DIRECTORY_SEPARATOR);
 }
 
 // echo BASEPATH_FFI;
