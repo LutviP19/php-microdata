@@ -235,7 +235,7 @@ class Gate
             json_response([], 401, $message, $errors);
         } else {
             http_response_code(isHtmx() ? 200 : 401);
-            include BASEPATH . "/views/error/401.php";
+            include BASEPATH . "views/error/401.php";
             die();
         }
     }
@@ -253,7 +253,7 @@ class Gate
             json_response([], 403, $message, $errors);
         } else {
             http_response_code(isHtmx() ? 200 : 403);
-            include BASEPATH . "/views/error/403.php";
+            include BASEPATH . "views/error/403.php";
             die();
         }
     }

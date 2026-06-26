@@ -35,7 +35,7 @@ cron_log.txt
 # node_modules/
 # vendor/
 examples/
-ffi/source*
+ffi/source/
 
 # === Folder Konfigurasi Text Editor / IDE ===
 .fleet/

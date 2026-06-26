@@ -193,7 +193,7 @@
 
         <main class="flex flex-col h-screen w-full overflow-hidden bg-gray-900">
             <div id="main-content" class="flex-1 p-6 pb-10 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-                <?php include BASEPATH . "/views/partial/" . $page . ".php"; ?>
+                <?php include BASEPATH . "views/partial/" . $page . ".php"; ?>
             </div>
         </main>
     </div>

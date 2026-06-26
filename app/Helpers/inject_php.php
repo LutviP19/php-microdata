@@ -11,7 +11,7 @@
 // }
 
 // if (!defined("BASEPATH_FFI")) {
-//     define("BASEPATH_FFI", BASEPATH . "/ffi");
+//     define("BASEPATH_FFI", BASEPATH . "ffi");
 // }
 
 if (!defined('BASEPATH')) {
@@ -26,7 +26,7 @@ if (!defined('APPPATH')) {
 }
 
 if (!defined("BASEPATH_FFI")) {
-    define("BASEPATH_FFI", APPPATH . DIRECTORY_SEPARATOR . "ffi");
+    define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi");
 }
 
 // echo BASEPATH_FFI;
@@ -295,7 +295,7 @@ if (!function_exists("validateStructData")) {
                 char* ValidateDynamic(char* input);
                 void free(void* ptr);
             ",
-                BASEPATH_FFI . "/lib/dynamic_validate.so",
+                path_join(BASEPATH_FFI, 'lib', 'dynamic_validate.so'),
             );
         }
 
@@ -693,7 +693,7 @@ function handle_cors()
             ]);
         } else {
             http_response_code(isHtmx() ? 200 : 403);
-            include BASEPATH . "/views/error/403.php";
+            include BASEPATH . "views/error/403.php";
         }
         exit();
     }
@@ -1272,7 +1272,7 @@ function check_ip_access($ip, ?array $list = null)
             ]);
         } else {
             http_response_code(isHtmx() ? 200 : 403);
-            include BASEPATH . "/views/error/403.php";
+            include BASEPATH . "views/error/403.php";
         }
         die();
     }

@@ -13,7 +13,8 @@ class RecursiveModelLoader
 
     public function __construct(private readonly ?array $config = [])
     {
-        $this->basePath = path_join(config("app.path"), "app");
+        $this->basePath = realpath(config("app.path") . "app");
+        // $this->basePath = BASEPATH;
         // Load konfigurasi modul
         $this->moduleConfig = $config["modules"] ?? [];
         $this->dataMapping = $config["data_mapping"] ?? [];

@@ -33,16 +33,16 @@ if (!defined('BASEPATH')) {
 // --- 1. INITIALIZATION (BOOTSTRAP) ---
 // Bagian ini hanya dijalankan SEKALI saat worker pertama kali naik.
 // Sangat efisien untuk i5-3210M karena load file init & composer dilakukan sekali saja.
-require_once BASEPATH . "/app/Core/init.php";
-// include BASEPATH . "/config/router.php";
+require_once BASEPATH . "app/Core/init.php";
+// include BASEPATH . "config/router.php";
 
 // write_log("Api server run", 'api.php', 'debug', 'debug_API.log');
 
 // load router
-$router = require BASEPATH . "/config/router.php";
+$router = require BASEPATH . "config/router.php";
 
 // Mapping Models
-$models = require BASEPATH . "/config/models.php";
+$models = require BASEPATH . "config/models.php";
 
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
 
@@ -127,7 +127,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         $resolved = null;
 
         // Static router for execute single php file
-        include BASEPATH . "/config/static-router.php";
+        include BASEPATH . "config/static-router.php";
 
         // Cek router.php (Main Route to Models)
         if (isset($router[$page])) {
@@ -166,12 +166,12 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
 
                 // Middleware Model for API Only
                 if (!$isJson || !expects_json()) {
-                    if (!file_exists(realpath(BASEPATH . "/views/partial/" . $page . ".php"))) {
+                    if (!file_exists(realpath(BASEPATH . "views/partial/" . $page . ".php"))) {
                         $loader->notFoundHandler($page, $modelPath);
                     }
                 }
 
-                include BASEPATH . "/app/Core/process_request.php";
+                include BASEPATH . "app/Core/process_request.php";
             } else {
                 // Handle 404
                 $loader->notFoundHandler($page, $modelPath);

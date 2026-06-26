@@ -30,13 +30,6 @@ class StatsData extends DashboardData
         $username = "root";
         $password = "";
 
-        $driver = "mysql";
-        $dbname = "employees";
-        $host = "127.0.0.1";
-        $port = "3306";
-        $username = "root";
-        $password = "";
-
         $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
 
         // Default connection

@@ -6,7 +6,7 @@
 // simple routing untuk execute file static php
 // You can also run FFi ​​code if needed with single php script
 
-$staticFile = BASEPATH . "/static/" . $page . ".php";
+$staticFile = BASEPATH . "static/" . $page . ".php";
 if (file_exists($staticFile)) {
     // Otomatis validasi format JSON dan sanitize JSON dengan FFI
     // kemudian JSON dikonversi ke $_REQUEST
@@ -46,7 +46,7 @@ if (file_exists($staticFile)) {
                 json_response([], 406, "Validation errors", $resultDefault["errors"]);
             } else {
                 http_response_code(isHtmx() ? 200 : 406);
-                include BASEPATH . "/views/error/406.php";
+                include BASEPATH . "views/error/406.php";
                 exit();
             }
         }

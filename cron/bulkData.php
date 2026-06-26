@@ -58,7 +58,7 @@ $ffi = FFI::cdef("
     void* SaveBulkData(char* dbPath, char* jsonData);
     int GetSize(void* ptr);
     void FillAndFree(void* ptr, char* outBuffer);
-", BASEPATH_FFI . "/lib/bulk_data.so");
+", BASEPATH_FFI . "lib/bulk_data.so");
 
 // 3. Prepare Data
 // $data = [

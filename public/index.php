@@ -11,7 +11,7 @@ if (!defined('BASEPATH')) {
 // echo BASEPATH;
 // exit(0);
 
-require_once BASEPATH . "/app/Core/init.php";
+require_once BASEPATH . "app/Core/init.php";
 
 use App\Core\Support\Session;
 
@@ -47,7 +47,7 @@ if (isset($_COOKIE["PHPFFISESSID"])) {
             json_response([], 403, "Forbidden", ["auth" => "Invalid credentials!"]);
         } else {
             http_response_code(isHtmx() ? 200 : 403);
-            include BASEPATH . "/views/error/403.php";
+            include BASEPATH . "views/error/403.php";
         }
         die();
     }
@@ -76,11 +76,11 @@ $isAllowAccess = true;
 // // ===========================================
 
 // Static router for execute single php file
-include BASEPATH . "/config/static-router.php";
+include BASEPATH . "config/static-router.php";
 
 // Load Router and Mapping Models
-$router = require BASEPATH . "/config/router.php";
-$models = require BASEPATH . "/config/models.php";
+$router = require BASEPATH . "config/router.php";
+$models = require BASEPATH . "config/models.php";
 // dd($models);
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
 
@@ -123,12 +123,12 @@ if ($resolved && file_exists($resolved["modelPath"])) {
 
         // Middleware Model for API Only
         if (!is_json_request() || !expects_json()) {
-            if (!file_exists(realpath(BASEPATH . "/views/partial/" . $page . ".php"))) {
+            if (!file_exists(realpath(BASEPATH . "views/partial/" . $page . ".php"))) {
                 $loader->notFoundHandler($page, $modelPath);
             }
         }
 
-        include_once BASEPATH . "/app/Core/process_request.php";
+        include_once BASEPATH . "app/Core/process_request.php";
     } else {
         // Handle 404
         $loader->notFoundHandler($page, $modelPath);
@@ -143,34 +143,34 @@ if ($resolved && file_exists($resolved["modelPath"])) {
 // Load HTMX View
 // Tentukan apakah ke halaman login
 $isLoginPage = $page === "login";
-$isPageExists = $viewPath = realpath(BASEPATH . "/views/partial/" . $page . ".php");
+$isPageExists = $viewPath = realpath(BASEPATH . "views/partial/" . $page . ".php");
 // dd($viewPath);
 
 // Handle 404 - Non HTMX
 if (!isHtmx() && !$isPageExists) {
     http_response_code(isHtmx() ? 200 : 404);
-    include BASEPATH . "/views/error/404.php";
+    include BASEPATH . "views/error/404.php";
     exit();
 }
 
 if (isHtmx()) {
-    if ($viewPath && file_exists($viewPath) && str_starts_with($viewPath, realpath(BASEPATH . "/views/"))) {
+    if ($viewPath && file_exists($viewPath) && str_starts_with($viewPath, realpath(BASEPATH . "views/"))) {
         include $viewPath;
     } else {
         if ($isLoginPage) {
             // Render hanya halaman login (tanpa sidebar/nav)
-            include BASEPATH . "/views/login.php";
+            include BASEPATH . "views/login.php";
         } else {
             http_response_code(isHtmx() ? 200 : 404);
-            include BASEPATH . "/views/error/404.php";
+            include BASEPATH . "views/error/404.php";
         }
     }
 } else {
     if ($isLoginPage) {
         // Render hanya halaman login (tanpa sidebar/nav)
-        include BASEPATH . "/views/login.php";
+        include BASEPATH . "views/login.php";
     } else {
         // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
-        include BASEPATH . "/views/index.php";
+        include BASEPATH . "views/index.php";
     }
 }

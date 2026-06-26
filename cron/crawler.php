@@ -24,7 +24,7 @@ $ffi = FFI::cdef("
 $start = microtime(true);
 
 // Use BASEPATH to avoid "File Not Found" during concurrent execution
-$path = BASEPATH . "/cron/urls.txt";
+$path = BASEPATH . "cron/urls.txt";
 
 if (!$path) {
     die("PHP Error: urls.txt does not exist in " . getcwd());

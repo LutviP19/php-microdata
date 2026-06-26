@@ -52,7 +52,7 @@ try {
 $ffi = FFI::cdef("
     char* SearchFTS(char* dbPath, char* query, int limit);
     void FreeString(char* ptr);
-", BASEPATH_FFI . "/lib/bulk_data.so");
+", BASEPATH_FFI . "lib/bulk_data.so");
 
 // 1. Call Go (Go handles sanitization and FTS5 logic)
 $resPtr = $ffi->SearchFTS($dbFile, $userInput, $limit);
@@ -75,7 +75,7 @@ foreach ($results as $row) {
 //     char* UpdateRecord(char* dbPath, long long id, char* content, char* tags);
 //     char* DeleteRecord(char* dbPath, long long id);
 //     void FreeString(char* ptr);
-// ", BASEPATH_FFI . "/lib/bulk_data.so");
+// ", BASEPATH_FFI . "lib/bulk_data.so");
 
 // // Usage
 // $resPtr = $ffi->UpdateRecord($dbFile, 123, "New Content", "tag1,tag2");

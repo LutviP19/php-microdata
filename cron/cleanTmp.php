@@ -49,7 +49,7 @@ if (!function_exists('cleanTmpFiles')) {
 }
 
 // Clean tmp-rate_limits
-// $tmpDir = BASEPATH . "/storage/framework/tmp/rate_limits";
+// $tmpDir = BASEPATH . "storage/framework/tmp/rate_limits";
 $tmpDir = storage_path('/framework/tmp/rate_limits');
 if(file_exists($tmpDir))
 cleanTmpFiles($tmpDir, 1);

@@ -4,8 +4,13 @@
  *  @author LutviP19 <lutvip19@gmail.com>
  */
 
-if (!defined("BASEPATH")) {
-    define("BASEPATH", __DIR__ . "/../..");
+// if (!defined("BASEPATH")) {
+//     define("BASEPATH", __DIR__ . "/../..");
+// }
+
+if (!defined('BASEPATH')) {
+    // Naik 2 tingkat dari /app/app/Core untuk mencapai /app (Root Proyek)
+    define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
 }
 
 /**
@@ -51,7 +56,7 @@ function e($str, $doubleEncode = true)
  */
 function storage_path($filePath)
 {
-    return BASEPATH . "/storage/" . $filePath;
+    return BASEPATH . "storage/" . $filePath;
 }
 
 /**
@@ -63,7 +68,7 @@ function storage_path($filePath)
  */
 function database_path($db_name)
 {
-    return BASEPATH . "/storage/database/" . $db_name;
+    return BASEPATH . "storage/database/" . $db_name;
 }
 
 /**
@@ -75,7 +80,7 @@ function database_path($db_name)
  */
 function logs_path($log_name)
 {
-    return BASEPATH . "/storage/logs/" . $log_name;
+    return BASEPATH . "storage/logs/" . $log_name;
 }
 
 /**
@@ -123,7 +128,7 @@ if (!function_exists("load_env")) {
     function load_env($path = null)
     {
         if ($path === null) {
-            $path = BASEPATH . "/.env";
+            $path = BASEPATH . ".env";
         }
 
         if (!file_exists($path)) {
@@ -633,7 +638,7 @@ if (!function_exists("write_log")) {
     function write_log(mixed $message, ?string $moduleName = "", ?string $level = "info", ?string $file = null)
     {
         // Specify the log folder path
-        $logDir = BASEPATH . "/storage/logs/";
+        $logDir = BASEPATH . "storage/logs/";
 
         $fileName = $file ?? "app_" . str_replace(" ", "_", $level) . ".log";
         $logFile = $logDir . $fileName;

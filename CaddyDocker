@@ -1,86 +1,78 @@
 {
-    # Global options
-    frankenphp {
-        num_threads 8
-        php_ini {
-            memory_limit 512M
-            max_execution_time 15
-            opcache.enable 1
-            opcache.enable_cli 1
-            opcache.memory_consumption 256
-            opcache.interned_strings_buffer 16
-            opcache.jit_buffer_size 64M
-            opcache.jit tracing
-        }
+	# Global options
+	frankenphp {
+		num_threads 8
+		php_ini {
+			memory_limit 512M
+			max_execution_time 15
+			opcache.enable 1
+			opcache.enable_cli 1
+			opcache.memory_consumption 256
+			opcache.interned_strings_buffer 16
+			opcache.jit_buffer_size 64M
+			opcache.jit tracing
+		}
 
-        # DYNAMIC WORKERS: Menggunakan Env Var {$ROOT_PATH} dengan fallback default ke /app
-        # Di Docker akan membaca /app, di Ubuntu lokal Anda bisa set ROOT_PATH jika lokasinya berbeda
-        worker {$ROOT_PATH:/app}/public/api.php {
-            num 4
-            watch {$ROOT_PATH:/app}/app/**/*.php {$ROOT_PATH:/app}/config/**/*.php {$ROOT_PATH:/app}/views/**/*.php {$ROOT_PATH:/app}/static/**/*.php {$ROOT_PATH:/app}/public/api.php
-        }
-        worker {$ROOT_PATH:/app}/public/index.php {
-            num 4
-            watch {$ROOT_PATH:/app}/app/**/*.php {$ROOT_PATH:/app}/views/**/*.php {$ROOT_PATH:/app}/public/index.php
-        }
-    }
-    servers {
-        # Mengizinkan proxy dari manapun (sangat penting untuk Docker Bridge & Ubuntu Reverse Proxy)
-        trusted_proxies static 0.0.0.0/0
-    }
-    auto_https off
+		# DYNAMIC WORKERS
+		worker {$ROOT_PATH:/app}/public/api.php {
+			num 4
+			watch {$ROOT_PATH:/app}/app/**/*.php {$ROOT_PATH:/app}/config/**/*.php {$ROOT_PATH:/app}/views/**/*.php {$ROOT_PATH:/app}/static/**/*.php {$ROOT_PATH:/app}/public/api.php
+		}
+		worker {$ROOT_PATH:/app}/public/index.php {
+			num 4
+			watch {$ROOT_PATH:/app}/app/**/*.php {$ROOT_PATH:/app}/views/**/*.php {$ROOT_PATH:/app}/public/index.php
+		}
+	}
+	servers {
+		trusted_proxies static 0.0.0.0/0
+	}
+	auto_https off
 }
 
-# DYNAMIC PORT & SERVER NAME: Menggunakan variabel SERVER_NAME dengan fallback http://localhost:8000
+# DYNAMIC PORT & SERVER NAME
 {$SERVER_NAME:http://localhost:8000} {
-    
-    # Menunjuk ke folder public secara dinamis
-    root * {$ROOT_PATH:/app}/public
+	root * {$ROOT_PATH:/app}/public
 
-    log {
-        format console
-    }
+	log {
+		format console
+	}
 
-    encode zstd br gzip {
-        minimum_length 1
-    }
+	encode zstd br gzip {
+		minimum_length 1
+	}
 
-    # CORS Dinamis (Mendukung localhost, IP Lokal, dan domain kustom)
-    @origin_allowed header_regexp Origin `^https?://(localhost|demo\.test|demo\.local|demo\.app\.com|192\.168\.0\.100|127\.0\.0\.1)(:\d+)?$`
-    header @origin_allowed Access-Control-Allow-Origin "{header.Origin}"
-    header ?Access-Control-Allow-Origin "http://localhost:8000" 
+	# CORS Dinamis
+	@origin_allowed header_regexp Origin `^https?://(localhost|demo\.test|demo\.local|demo\.app\.com|192\.168\.0\.100|127\.0\.0\.1)(:\d+)?$`
+	header @origin_allowed Access-Control-Allow-Origin "{header.Origin}"
+	header ?Access-Control-Allow-Origin "http://localhost:8000"
 
-    header {
-        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-        Access-Control-Allow-Headers "Content-Type, X-Api-Key, HTTP_X_PMD_SIGNATURE, HTTP_X_PMD_TIMESTAMP, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
-        Access-Control-Allow-Credentials "true"
-        Vary Origin
-    }
+	header {
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+		Access-Control-Allow-Headers "Content-Type, X-Api-Key, HTTP_X_PMD_SIGNATURE, HTTP_X_PMD_TIMESTAMP, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
+		Access-Control-Allow-Credentials "true"
+		Vary Origin
+	}
 
-    @options method OPTIONS
-    respond @options 204
+	@options method OPTIONS
+	respond @options 204
 
-    # UNIVERSAL ROUTING BLOCK
-    route {
-        # PRIORITAS 1: Tangkap semua rute /api (dengan atau tanpa trailing slash) dan paksa ke api.php Worker
-        @api_routes path /api /api/*
-        handle @api_routes {
-            rewrite * /api.php{uri}
-            
-            php_server {
-                # Mematikan resolve symlink agar Caddy tidak bingung membaca Virtual Volume Docker
-                resolve_root_symlink false 
-            }
-        }
+	# UNIVERSAL ROUTING BLOCK
+	route {
+		# PRIORITAS 1: Tangkap semua rute /api dan paksa ke api.php Worker
+		@api_routes path /api /api/*
+		handle @api_routes {
+			rewrite * /api.php{uri}
+			php_server {
+				resolve_root_symlink false
+			}
+		}
 
-        # PRIORITAS 2: Sisanya (Web / File Statis Asset) dilempar ke index.php
-        handle {
-            # Cek apakah file fisik ada (CSS/JS). Jika tidak, arahkan ke index.php dengan query string utuh {uri}
-            try_files {path} /index.php{uri}
-            
-            php_server {
-                resolve_root_symlink false
-            }
-        }
-    }
+		# PRIORITAS 2: Sisanya (Web / File Statis Asset) dilempar ke index.php
+		handle {
+			try_files {path} /index.php{uri}
+			php_server {
+				resolve_root_symlink false
+			}
+		}
+	}
 }

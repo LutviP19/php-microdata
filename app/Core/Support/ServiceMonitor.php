@@ -99,7 +99,7 @@ class ServiceMonitor
     {
         $color = $isUp ? "emerald" : "rose";
         $latencyColor = $latency > 100 ? "text-amber-400" : "text-emerald-400";
-        $elementView = BASEPATH . "/views/elements/monitoring-service-status.php";
+        $elementView = BASEPATH . "views/elements/monitoring-service-status.php";
         if (file_exists($elementView)) {
             include $elementView;
         } else {

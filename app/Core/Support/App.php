@@ -459,7 +459,7 @@ class App
     public static function bootListeners()
     {
         // Tentukan path ke folder Listeners
-        $path = BASEPATH . "/app/Listeners";
+        $path = BASEPATH . "app/Listeners";
         self::loadListeners($path);
     }
 

@@ -31,7 +31,7 @@ ini_set("display_errors", 1);
 /**
  * Require the composer autoload File.
  */
-require_once BASEPATH . "/vendor/autoload.php";
+require_once BASEPATH . "vendor/autoload.php";
 
 // Min php version
 ensure_minimum_php_version();
@@ -66,15 +66,15 @@ set_exception_handler(function (\Throwable $exception) {
         // http_response_code(500);
         // echo "<h1>An internal error occurred. Please try again later.</h1>";
         // // In a production environment, avoid echoing the raw message
-        include BASEPATH . "/views/error/500.php";
+        include BASEPATH . "views/error/500.php";
         die();
     }
 });
 
 // Mendaftarkan konfigurasi ke aplikasi.
 use App\Core\Support\App;
-App::register("config", require BASEPATH . "/config/app.php");
-App::register("routing_external_api", require BASEPATH . "/config/external-api.php");
+App::register("config", require BASEPATH . "config/app.php");
+App::register("routing_external_api", require BASEPATH . "config/external-api.php");
 
 // INI Set Session
 if (session_status() == PHP_SESSION_NONE) {
