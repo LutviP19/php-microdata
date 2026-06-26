@@ -28,7 +28,8 @@ RUN curl -sSLo /tmp/k6.tar.gz https://github.com/grafana/k6/releases/download/v0
     && rm -rf /tmp/k6.tar.gz /tmp/k6-v0.51.0-linux-amd64
 
 # 3. Download dan install tool 'hey' (Mengambil binary Linux 64-bit versi stabil terbaru)
-RUN curl -sSLo /usr/local/bin/hey https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64 \
+# HEY: Download langsung dari Google Storage resmi rakyll
+RUN curl -sSLo /usr/local/bin/hey https://storage.googleapis.com/hey-releases/hey_linux_amd64 \
     && chmod +x /usr/local/bin/hey
 
 # 4. Install ekstensi PHP melalui helper resmi FrankenPHP
