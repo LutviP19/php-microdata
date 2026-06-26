@@ -512,6 +512,9 @@ ab -n 1000 -c 50 \
 Using hey tools
 https://github.com/rakyll/hey
 paste bin to: test/bin/
+
+Docker - terminal:
+cp /usr/local/bin/hey /app/test/bin/hey
 ======================
 test/bin/hey -n 1000 -c 50 \
 -m GET \

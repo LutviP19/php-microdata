@@ -20,13 +20,17 @@ services:
       - ./ffi:/app/ffi
       - ./public:/app/public
       - ./static:/app/static
-      - ./storage:/app/storage
+      - ./storage:/app/storage      
       - ./vendor:/app/vendor
       - ./views:/app/views
       - ./.env:/app/.env
       - ./CaddyDocker:/app/Caddyfile
       - ./worker.php:/app/worker.php
       - ./worker-event.php:/app/worker-event.php
+
+      # Development
+      - ./test:/app/test
+
 
       # - ./CaddyDocker:/etc/caddy/Caddyfile # Mount CaddyDocker untuk development
       - ./php.ini:/usr/local/etc/php/php.ini # Mount php.ini agar dinamis saat dev
