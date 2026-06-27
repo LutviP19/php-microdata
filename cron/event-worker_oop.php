@@ -43,7 +43,7 @@ ListenerRegistry::listen('crawler.finished', function($data) {
 
 //  Jalankan EventWorker
 $once = true; // Mode Worker
-$lockPath = BASEPATH . '/worker.lock';
+$lockPath = BASEPATH . 'worker.lock';
 
 // Mencegah Zombie Process
 if ($once) {

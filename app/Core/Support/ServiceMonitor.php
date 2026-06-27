@@ -12,23 +12,28 @@ class ServiceMonitor
 {
     public static function checkAll()
     {
-        // $services = [
-        //     ["id" => "db", "name" => "MySQL Database", "host" => "127.0.0.1", "port" => 3306],
-        //     ["id" => "redis", "name" => "Redis", "host" => "127.0.0.1", "port" => 6379],
-        //     ["id" => "mq", "name" => "RabbitMQ", "host" => "127.0.0.1", "port" => 5672],
-        //     ["id" => "mailpit", "name" => "Mailpit", "host" => "127.0.0.1", "port" => 8025],
-        //     ["id" => "search", "name" => "Meilisearch", "host" => "127.0.0.1", "port" => 7700],
-        //     ["id" => "ollama", "name" => "Ollama (AI)", "host" => "127.0.0.1", "port" => 11434],
-        // ];
+        if(env('DB_HOST') === '127.0.0.1') {
+            $services = [
+                ["id" => "db", "name" => "MySQL Database", "host" => "127.0.0.1", "port" => 3306],
+                ["id" => "redis", "name" => "Redis", "host" => "127.0.0.1", "port" => 6379],
+                ["id" => "mq", "name" => "RabbitMQ", "host" => "127.0.0.1", "port" => 5672],
+                ["id" => "mailpit", "name" => "Mailpit", "host" => "127.0.0.1", "port" => 8025],
+                ["id" => "search", "name" => "Meilisearch", "host" => "127.0.0.1", "port" => 7700],
+                ["id" => "ollama", "name" => "Ollama (AI)", "host" => "127.0.0.1", "port" => 11434],
+            ];
+        } else {
+            $services = [
+                ["id" => "db", "name" => "MySQL Database", "host" => env('DB_HOST'), "port" => 3306],
+                ["id" => "redis", "name" => "Redis", "host" => env('REDIS_HOST'), "port" => 6379],
+                ["id" => "mq", "name" => "RabbitMQ", "host" => env('MB_HOST'), "port" => 5672],
+                ["id" => "mailpit", "name" => "Mailpit", "host" => "127.0.0.1", "port" => 8025],
+                ["id" => "search", "name" => "Meilisearch", "host" => "127.0.0.1", "port" => 7700],
+                ["id" => "ollama", "name" => "Ollama (AI)", "host" => "127.0.0.1", "port" => 11434],
+            ];
+        }
+        
 
-        $services = [
-            ["id" => "db", "name" => "MySQL Database", "host" => env('DB_HOST'), "port" => 3306],
-            ["id" => "redis", "name" => "Redis", "host" => env('REDIS_HOST'), "port" => 6379],
-            ["id" => "mq", "name" => "RabbitMQ", "host" => env('MB_HOST'), "port" => 5672],
-            ["id" => "mailpit", "name" => "Mailpit", "host" => "127.0.0.1", "port" => 8025],
-            ["id" => "search", "name" => "Meilisearch", "host" => "127.0.0.1", "port" => 7700],
-            ["id" => "ollama", "name" => "Ollama (AI)", "host" => "127.0.0.1", "port" => 11434],
-        ];
+        
 
         foreach ($services as $srv) {
             $start = microtime(true);
@@ -53,8 +58,17 @@ class ServiceMonitor
     {
         switch ($id) {
             case "db":
-                // Mengambil jumlah koneksi aktif MySQL
-                $output = shell_exec("mysqladmin -u" . env("DB_USERNAME") . " -p" . env("DB_PASSWORD") . " status 2>&1");
+                // Mengambil jumlah koneksi aktif MySQL dengan membungkus credentials menggunakan kutipan tunggal
+                $username = env("DB_USERNAME");
+                $password = env("DB_PASSWORD");
+
+                // Gunakan escapeshellarg() untuk mengamankan karakter khusus secara otomatis di Linux/Docker
+                $cmd_username = escapeshellarg($username);
+                $cmd_password = escapeshellarg($password);
+
+                // Eksekusi mysqladmin (Gunakan format panjang --user dan --password agar lebih stabil di shell_exec)
+                $output = shell_exec("mysqladmin --user={$cmd_username} --password={$cmd_password} status 2>&1");
+
                 preg_match("/Threads: (\d+)/", (string) $output, $matches);
                 return ["mem" => "Active Conn: " . ($matches[1] ?? "0"), "load" => "MySQLd"];
 

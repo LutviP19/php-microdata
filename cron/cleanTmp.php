@@ -50,14 +50,14 @@ if (!function_exists('cleanTmpFiles')) {
 
 // Clean tmp-rate_limits
 // $tmpDir = BASEPATH . "storage/framework/tmp/rate_limits";
-$tmpDir = storage_path('/framework/tmp/rate_limits');
+$tmpDir = storage_path('framework/tmp/rate_limits');
 if(file_exists($tmpDir))
 cleanTmpFiles($tmpDir, 1);
 
 // Clean Session
-$tmpDir = storage_path('/framework/sessions');
+$tmpDir = storage_path('framework/sessions');
 cleanTmpFiles($tmpDir, 0);
 
 // Clean Cache
-$tmpDir = storage_path('/framework/cache');
+$tmpDir = storage_path('framework/cache');
 cleanTmpFiles($tmpDir, 0);

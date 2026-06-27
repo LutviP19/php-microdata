@@ -28,7 +28,7 @@ if (($currentTime - $lastRun) >= $interval) {
     file_put_contents($lastRunFile, $currentTime);
 
     // Sample real Task Clean temporary files
-    include BASEPATH . '/cron/cleanTmp.php';
+    include BASEPATH . 'cron/cleanTmp.php';
     
     echo "Sukses: " . $message;
 } else {

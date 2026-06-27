@@ -48,7 +48,7 @@ $loader = new \App\Core\Support\RecursiveModelLoader($models);
 
 // Auto Select middleware
 $privateNetwork = true; // set false jika ingin di publish ke internet
-dd($privateNetwork);
+// dd($privateNetwork);
 
 // --- 2. THE HANDLER FUNCTION ---
 // Fungsi ini dipanggil setiap ada request masuk.

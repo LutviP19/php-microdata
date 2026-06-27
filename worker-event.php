@@ -8,13 +8,14 @@ declare(strict_types=1);
 // file: worker-event.php
 
 if (!defined('BASEPATH')) {
-    define('BASEPATH', __DIR__ );
+    // define('BASEPATH', __DIR__ );
+    define('BASEPATH', __DIR__ . DIRECTORY_SEPARATOR);
 }
 
 /**
  * Require Worker Bootstrap File.
  */
-require_once BASEPATH . '/cron/bootstrap.php';
+require_once BASEPATH . 'cron/bootstrap.php';
 
 use App\Core\Support\App;
 use App\Core\Events\EventWorker;
@@ -36,7 +37,7 @@ App::bootListeners();
 // Inisialisasi variabel di luar try agar bisa diakses di catch/finally
 $lockFile = null;
 $once = true; // Set true jika ingin mode Cron/Once
-$lockPath = BASEPATH . '/worker.lock';
+$lockPath = BASEPATH . 'worker.lock';
 
 if($once && $is_cron) {
     $start = microtime(true);

@@ -64,7 +64,7 @@ http://localhost:8000 {
     header {
         Access-Control-Allow-Origin "localhost,demo.test,demo.local,demo.app.com,192.168.0.100,[::1],127.0.0.1"
         Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-        Access-Control-Allow-Headers "Content-Type, X-Api-Key, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
+        Access-Control-Allow-Headers "Content-Type, X-Api-Key, HTTP_X_PMD_SIGNATURE,HTTP_X_PMD_TIMESTAMP, HX-Request, HX-Trigger, HX-Target, HX-Current-URL"
         Access-Control-Allow-Credentials "true"
         Vary Origin
     }

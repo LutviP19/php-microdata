@@ -278,6 +278,10 @@ curl --request POST \
 BUILD FFI - LIB
 ######################################################
 
+TESTING:
+-------
+go build -buildmode=c-shared -o ./ffi/lib/fibonacci.so ./ffi/source/fibonacci.go
+
 crawler.go
 ===========
 $ cd ffi/source/crawler
