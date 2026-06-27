@@ -12,12 +12,26 @@
      }">
     
     <!-- <h3><?= htmlspecialchars((string) $title) ?></h3> -->
-    <div class="text-center mb-6 md:mb-10">
+    <!-- <div class="text-center mb-6 md:mb-10">
         <h1 class="text-4xl md:text-6xl font-bold tracking-tight bg-transparent select-none whitespace-nowrap">
             <span class="text-white">“</span>
             <span class="text-[#e62414]">C</span><span class="text-[#4285F4]">a</span><span class="text-[#FBBC05]">r</span><span class="text-[#00c028]">i</span>
             <span class="text-white italic ml-1 md:ml-2"> </span>
             <span class="text-[#e62414]">A</span><span class="text-[#4285F4]">H</span><span class="text-[#00c028]">!</span>
+            <span class="text-white">”</span>
+        </h1>
+        <p class="text-gray-400 mt-2 font-mono text-[10px] md:text-sm uppercase tracking-[0.2em]">System Intelligence Engine</p>
+    </div> -->
+
+    <div class="text-center mb-6 md:mb-10">
+        <h1 class="text-4xl md:text-6xl font-bold tracking-tight bg-transparent select-none whitespace-nowrap">
+            <span class="text-white">“</span>
+            <span class="text-[#e62414]">P</span><span class="text-[#4285F4]">H</span><span class="text-[#FBBC05]">P</span>
+            
+            <span class="text-white italic ml-1 md:ml-2"> </span>
+            
+            <span class="text-[#00c028]">M</span><span class="text-[#e62414]">i</span><span class="text-[#4285F4]">c</span><span class="text-[#FBBC05]">r</span><span class="text-[#00c028]">o</span><span class="text-[#e62414]">d</span><span class="text-[#4285F4]">a</span><span class="text-[#FBBC05]">t</span><span class="text-[#00c028]">a</span>
+            
             <span class="text-white">”</span>
         </h1>
         <p class="text-gray-400 mt-2 font-mono text-[10px] md:text-sm uppercase tracking-[0.2em]">System Intelligence Engine</p>
