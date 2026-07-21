@@ -3,7 +3,6 @@
 *.pid
 *.cache
 *.zip
-*.ini
 *.lock
 *.old
 *.bak
