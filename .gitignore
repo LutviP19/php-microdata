@@ -3,9 +3,12 @@
 *.pid
 *.cache
 *.zip
+*.xz
 *.lock
 *.old
 *.bak
+*.ori
+*.dev
 *.sample
 *DS*
 Caddyfile
@@ -21,7 +24,7 @@ cron_log.txt
 /.nova
 /.vscode
 /.zed
-rector.php
+!rector.php
 *.log
 # macOS Thumbnail Files
 .DS_Store

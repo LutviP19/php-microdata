@@ -34,7 +34,7 @@ ini_set("display_errors", 1);
 require_once BASEPATH . "vendor/autoload.php";
 
 // Min php version
-ensure_minimum_php_version();
+ensure_minimum_php_version(config('app.php_version'));
 
 // Muat file .env
 load_env();

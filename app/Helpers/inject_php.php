@@ -45,12 +45,12 @@ if (!function_exists("ensure_minimum_php_version")) {
     {
         if (version_compare(PHP_VERSION, $version, "<")) {
             $message = "ERROR: PHP $version or higher is required. Current: " . PHP_VERSION;
-
+    
             if (PHP_SAPI === "cli") {
                 fwrite(STDERR, $message . PHP_EOL);
             } else {
                 http_response_code(500);
-                die($message);
+                print($message);
             }
             exit(1);
         }
