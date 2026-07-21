@@ -95,6 +95,9 @@ class Model
         $this->setParams($params);
         $exec = $this->setSQL($query)->query();
 
+        // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
+        $exec->setFetchMode(\PDO::FETCH_ASSOC);
+
         if (!$exec) {
             return false;
         }
@@ -107,8 +110,6 @@ class Model
         // Logika deteksi: jika rawAttr adalah 0 atau false, berarti Unbuffered AKTIF
         $isUnbuffered = $rawAttr === false || $rawAttr === 0;
         if ($isUnbuffered && $fetchAll && $chunk) {
-            // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
-            $exec->setFetchMode(\PDO::FETCH_ASSOC);
 
             // dd('FITUR BARU: CHUNK-FFI');
             return $this->handleFFIChunking($exec);

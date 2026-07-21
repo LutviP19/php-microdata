@@ -102,7 +102,7 @@ return [
 
                 // Konstanta standar PDO (Tidak berubah di 8.5)
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+                // PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
 
                 // Tambahan: Jika Anda menggunakan fitur Unbuffered (Optional)
                 // (defined('\Pdo\Mysql::ATTR_USE_BUFFERED_QUERY') ? \Pdo\Mysql::ATTR_USE_BUFFERED_QUERY : PDO::MYSQL_ATTR_USE_BUFFERED_QUERY)
