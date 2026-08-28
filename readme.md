@@ -1,6 +1,12 @@
 # PHP-Microdata
 
-### Build your micro system with PHP8 and FFi support, ready to up and running with FrankenPHP
+<div align="center" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom:1em">
+  <img src="public/assets/icons/Logo-PHP_Microdata.jpeg" alt="Logo" height="80" style="margin-right:15px">
+  <img src="public/assets/icons/Logo-SCF.jpeg" alt="UI-UX" width="80" height="80" style="margin-right:15px">
+  <img src="public/assets/icons/Logo-PHP_v9.jpeg" alt="SCF" width="80" height="80">
+</div>
+
+Build your micro system with PHP8 and FFi support, ready to up and running with FrankenPHP
 
 #### How to run: please read DEV.txt
 
