@@ -41,13 +41,23 @@ class Cache
     }
 
     /**
-     * Remember Pattern: Fetch cache or save if it doesn't exist
+     * Remember Pattern: Fetch cache or execute callback and save if it doesn't exist
+     *
+     * @param string $key
+     * @param callable $callback
+     * @param int|null $expiry
+     * @return mixed
      */
-    public function remember($key, $callback, $expiry = null)
+    public function remember($key, callable $callback, $expiry = null)
     {
-        $expiry = $expiry ?: $this->defaultExpiry;
-        $data = $this->get($key);
+        $expiry = $expiry ?? $this->defaultExpiry;
+        
+        if (method_exists($this, 'has') && $this->has($key)) {
+            return $this->get($key);
+        }
 
+        // If there is no has() method, fallback to the get() !== null check
+        $data = $this->get($key);
         if ($data !== null) {
             return $data;
         }

@@ -48,17 +48,21 @@ class DashboardModel extends DashboardData
         $query = "SELECT * FROM ".$this->table." ORDER BY hire_date DESC";
 
         // Set limit agar bisa auto Stream
-        $mainData->limitToStream = 55;
+        $limitToStream = 55;
+        $mainData->limitToStream = $limitToStream;
         $dataDashboard = null;
         // Cek limit agar otomatis masuk ke Mode Stream
-        if($limit > $mainData->limitToStream) {
+        if ((int) $limit >= $limitToStream) {
             $dataDashboard = $mainData->paginate($query, [], $page, $limit);
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
             $queryString = md5((string) $cleanQuery);
-            $cacheKeyId = "dashboard:{$this->table}:" . $queryString . ":p{$page}:l{$limit}";
-
-            $dataDashboard = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
+            $cacheKeyId = "dashboard:{$this->table}:p{$page}:l{$limit}:{$queryString}";     
+            $dataDashboard = $cache->remember(
+                $cacheKeyId, 
+                fn() => $mainData->paginate($query, [], $page, $limit), 
+                300
+            );
         }
         
 

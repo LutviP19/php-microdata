@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Model class
  * @package Backend-PHP
@@ -75,118 +76,7 @@ class Model
         $this->table = null;
     }
 
-    /**
-     * execQuery
-     *
-     * @param string $query
-     * @param array $params
-     * @param bool $lastInsertId
-     * @return mixed
-     */
-    public function execQuery(
-        $query,
-        array $params,
-        $lastInsertId = false,
-        bool $fetch = false,
-        bool $fetchAll = false,
-        bool $stream = false,
-        bool $chunk = false,
-    ) {
-        $this->setParams($params);
-        $exec = $this->setSQL($query)->query();
-
-        // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
-        $exec->setFetchMode(\PDO::FETCH_ASSOC);
-
-        if (!$exec) {
-            return false;
-        }
-
-        // --- FITUR BARU: CHUNK-FFI
-        // dd($chunk);
-        // 1001 adalah nilai integer absolut untuk MYSQL_ATTR_USE_BUFFERED_QUERY
-        // Ambil nilai atribut untuk flag CHUNK-FFI
-        $rawAttr = $this->pdo->getAttribute(1001);
-        // Logika deteksi: jika rawAttr adalah 0 atau false, berarti Unbuffered AKTIF
-        $isUnbuffered = $rawAttr === false || $rawAttr === 0;
-        if ($isUnbuffered && $fetchAll && $chunk) {
-
-            // dd('FITUR BARU: CHUNK-FFI');
-            return $this->handleFFIChunking($exec);
-        } else {
-            if ($lastInsertId) {
-                return $this->getPDO()->lastInsertId();
-            }
-
-            if ($fetch) {
-                return $exec->fetch();
-            }
-
-            // --- FITUR BARU: STREAMING ---
-            if ($stream) {
-                return (function () use ($exec) {
-                    while ($row = $exec->fetch()) {
-                        yield $row;
-                    }
-                })();
-            }
-
-            if ($fetchAll) {
-                return $exec->fetchAll();
-            }
-        }
-
-        return true;
-    }
-
-    private function handleFFIChunking(\PDOStatement $exec): mixed
-    {
-        // Ambil aturan casting secara dinamis berdasarkan class struct yang sedang digunakan
-        // Asumsi: $this->structClass menyimpan nama class seperti 'App\Structs\ProductStruct'
-        $castRules = getCastRules($this->structClass ?? \App\Structs\DefaultStruct::class);
-        // dd($this->structClass);
-        // dd($castRules);
-
-        $this->rustEngine = new \App\Core\FFI\DataEngine();
-        $this->rustEngine->clear();
-
-        $chunkSize = 50000;
-        $currentChunk = [];
-        try {
-            while ($row = $exec->fetch()) {
-                // --- DYNAMIC CASTING ---
-                foreach ($castRules as $column => $type) {
-                    if (isset($row[$column])) {
-                        $row[$column] = match ($type) {
-                            "int" => (int) $row[$column],
-                            "float" => (float) $row[$column],
-                            "bool" => (bool) $row[$column],
-                            default => (string) $row[$column],
-                        };
-                    }
-                }
-
-                $currentChunk[] = $row;
-
-                if (count($currentChunk) >= $chunkSize) {
-                    $this->rustEngine->appendChunk($currentChunk);
-                    $currentChunk = [];
-                }
-            }
-
-            if (!empty($currentChunk)) {
-                $this->rustEngine->appendChunk($currentChunk);
-                unset($currentChunk);
-            }
-        } catch (\Throwable $e) {
-            die("Dynamic FFI Chunking Error: " . $e->getMessage());
-            return false;
-        } finally {
-            $exec->closeCursor();
-            // dd($this->rustEngine->debugFirstItem());
-            return $this->rustEngine->streamAll();
-        }
-    }
+    
 
     /**
      * Create a new instance or return the
@@ -243,7 +133,13 @@ class Model
      */
     protected function getSQL()
     {
-        return $this->sql;
+        // Check the name of the database driver used
+        if (in_array(config('default_db'), ['mariadb', 'mysql'])) {
+            return str_replace(["to_date"], ["`to_date`"], $this->sql);
+        } else {
+            return $this->sql;
+        }
+
     }
 
     /**
@@ -314,6 +210,124 @@ class Model
     }
 
     /**
+     * execQuery
+     *
+     * @param string $query
+     * @param array $params
+     * @param bool $lastInsertId
+     * @return mixed
+     */
+    public function execQuery(
+        $query,
+        array $params,
+        $lastInsertId = false,
+        bool $fetch = false,
+        bool $fetchAll = false,
+        bool $stream = false,
+        bool $chunk = false,
+    ) {
+        $this->setParams($params);
+        $exec = $this->setSQL($query)->query();
+
+        // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
+        $exec->setFetchMode(\PDO::FETCH_ASSOC);
+
+        if (!$exec) {
+            return false;
+        }
+
+        $isUnbuffered = 1;
+
+        // ---NEW FEATURE: CHUNK-FFI
+        // dd($chunk);
+        // 1001 is the absolute integer value for MYSQL_ATTR_USE_BUFFERED_QUERY
+        // Retrieve the attribute value for the CHUNK-FFI flag
+        if (in_array(config('default_db'), ['mariadb', 'mysql'])) {
+            $rawAttr = $this->pdo->getAttribute(1001);
+
+            // Detection logic: if rawAttr is 0 or false, then Unbuffered is ON
+            $isUnbuffered = $rawAttr === false || $rawAttr === 0;
+        }
+
+        if ($isUnbuffered && $fetchAll && $chunk) {
+            // dd('FITUR BARU: CHUNK-FFI');
+            return $this->handleFFIChunking($exec);
+        } else {
+            if ($lastInsertId) {
+                return $this->getPDO()->lastInsertId();
+            }
+
+            if ($fetch) {
+                return $exec->fetch();
+            }
+
+            // ---NEW FEATURE: STREAMING ---
+            if ($stream) {
+                return (function () use ($exec) {
+                    while ($row = $exec->fetch()) {
+                        yield $row;
+                    }
+                })();
+            }
+
+            if ($fetchAll) {
+                return $exec->fetchAll();
+            }
+        }
+
+        return true;
+    }
+
+    private function handleFFIChunking(\PDOStatement $exec): mixed
+    {
+        // Dynamically retrieve casting rules based on the struct class being used
+        // Assumption: $this->structClass holds a class name like 'App\Structs\ProductStruct'
+        $castRules = getCastRules($this->structClass ?? \App\Structs\DefaultStruct::class);
+        // dd($this->structClass);
+        // dd($castRules);
+
+        $this->rustEngine = new \App\Core\FFI\DataEngine();
+        $this->rustEngine->clear();
+
+        $chunkSize = 50000;
+        $currentChunk = [];
+        try {
+            while ($row = $exec->fetch()) {
+                // --- DYNAMIC CASTING ---
+                foreach ($castRules as $column => $type) {
+                    if (isset($row[$column])) {
+                        $row[$column] = match ($type) {
+                            "int" => (int) $row[$column],
+                            "float" => (float) $row[$column],
+                            "bool" => (bool) $row[$column],
+                            default => (string) $row[$column],
+                        };
+                    }
+                }
+
+                $currentChunk[] = $row;
+
+                if (count($currentChunk) >= $chunkSize) {
+                    $this->rustEngine->appendChunk($currentChunk);
+                    $currentChunk = [];
+                }
+            }
+
+            if (!empty($currentChunk)) {
+                $this->rustEngine->appendChunk($currentChunk);
+                unset($currentChunk);
+            }
+        } catch (\Throwable $e) {
+            die("Dynamic FFI Chunking Error: " . $e->getMessage());
+            return false;
+        } finally {
+            $exec->closeCursor();
+            // dd($this->rustEngine->debugFirstItem());
+            return $this->rustEngine->streamAll();
+        }
+    }
+
+    /**
      * Handle Pagination
      *
      * @param string $query Main query without LIMIT/OFFSET
@@ -322,20 +336,24 @@ class Model
      * @param int $limit Amount of data per page
      * @return array [data, total, current_page, last_page, limit]
      */
-    public function paginate($query, array $params = [], $page = 1, $limit = 10)
+    public function paginate($query, array $params = [], $page = 1, $limit = 10, $queryCount = null)
     {
-        // dd($this->table);
-        // Offset Calculation
-        $page = (int) $page > 0 ? (int) $page : 1;
-        $limit = $limit <= 0 ? 1 : (int) $limit;
+        // Sanitize & Ensure Integer data type for security from SQL Injection
+        $page = max(1, (int) $page);
+        $limit = max(1, (int) $limit);
         $offset = ($page - 1) * $limit;
+
+        // Remove the semicolon at the end of $query (if any) and eliminate extra spaces
+        $query = rtrim(trim($query), ';');
 
         // Add LIMIT and OFFSET in Query
         $paginatedQuery = $query . " LIMIT $limit OFFSET $offset";
 
-        // Eksekusi Data dengan Mode STREAM otomatis sesuai limitToStream
-        $shouldStream = $limit > $this->limitToStream;
-        $dataGenerator = $this->execQuery($paginatedQuery, $params, false, false, !$shouldStream, $shouldStream);
+        // Data Execution with STREAM Mode is automatic according to limitToStream
+        $shouldStream = $limit >= $this->limitToStream;
+        $rawData = $this->execQuery($paginatedQuery, $params, false, false, !$shouldStream, $shouldStream);
+        // If the data is in the form of a Generator (Streaming), convert it to an Array so that the JSON Controller is not Null
+        $dataResult = $rawData instanceof \Generator ? iterator_to_array($rawData) : $rawData;
         // dd($shouldStream, true);
 
         // Cache data
@@ -345,20 +363,27 @@ class Model
         ksort($params);
         $paramSignature = !empty($params) ? md5(json_encode($params) . $queryString) : $queryString;
         $cacheKeyId = "paginate_count:{$this->table}:p{$page}:l{$limit}:{$paramSignature}";
-        $paginationMeta = $cache->remember(
-            $cacheKeyId,
-            function () use ($query, $params, $page, $limit, $offset) {
+
+        $callback = function () use ($query, $queryCount, $params, $page, $limit, $offset) {
                 // Calculate Total Data (for info pagination)
-                $countQuery = "SELECT COUNT(*) AS total_count FROM ($query) AS total";
-                $total = $this->execQuery($countQuery, $params, false, true);
+                $finalQuery = !is_null($queryCount) 
+                    ? $queryCount 
+                    : "SELECT COUNT(*) AS total_count FROM ($query) AS total";
+                $total = $this->execQuery($finalQuery, $params, false, true);
 
                 // Parsing data (Supports Objects and Arrays)
+                $totalRows = 0;
                 if ($total) {
-                    $totalRows = is_object($total) ? (int) $total->total_count : (int) $total["total_count"];
+                    if (is_object($total) && isset($total->total_count)) {
+                        $totalRows = (int) $total->total_count;
+                    } elseif (is_array($total) && isset($total['total_count'])) {
+                        $totalRows = (int) $total['total_count'];
+                    }
                 }
 
                 // Metadata calculations
-                $lastPage = ceil($totalRows / $limit);
+                $safeLimit = max(1, (int) $limit);
+                $lastPage = (int) ceil($totalRows / $safeLimit);
 
                 return [
                     "total" => $totalRows,
@@ -368,14 +393,22 @@ class Model
                     "from" => $offset + 1,
                     "to" => min($offset + $limit, $totalRows),
                 ];
-            },
+            };
+
+        $paginationMeta = $cache->remember(
+            $cacheKeyId,
+            $callback,
             $this->timeCachedCount,
         );
         // dd($paginationMeta, true);
 
-        // Kembalikan metadata DAN generator datanya
+        if($paginationMeta['total'] === 0) {
+            $paginationMeta = $callback();
+        }
+
+        // Return the metadata AND the data generator
         return [
-            "data" => $dataGenerator,
+            "data" => $dataResult,
             "meta" => $paginationMeta,
         ];
     }
@@ -391,6 +424,6 @@ class Model
     {
         $cache = new \App\Core\Support\Cache();
 
-        return $cache->remember($key, fn() => $this->execQuery($query, $params, false, false, true), $expiry);
+        return $cache->remember($key, fn () => $this->execQuery($query, $params, false, false, true), $expiry);
     }
 }

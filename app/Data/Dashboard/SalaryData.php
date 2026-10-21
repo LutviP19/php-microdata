@@ -8,6 +8,7 @@ namespace App\Data\Dashboard;
 
 
 use PDO; // new PDO object
+use App\Core\Database\Connection; // Uncomment to use custom DB connection
 
 class SalaryData extends DashboardData {
 
@@ -21,13 +22,14 @@ class SalaryData extends DashboardData {
     public function __construct(?PDO $pdo = null, array $options = [])
     {
         // Global Set Custom connection
-        $driver = 'mysql';
+        // $driver = 'mysql';
+        $driver = config("default_db");
         $dbname = 'employees';
         // $host = '127.0.0.1';
-        $host = env('DB_HOST');
-        $port = '3306';
-        $username = 'root';
-        $password = '';
+        $host = config("database.{$driver}.host");
+        $port = config("database.{$driver}.port");
+        $username = config("database.{$driver}.username");
+        $password = config("database.{$driver}.password");
         
         $conn = $pdo ?? Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
         

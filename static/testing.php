@@ -369,14 +369,14 @@ $cache = new \App\Core\Support\Cache();
 
 $request = $_GET;
 // Ambil data paginate result dari cache selama 5 menit
-$page = (int) ($request["page"] ?? 3);
+$page = (int) ($request["page"] ?? 1);
 $limit = (int) ($request["limit"] ?? 50); // total data perpage
 
 $id = $request["id"] ?? null;
 
 // Maximum limit to render in browser
 // else using chunk - FFI
-$maxLimitToRender = 10000;
+$maxLimitToRender = 500;
 
 // Dynamic
 if ($limit >= $maxLimitToRender) {
@@ -507,11 +507,57 @@ $mainData->limitToStream = 100;
 
 // Query Utama
 $dataEmployees = null;
-$query = "SELECT * FROM " . $table . " ORDER BY to_date DESC";
+// $query = "SELECT * FROM " . $table . " ORDER BY to_date DESC";
+
+// Test Complex Query
+$query = "SELECT 
+            e.emp_no,
+            CONCAT(e.first_name, ' ', e.last_name) AS full_name,
+            e.gender,
+            d.dept_name,
+            t.title AS current_title,
+            s.salary AS current_salary,
+            s.from_date AS salary_effective_date,
+            sub.avg_salary_in_dept,
+            ROUND(s.salary - sub.avg_salary_in_dept, 2) AS salary_diff_from_dept_avg
+        FROM employees e
+        INNER JOIN {$table} s 
+            ON e.emp_no = s.emp_no 
+            AND s.to_date = '9999-01-01' -- Mengambil gaji aktif/terakhir
+        INNER JOIN dept_emp de 
+            ON e.emp_no = de.emp_no 
+            AND de.to_date = '9999-01-01' -- Mengambil departemen aktif
+        INNER JOIN departments d 
+            ON de.dept_no = d.dept_no
+        INNER JOIN titles t 
+            ON e.emp_no = t.emp_no 
+            AND t.to_date = '9999-01-01' -- Mengambil jabatan aktif
+        INNER JOIN (
+            -- Subquery: Menghitung rata-rata gaji per departemen
+            SELECT 
+                de_sub.dept_no,
+                AVG(s_sub.salary) AS avg_salary_in_dept
+            FROM salaries s_sub
+            INNER JOIN dept_emp de_sub ON s_sub.emp_no = de_sub.emp_no
+            WHERE s_sub.to_date = '9999-01-01'
+            GROUP BY de_sub.dept_no
+        ) sub ON d.dept_no = sub.dept_no
+        WHERE s.salary > 50000
+        ORDER BY s.salary DESC, e.hire_date ASC";
+
+// Custum COUNT rows
+$queryCount = "SELECT COUNT(*) AS total_count
+                FROM salaries s
+                INNER JOIN dept_emp de 
+                    ON s.emp_no = de.emp_no 
+                    AND de.to_date = '9999-01-01'
+                WHERE s.to_date = '9999-01-01'
+                AND s.salary > 50000";
+
 
 // Cek limit agar otomatis masuk ke Mode Stream
-if ($limit > $mainData->limitToStream) {
-    $dataEmployees = $mainData->paginate($query, [], $page, $limit);
+if ($limit >= $mainData->limitToStream) {
+    $dataEmployees = $mainData->paginate($query, [], $page, $limit, $queryCount);
     // dd($dataEmployees['meta']);
 
     // Stream - Output
@@ -521,7 +567,10 @@ if ($limit > $mainData->limitToStream) {
     $queryString = md5((string) $cleanQuery);
     $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataEmployees = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit), 300);
+    $dataEmployees = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit, $queryCount), 300);
+
+    // Cached Data - Output
+    json_response_stream(200, "load-cache", $dataEmployees["data"], $dataEmployees["meta"]);
 }
-dd($dataEmployees, true);
+// dd($dataEmployees, true);
 // echo "<pre>".json_encode($dataEmployees, JSON_PRETTY_PRINT)."</pre>";

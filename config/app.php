@@ -8,12 +8,12 @@
 // if (!defined("BASEPATH")) {
 //     // === PERBAIKAN 1: Gunakan realpath() untuk membersihkan path dari awal ===
 //     $calculatedPath = __DIR__ . "/..";
-    
+
 //     // === PERBAIKAN 2: Jika terdeteksi double /app/app/, bersihkan menjadi /app/ ===
 //     if (str_contains(realpath($calculatedPath), '/app/app')) {
 //         $calculatedPath = str_replace('/app/app', '/app', $calculatedPath);
 //     }
-    
+
 //     define("BASEPATH", $calculatedPath);
 // }
 
@@ -86,9 +86,9 @@ return [
         'mysql' => [
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'dbname' => env('DB_DATABASE', 'backend_php'),
+            'dbname' => env('DB_DATABASE', 'php_microdata_server'),
             'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'password' => env('DB_PASSWORD', 'password123'),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
@@ -110,6 +110,90 @@ return [
                 // Gunakan 1001 langsung untuk menjamin kompatibilitas di PHP 8.3 - 8.5
                 1001 => true,
             ]) : [],
+        ],
+
+        'mariadb' => [
+            'driver' => 'mariadb',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'dbname' => env('DB_DATABASE', 'php_microdata_server'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', 'password123'),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_uca1400_ai_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+
+                // PENTING: Batasi timeout koneksi PDO agar tidak membuat HTTP request hang
+                PDO::ATTR_TIMEOUT => 2,
+
+                // Deteksi otomatis konstanta SSL CA (Mendukung PHP < 8.5 & 8.5+)
+                (defined('\Pdo\Mysql::ATTR_SSL_CA') ? \Pdo\Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'pgsql' => [
+            'driver'    => 'pgsql',
+            'url'       => env('DB_URL'),
+            'host'      => env('DB_HOST', '127.0.0.1'),
+            'port'      => env('DB_PORT', '5432'),
+            'dbname'    => env('DB_DATABASE', 'php_microdata_server'),
+            'username'  => env('DB_USERNAME', 'postgres'),
+            'password'  => env('DB_PASSWORD', 'password123'),
+            'charset'   => env('DB_CHARSET', 'utf8'),
+            'prefix'    => '',
+            'prefix_indexes' => true,
+            'search_path'    => 'public',
+            'sslmode'        => env('DB_SSLMODE', 'prefer'),
+
+            /*
+            |--------------------------------------------------------------------------
+            | PDO Options Optimization (Untuk QueryBuilder & OpenSwoole/FPM)
+            |--------------------------------------------------------------------------
+            */
+            'options' => [
+                // 1. Lempar Exception secara eksplisit jika terjadi SQL Error
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+
+                // 2. Kembalikan nama kolom SELECT sesuai tipe aslinya (Lower/Upper case tetap presisi)
+                PDO::ATTR_CASE => PDO::CASE_NATURAL,
+
+                // 3. Kembalikan data NULL dan Empty String secara konsisten
+                PDO::ATTR_ORACLE_NULLS => PDO::NULL_NATURAL,
+
+                // 4. Menggunakan Native Prepared Statements dari PostgreSQL (Penting untuk Performa)
+                PDO::ATTR_EMULATE_PREPARES => false,
+
+                // 5. Kembalikan hasil fetch sebagai stdObject secara default
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+
+                // 6. Konversi tipe data numeric PostgreSQL (INT, BIGINT, FLOAT) ke Tipe Data Asli PHP (int/float)
+                //    mencegah semua angka dikembalikan sebagai 'string'.
+                PDO::ATTR_STRINGIFY_FETCHES => false,
+
+                // PENTING: Batasi timeout koneksi PDO agar tidak membuat HTTP request hang
+                PDO::ATTR_TIMEOUT => 2,
+            ],
+        ],
+
+        'sqlsrv' => [
+            'driver' => 'sqlsrv',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', 'localhost'),
+            'port' => env('DB_PORT', '1433'),
+            'dbname' => env('DB_DATABASE', 'php_microdata_server'),
+            'username' => env('DB_USERNAME', 'sa'),
+            'password' => env('DB_PASSWORD', 'password123'),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            // 'encrypt' => env('DB_ENCRYPT', 'yes'),
+            // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
     ],
 
