@@ -588,3 +588,27 @@ php-microdata/                 # [Root Direktori Proyek di Host & /app di Docker
 
 
 
+=============================
+Upgrade to min version PHP-8.5:
+
+Updating dependencies
+Lock file operations: 1 install, 16 updates, 1 removal
+  - Removing paragonie/random_compat (v9.99.100)
+  - Upgrading amphp/amp (v3.1.1 => v3.1.3)
+  - Upgrading amphp/dns (v2.4.0 => v2.4.1)
+  - Upgrading amphp/pipeline (v1.2.3 => v1.2.7)
+  - Upgrading amphp/process (v2.0.3 => v2.1.0)
+  - Upgrading amphp/socket (v2.4.0 => v2.4.1)
+  - Upgrading dragonmantank/cron-expression (v3.6.0 => v3.6.1)
+  - Upgrading league/uri (7.8.1 => 7.9.0)
+  - Upgrading league/uri-interfaces (7.8.1 => 7.9.0)
+  - Upgrading meilisearch/meilisearch-php (v1.16.1 => v1.17.0)
+  - Upgrading php-amqplib/php-amqplib (v3.7.4 => v3.7.5)
+  - Upgrading phpseclib/phpseclib (3.0.52 => 4.0.2)
+  - Upgrading phpstan/phpstan (2.1.54 => 2.3.1)
+  - Upgrading predis/predis (v3.4.2 => v3.7.0)
+  - Upgrading rector/rector (2.4.2 => 2.7.0)
+  - Upgrading revolt/event-loop (v1.0.8 => v1.0.9)
+  - Upgrading symfony/polyfill-php81 (v1.37.0 => v1.38.1)
+  - Locking symfony/polyfill-php82 (v1.43.0)
+
