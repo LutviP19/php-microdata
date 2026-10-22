@@ -15,7 +15,7 @@ use ReflectionClass;
  * @author Lutvi <lutvip19@gmail.com>
  * @package: Backend-PHP
  */
-abstract class BaseModel
+abstract class BaseModelV2
 {
     /**
      * PDO properties for this instance (Instance-based)
@@ -136,7 +136,7 @@ abstract class BaseModel
         }
 
         $className = (new ReflectionClass(static::class))->getShortName();
-        return strtolower($className) . 's';
+        return strtolower(str_replace(['Struct','Data','Model'], "", $className)) . 's';
     }
 
     /**
