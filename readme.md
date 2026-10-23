@@ -14,6 +14,8 @@ Build your micro system with PHP8 and FFi support, ready to up and running with 
 
 ##### Requirements: PHP 8.5+ with FFI, Golang go1.26.1, rustc 1.94.1, OS: Linux/Mac
 
+##### Developed On: PHP 8.6.0RC3, go1.26.3 linux/amd64, rustc 1.96.0, psql (PostgreSQL) 16.14 OS: Linux
+
 ##### Database sample: [employees](https://github.com/datacharmer/test_db)
 
 ### Youtube Shorts Video - Intro
