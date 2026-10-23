@@ -4,7 +4,7 @@
     "description": "Micro system of PHP8 with FFi",
     "keywords": ["php8", "ffi", "cronjob", "microservices", "frankenphp"],
     "require": {
-        "php": "^8.5",
+        "php": ">=8.5.12 <8.6.0",
         "phpstreamserver/scheduler": "^0.8.1",
         "predis/predis": "^3.4",
         "php-amqplib/php-amqplib": "^3.7",
@@ -20,6 +20,9 @@
         ]
     },
     "config": {
+        "platform": {
+            "php": "8.5.12"
+        },
         "allow-plugins": {
             "php-http/discovery": true
         }

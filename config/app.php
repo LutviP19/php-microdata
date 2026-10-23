@@ -28,7 +28,7 @@ return [
      * Application config details.
      */
     'app' => [
-        'php_version' => env('PHP_VERSION', '8.5.0'),
+        'php_version' => env('PHP_VERSION', '8.5.12'),
         'name' => env('APP_NAME', 'PHP Microdata Server'),
         'url' => env('APP_URL', 'http://localhost'),
         'path' => BASEPATH,

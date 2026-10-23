@@ -12,7 +12,7 @@ Build your micro system with PHP8 and FFi support, ready to up and running with 
 
 #### Testing Results: please read ./test/TEST.txt or ./test/TEST_SUMMARY.json
 
-##### Requirements: PHP 8.5+ with FFI, Golang go1.26.1, rustc 1.94.1, OS: Linux/Mac
+##### Requirements: PHP 8.5.12+, Golang go1.26.1, rustc 1.94.1, OS: Linux/Mac
 
 ##### Developed On: PHP 8.6.0RC3, go1.26.3 linux/amd64, rustc 1.96.0, psql (PostgreSQL) 16.14 OS: Linux
 
