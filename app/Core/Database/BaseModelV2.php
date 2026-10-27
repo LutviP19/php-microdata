@@ -293,9 +293,9 @@ abstract class BaseModelV2
         return $affected;
     }
 
-    public static function paginate(int $page = 1, int $perPage = 15): array
+    public static function paginate(int $perPage = 15, int $page = 1): array
     {
-        return static::query()->paginate($page, $perPage);
+        return static::query()->paginate($perPage, $page);
     }
 
     public static function getPaginationRange(int $currentPage, int $totalPages, int $delta = 1): array

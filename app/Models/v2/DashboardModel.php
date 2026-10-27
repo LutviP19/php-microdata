@@ -86,7 +86,7 @@ class DashboardModel
         // $query = "SELECT * FROM ".static::getTableName()." ORDER BY hire_date DESC";
         // // Panggil fungsi paginate
         // // $mainData->limitToStream = 1000;
-        // $result = $mainData->paginate($query, [], $page, $limit);
+        // $result = $mainData->paginate($limit, $page);
         // dd($result, true);
 
         // // Test - Pagination 2
@@ -96,7 +96,7 @@ class DashboardModel
         // // Query dasar
         // $query = "SELECT * FROM ".$statsData->table." ORDER BY to_date DESC";
         // // Panggil fungsi paginate
-        // $result = $statsData->paginate($query, [], $page, $limit);
+        // $result = $statsData->paginate($limit, $page);
         // dd($result, true);
 
 
@@ -134,14 +134,14 @@ class DashboardModel
 
         // Cek limit agar otomatis masuk ke Mode Stream
         if ($limit > $mainData->limitToStream) {
-            $dataDashboard = $mainData->paginate($page, $limit);
+            $dataDashboard = $mainData->paginate($limit, $page);
             $dataStats = $statsData->getAllDataSalaries();
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
             $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "dashboard_data:{$mainData::getTableName()}:" . $queryString . ":p{$page}:l{$limit}";
 
-            $dataDashboard = $cache->remember($cacheKeyId, fn () => $mainData->paginate($page, $limit), 300);
+            $dataDashboard = $cache->remember($cacheKeyId, fn () => $mainData->paginate($limit, $page), 300);
 
             // // Ambil data stats dari cache selama 5 menit
             $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {

@@ -61,12 +61,12 @@ class AuthModel
 
         // Cek limit agar otomatis masuk ke Mode Stream
         if($limit > $mainData->limitToStream) {            
-            $dataAuth = $mainData->paginate($page, $limit);
+            $dataAuth = $mainData->paginate($limit, $page);
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
             $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "auth_data:{$mainData::getTableName()}:" . $queryString . ":p{$page}:l{$limit}";
-            $dataAuth = $cache->remember($cacheKeyId, fn() => $mainData->paginate($page, $limit), 300);
+            $dataAuth = $cache->remember($cacheKeyId, fn() => $mainData->paginate($limit, $page), 300);
         }
 
         $modelA = [

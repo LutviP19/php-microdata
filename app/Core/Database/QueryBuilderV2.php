@@ -437,7 +437,7 @@ class QueryBuilderV2
         return (float) $this->aggregate('AVG', $column);
     }
 
-    public function paginate(int $page = 1, int $perPage = 15): array
+    public function paginate(int $perPage = 15, int $page = 1): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
