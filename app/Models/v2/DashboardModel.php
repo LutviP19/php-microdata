@@ -137,7 +137,7 @@ class DashboardModel
             $dataDashboard = $mainData->paginate($limit, $page);
             $dataStats = $statsData->getAllDataSalaries();
         } else {
-            $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+            $cleanQuery = preg_replace('/\s+/', ' ', trim($mainData->toSql()));
             $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "dashboard_data:{$mainData::getTableName()}:" . $queryString . ":p{$page}:l{$limit}";
 

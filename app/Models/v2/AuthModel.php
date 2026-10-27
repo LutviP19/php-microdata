@@ -63,7 +63,7 @@ class AuthModel
         if($limit > $mainData->limitToStream) {            
             $dataAuth = $mainData->paginate($limit, $page);
         } else {
-            $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
+            $cleanQuery = preg_replace('/\s+/', ' ', trim($mainData->toSql()));
             $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "auth_data:{$mainData::getTableName()}:" . $queryString . ":p{$page}:l{$limit}";
             $dataAuth = $cache->remember($cacheKeyId, fn() => $mainData->paginate($limit, $page), 300);
