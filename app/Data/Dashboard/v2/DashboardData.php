@@ -37,8 +37,9 @@ class DashboardData extends DashboardStruct {
     {
         // Default connection
         $conn = $pdo ?? Connection::make(config('default_db'));
-        $conn = $pdo;
-        parent::__construct($conn);
+
+        // save it to static properties
+        static::$staticPdo = $conn;
     }
 
     public function getAllData($id = null, $selectCols = '*') { 
@@ -46,7 +47,7 @@ class DashboardData extends DashboardStruct {
             // Logic to getAllData
             return static::select($selectCols)->where(static::$primaryKey, '=', $id)->limit(10)->get();
         }
-            
+
         return static::select($selectCols)->limit(10)->get();
     }
 }

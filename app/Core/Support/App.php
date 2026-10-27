@@ -2,13 +2,14 @@
 
 /**
  * App class
+ * 
  * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata(PMD)
  */
 
 namespace App\Core\Support;
 
 use App\Core\Events\ListenerRegistry;
-use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Throwable;
 use Exception;
@@ -36,28 +37,7 @@ class App
      */
     public static function get(string $key): mixed
     {
-        // return self::has($key) ? self::$registry[$key] : false;
-
-        // // PERBAIKAN UTAMA: Menggunakan array_key_exists alih-alih isset.
-        // // Ini memastikan jika service terdaftar sebagai null (karena RabbitMQ/Redis down di Docker lokal),
-        // // fungsi ini tetap mengembalikan nilai null asli, bukan mereturn nilai boolean false.
-        // return array_key_exists($key, self::$registry) ? self::$registry[$key] : null;
-
-        // if (!array_key_exists($key, self::$registry)) {
-        //     return null;
-        // }
-
-        // // === FITUR SINGLETON AUTOMATIC RESOLUTION ===
-        // // Jika service yang disimpan berupa instance dari Closure (Fungsi),
-        // // eksekusi fungsi tersebut untuk membuat objek aslinya, 
-        // // lalu timpa registry dengan hasil objek asli tersebut agar menjadi static instansiasi tunggal.
-        // if (self::$registry[$key] instanceof Closure) {
-        //     self::$registry[$key] = self::$registry[$key]();
-        // }
-
-        // return self::$registry[$key];
-
-        // 1. Jika service sudah terdaftar langsung di container
+        // 1. If the service has been registered directly in the container
         if (array_key_exists($key, self::$registry)) {
             if (self::$registry[$key] instanceof Closure) {
                 self::$registry[$key] = self::$registry[$key]();
@@ -65,8 +45,8 @@ class App
             return self::$registry[$key];
         }
 
-        // 2. JALUR AUTOWIRING: Jika key merupakan nama sebuah Class yang valid, 
-        // lakukan resolusi otomatis menggunakan Reflection API
+        // 2. AUTOWIRING PATH: If key is the name of a valid Class, 
+        // perform auto resolution using the Reflection API
         if (class_exists($key)) {
             try {
                 return self::resolve($key);
@@ -86,9 +66,6 @@ class App
      */
     public static function has(string $key): bool
     {
-        // return isset(self::$registry[$key]) ? true : false;
-
-        // Menggunakan array_key_exists agar kolom yang bernilai null tetap dianggap "ada" kuncinya
         return array_key_exists($key, self::$registry);
     }
 
@@ -105,7 +82,7 @@ class App
     }
 
      /**
-     * Menghapus service tertentu dari container jika dibutuhkan (Opsional/Utilitas)
+     * Remove certain services from the container if needed (Optional/Utility)
      * 
      * @param string $key
      * @return void
@@ -118,11 +95,11 @@ class App
     }
 
     /**
-     * Fitur Baru: Mendaftarkan service dengan skema Singleton (Lazy Loading)
-     * Objek tidak akan dibuat sebelum fungsi App::get() dipanggil pertama kali.
+     * New Feature: Register services with Singleton (Lazy Loading) scheme
+     * The object will not be created until the App::get() function is called the first time.
      * 
-     * @param string $key Nama alias service
-     * @param Closure $callback Fungsi pembuat objek instansiasi
+     * @param string $key Service alias name
+     * @param Closure $callback The instantiation object creation function
      * @return void
      */
     public static function singleton(string $key, Closure $callback): void
@@ -131,59 +108,57 @@ class App
     }
 
     /**
-     * Logika utama Autowiring menggunakan Reflection API (Resolusi Dependensi Otomatis)
+     * Autowiring main logic using Reflection API (Automatic Dependency Resolution)
      */
     private static function resolve(string $className): mixed
     {
         $reflector = new ReflectionClass($className);
 
-        // Jika kelas tidak bisa di-instansiasi (misal: Interface atau Abstract Class)
+        // If the class cannot be instantiated (eg: Interface and Abstract Class)
         if (!$reflector->isInstantiable()) {
             throw new Exception("Kelas [{$className}] bukan merupakan kelas yang dapat di-instansiasi.");
         }
 
-        // Ambil konstruktor dari kelas tersebut
+        // Take the constructor of that class
         $constructor = $reflector->getConstructor();
 
-        // Jika tidak memiliki konstruktor, langsung buat objek baru tanpa argumen
         if (is_null($constructor)) {
             return new $className();
         }
 
-        // Ambil daftar parameter dari konstruktor
         $parameters = $constructor->getParameters();
         $dependencies = [];
 
         foreach ($parameters as $parameter) {
-            // Ambil tipe data class dari parameter (PHP 8 ReflectionType)
+            // Get the class data type from the parameter (PHP 8 ReflectionType)
             $type = $parameter->getType();
 
-            // Jika parameter tidak memiliki tipe data (type-hint) kelas, atau merupakan tipe primitif (string, int, dll)
+            // If the parameter does not have a class data type (type-hint), or is a primitive type (string, int, etc.)
             if (!$type || $type->isBuiltin()) {
                 if ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                     continue;
                 }
-                throw new Exception("Tidak dapat menyelesaikan parameter [{$parameter->getName()}] di kelas [{$className}] karena tidak memiliki tipe kelas yang valid.");
+                throw new Exception("Cannot resolve parameter [{$parameter->getName()}] in class [{$className}] because it does not have a valid class type.");
             }
 
-            // Ambil nama lengkap kelas dari parameter tersebut
+            // Retrieve the full class name of the parameter
             $dependencyClassName = $type->getName();
 
-            // Panggil App::get() secara rekursif untuk menyelesaikan dependensi ini
+            // Call App::get() recursively to resolve these dependencies
             $dependencies[] = self::get($dependencyClassName);
         }
 
-        // Buat objek baru dengan menyuntikkan seluruh dependensi yang berhasil di-resolve
+        // Create a new object by injecting all successfully resolved dependencies
         return $reflector->newInstanceArgs($dependencies);
     }
 
     /**
-     * Mengeksekusi (Invoke) sebuah method pada objek tertentu dengan autowiring parameter.
-     * 
+     * Execute (Invoke) a method on a specific object with autowiring parameters.
+     *
      * @param array|callable $callback Format: [$objectInstance, 'methodName']
-     * @param array $routeParams Parameter dinamis dari URL (misal: ['id' => 77])
-     * @return mixed Hasil eksekusi dari method tersebut
+     * @param array $routeParams Dynamic parameters of the URL (e.g. ['id' => 77])
+     * @return mixed The result of the execution of the method
      * @throws Exception
      */
     public static function call(array|callable $callback, array $routeParams = []): mixed
@@ -195,7 +170,7 @@ class App
         [$instance, $method] = $callback;
         
         try {
-            // Gunakan ReflectionMethod untuk membedah parameter fungsi Controller
+            // Use ReflectionMethod to dissect Controller function parameters
             $reflectionMethod = new \ReflectionMethod($instance, $method);
             $parameters = $reflectionMethod->getParameters();
             $arguments = [];
@@ -204,7 +179,7 @@ class App
                 $type = $parameter->getType();
                 $paramName = $parameter->getName();
 
-                // 1. KONDISI A: Parameter memiliki type-hint sebuah CLASS (seperti Request, UserRepository)
+                // 1. CONDITION A: The parameter has the type-hint of a CLASS (such as Request, UserRepository)
                 if ($type && !$type->isBuiltin()) {
                     $dependencyClass = $type->getName();
                     // Resolve otomatis menggunakan fungsi App::get() yang sudah kita buat sebelumnya
@@ -212,26 +187,26 @@ class App
                     continue;
                 }
 
-                // 2. KONDISI B: Parameter merupakan variabel primitif dari URL (seperti $id atau $slug)
+                // 2. CONDITION B: Parameters are primitive variables of the URL (such as $id or $slug)
                 if (array_key_exists($paramName, $routeParams)) {
                     $arguments[] = $routeParams[$paramName];
                     continue;
                 }
 
-                // 3. KONDISI C: Gunakan nilai default jika tersedia (misal: $status = 1)
+                // 3. CONDITION C: Use default value if available (e.g. $status = 1)
                 if ($parameter->isDefaultValueAvailable()) {
                     $arguments[] = $parameter->getDefaultValue();
                     continue;
                 }
 
-                throw new \Exception("Tidak dapat menyelesaikan parameter [\${$paramName}] pada metode [{$method}].");
+                throw new \Exception("Cannot resolve parameter [\${$paramName}] on method [{$method}].");
             }
 
             // Eksekusi metode Controller dengan seluruh argumen yang sudah dirakit
             return $reflectionMethod->invokeArgs($instance, $arguments);
 
         } catch (\ReflectionException $e) {
-            throw new \Exception("Gagal melakukan autowiring pada metode: " . $e->getMessage());
+            throw new \Exception("Failed to autowiring method:" . $e->getMessage());
         }
     }
 
@@ -253,32 +228,24 @@ class App
             case "PATCH":
                 $structClass = new $structNameSpace();
                 $rules = parseStructToRules($structClass::class);
-                // dd($rules);
 
                 // Refine the raw $_REQUEST data into native types
                 $safeData = refineRequest($_REQUEST, $rules);
-                // dd($safeData);
 
                 if (isset($_REQUEST["id"])) {
                     $rules += ["id" => "required,numeric,gte=1"];
-                    // Refine the raw $_REQUEST data into native types
-                    // $id =  $_POST['id'] ?? $_GET['id'];
                     $id = formatReqId();
-                    // dd($id);
                     $safeData += refineRequest(["id" => $id], $rules);
                 }
 
                 $result = validateStructData($safeData, $rules);
-                // dd($result);
+
                 break;
             case "GET":
                 // Process GET data
                 if (isset($_REQUEST["id"])) {
                     $rules = ["id" => "required,numeric,gte=1"];
-                    // Refine the raw $_REQUEST data into native types
-                    // $id =  $_POST['id'] ?? $_GET['id'];
                     $id = formatReqId();
-                    // dd($id);
                     $safeData = refineRequest(["id" => $id], $rules);
 
                     $result = validateStructData($safeData, $rules);
@@ -306,19 +273,11 @@ class App
                     // dd($rules);
 
                     if (!empty($rules)) {
-                        // dd($rules);
-
                         // Allow only struct keys
                         if (isset($_REQUEST["params"])) {
                             $structClass = new $structNameSpace();
                             $structRules = parseStructToRules($structClass::class);
                             foreach ($structRules as $index => $structRule) {
-                                // dd($index);
-                                // dd($structRule);
-                                // dd(isset($_REQUEST[$index]));
-
-                                // if($index === "website")
-                                //     dd($structRule);
 
                                 if (
                                     isset($_REQUEST["params"][$index]) &&
@@ -328,43 +287,23 @@ class App
                                         ltrim(str_replace(["required", "email", "url"], "", $structRule), ","),
                                         ",",
                                     );
-                                    // $rules[$index] = "";
+
                                     $safeData += refineRequest(["$index" => $_REQUEST["params"][$index]], $rules);
                                 }
                                 continue;
                             }
-                            // dd($safeData);
-                            // dd($rules);
                         }
 
                         $result = validateStructData($safeData, $rules);
-                        // dd($result);
                     }
                 }
                 break;
             case "DELETE":
                 if (isset($_REQUEST["id"])) {
                     $rules = ["id" => "numeric,required,gte=1"];
-                    // Refine the raw $_REQUEST data into native types
-                    // $id =  (int)($_POST['id'] ?? $_GET['id']);
-
-                    // // Simulate generate ID
-                    // unset($_REQUEST);
-                    // // $id = formatReqId("123456", 1);
-                    // $id = formatReqId("abcd", 1);
-                    // // $id = encryptData("abcd");
-                    // dd($id);
-
-                    // // Simulate encrypted ID
-                    // $reqId = "g4RPUbVo0lPHZdTccyJ6z53A9fK9_mphd0ikawMdDk0"; // 123456
-                    // // $reqId = "MP7GTz3IeGdgCcJISx6z4IswrAxv9hhxbzBrYW-Klmw"; // abcd
-                    // $id = formatReqId($reqId, 1);
-                    // dd($id);
 
                     $id = formatReqId();
-                    // dd($id);
                     $safeData = refineRequest(["id" => $id], $rules);
-                    // dd($safeData);
                     $result = validateStructData($safeData, $rules);
                 } else {
                     $result["errors"] = [
@@ -383,9 +322,6 @@ class App
             die();
         }
 
-        // Refine to data type
-        // $_REQUEST = $safeData;
-
         return $safeData;
     }
 
@@ -395,13 +331,11 @@ class App
      */
     public static function loadModel($modelPath)
     {
-        // dd($_REQUEST);
         $requestMethod = $_SERVER["REQUEST_METHOD"];
         $dataModel = [];
 
         // Create a new instance from $className
         $className = pathToNamespace(str_replace(realpath(config("app.path")), "", $modelPath));
-        // dd($className);
         $modelClass = new $className();
 
         // Check $modelClass is has default validMethods
@@ -458,13 +392,13 @@ class App
 
     public static function bootListeners()
     {
-        // Tentukan path ke folder Listeners
+        // Specify the path to the Listeners folder
         $path = BASEPATH . "app/Listeners";
         self::loadListeners($path);
     }
 
     /**
-     * Auto Scan folder Listeners dan melakukan require_once.
+     * Auto Scan Listeners folder and perform require_once.
      * * @param string $path
      */
     protected static function loadListeners($path)
@@ -481,19 +415,19 @@ class App
             if ($file->getExtension() === "php") {
                 require_once $file->getRealPath();
 
-                // Ambil path relatif dari folder Listeners
-                // Contoh: "Order/SendInvoice.php"
+                // Retrieve the relative path of the Listeners folder
+                // Example: "Order/SendInvoice.php"
                 $relative = $iterator->getSubPathname();
 
-                // Konversi path menjadi format Namespace
-                // Kita hapus .php dan ubah "/" atau "\" menjadi "\"
+                // Convert path to Namespace format
+                // We delete .php and change "/" or "\" to "\"
                 $namespacePath = str_replace([".php", "/", DIRECTORY_SEPARATOR], ["", "\\", "\\"], $relative);
 
                 // Full Class Name
-                // Hasil: App\Listeners\Order\ProcessPayment
+                // Result: App\Listeners\Order\ProcessPayment
                 $className = "App\\Listeners\\" . $namespacePath;
 
-                // Debug: Uncomment baris di bawah jika masih gagal untuk melihat class apa yang dicari
+                // Debug: Uncomment the line below if it still fails to see what class it is looking for
                 // echo "Checking class: " . $className . PHP_EOL;
 
                 if (class_exists($className)) {
@@ -516,13 +450,11 @@ class App
             }
         }
 
-        // Registrasi ke Registry dengan urutan ASC
-        // dd($collectedListeners, true);
+        // Register to the Registry with ASC sequence
         foreach ($collectedListeners as $eventName => $listeners) {
-            // ASC: Priority 1 tampil sebelum Priority 10
+            // ASC: Priority 1 appears before Priority 10
             usort($listeners, fn($a, $b) => $a["priority"] <=> $b["priority"]);
-
-            // dd($listeners, true);
+            
             foreach ($listeners as $item) {
                 ListenerRegistry::listen($eventName, $item["callback"]);
             }
@@ -531,14 +463,14 @@ class App
 
     /**
      * Resolve External API Config for GoHttpClient.
-     * * @param string $key Contoh: 'external_api_1'
-     * @param array $dynamicOptions Parameter dinamis seperti ['body' => [...], 'headers' => [...]]
+     * @param string $key Example: 'external_api_1'
+     * @param array $dynamicOptions Dynamic parameters like ['body' => [...], 'headers' => [...]]
      * @return array
      */
     public static function externalApi(string $key, array $dynamicOptions = []): array
     {
         try {
-            // 1. Ambil semua config routing (config/external-api.php)
+            // 1. Take all routing config (config/external-api.php)
             $configs = self::get("routing_external_api");
 
             if (!$configs) {
@@ -575,10 +507,10 @@ class App
 
             $base = $configs[$key];
 
-            // 2. Satukan Headers (Config Base + Dinamis dari argumen)
+            // 2. Unite Headers (Config Base + Dynamic of arguments)
             $headers = array_merge($base["headers"] ?? [], $dynamicOptions["headers"] ?? []);
 
-            // 3. Build Result untuk GoHttpClient
+            // 3. Build Results for GoHttpClient
             return [
                 "method" => strtoupper($base["method"] ?? "GET"),
                 "url" => $base["url"] ?? "",
@@ -591,39 +523,8 @@ class App
                 "timeout" => $dynamicOptions["timeout"] ?? ($base["timeout"] ?? 30),
             ];
         } catch (Throwable $e) {
-            // Re-throw agar error detail (seperti typo function) muncul di log global
+            // Re-throw so that detailed errors (such as function typos) appear in the global log
             throw $e;
         }
     }
-
-    // REMOVED CANDIDAT :
-    // public function getUserAbilities($userId, $groupId)
-    // {
-    //     $cache = new \App\Core\Support\Cache();
-    //     $cacheKey = "user_abilities_{$userId}_{$groupId}";
-
-    //     return $cache->remember($cacheKey, function() use ($userId, $groupId) {
-    //         $db = new \App\Core\Database\Model();
-    //         $sql = "SELECT DISTINCT p.slug
-    //                 FROM user_roles ur
-    //                 JOIN role_permissions rp ON ur.role_id = rp.role_id
-    //                 JOIN permissions p ON rp.permission_id = p.id
-    //                 WHERE ur.user_id = ? AND (ur.group_id = ? OR ur.group_id IS NULL)";
-
-    //         $rows = $db->execQuery($sql, [$userId, $groupId], false, false, true);
-
-    //         // Flatten array agar mudah dicek: ['create-asset', 'edit-asset', ...]
-    //         return array_column($rows, 'slug');
-    //     }, 3600); // Simpan 1 jam
-
-    //     // // Cara Penggunaan di View/Controller (HTMX)
-
-    //     // $abilities = $auth->getUserAbilities($user->id, $user->current_team_id);
-
-    //     // // Contoh pengecekan akses
-    //     // if (in_array('delete-asset', $abilities)) {
-    //     //     // Tampilkan tombol hapus untuk HTMX
-    //     //     echo '<button hx-delete="/asset/1">Hapus</button>';
-    //     // }
-    // }
 }

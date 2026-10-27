@@ -1,21 +1,22 @@
 <?php
 /**
- *  @author LutviP19 <lutvip19@gmail.com>
+ * Global process request and Response output
+ * 
+ * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata(PMD)
  */
 // process_request.php
-// Global process request and Response output
 
 // Load App
 use App\Core\Support\App;
 
-// Otomatis validasi format JSON dan sanitize JSON dengan FFI
-// kemudian JSON dikonversi ke $_REQUEST
+// Automatically validate the JSON format and sanitize JSON with FFI then JSON is converted to $_REQUEST
 if (is_json_request() && !handle_json_request()) {
     json_response([], 406, "Invalid JSON", ["input" => "Invalid JSON format."]);
     die();
 }
 
-// Bersihkan seluruh input $_REQUEST setelah di konversi
+// Clean all $_REQUEST input after conversion
 $_REQUEST = sanitize($_REQUEST);
 $_POST = sanitize($_POST);
 $_GET = sanitize($_GET);

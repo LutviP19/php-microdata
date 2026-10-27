@@ -8,9 +8,6 @@ if (!defined('BASEPATH')) {
     define('BASEPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
 
-// echo BASEPATH;
-// exit(0);
-
 require_once BASEPATH . "app/Core/init.php";
 
 use App\Core\Support\Session;
@@ -24,7 +21,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 //====== Middleware
-// Jalankan fungsi CORS
+// Run the CORS function
 handle_cors();
 
 // Filter IP - API Only
@@ -32,13 +29,13 @@ if (is_json_request()) {
     check_ip_access(clientIP());
 }
 
-// Validasi API Key
+// Validate API Key
 if (!validateApiKey()) {
     json_response([], 401, "Unauthorized", ["auth" => "Unauthorized: Invalid API Key"]);
 }
 
 // Auth Session
-if (isset($_COOKIE["PHPFFISESSID"])) {
+if (isset($_COOKIE["PMDSESSID"])) {
     // // Test Invalid
     // $_SESSION['IPaddress'] = '192.168.0.101';
 
@@ -54,8 +51,8 @@ if (isset($_COOKIE["PHPFFISESSID"])) {
 }
 //====== End Middleware
 
-// --- SEO ROUTING LOGIC ---
-// Mengambil path dari URL (misal: /dashboard)
+// ---SEO ROUTING LOGIC ---
+// Retrieves the path from the URL (eg: /dashboard)
 $requestPath = parse_url((string) $_SERVER["REQUEST_URI"], PHP_URL_PATH);
 // dd($requestPath);
 $lastSegment = basename($requestPath);
@@ -87,7 +84,7 @@ $loader = new \App\Core\Support\RecursiveModelLoader($models);
 // Cek router.php (Main Route to Models)
 if (isset($router[$page])) {
     $normalPath = $router[$page];
-    $resolved = $loader->resolve(formatRoutePath($normalPath)); // Mengubah format "v1/Dashboard" menjadi "v1-dashboard"
+    $resolved = $loader->resolve(formatRoutePath($normalPath)); // Changing the "v1/Dashboard" format to "v1-dashboard"
 } else {
     $customPath = $router[$requestPath] ?? null;
     if (is_numeric($lastSegment)) {
@@ -101,7 +98,7 @@ if (isset($router[$page])) {
 }
 // dd($resolved, true); //debug: $resolved | $page
 
-// Jika tidak resolve fallback ke default $page
+// Otherwise resolve fallback to default $page
 if (!$resolved) {
     $resolved = $loader->resolve($page);
 }
@@ -112,13 +109,13 @@ if ($resolved && file_exists($resolved["modelPath"])) {
     extract($resolved);
 
     if ($model && file_exists($modelPath)) {
-        // Parameter ID untuk edit/detail
+        // Parameter ID for edit/detail
         if (is_numeric($lastSegment)) {
             $_GET["id"] = (int) $lastSegment;
         }
         // dd($_GET);
 
-        // Jalankan proses request
+        // Run the request process
         $page = $resolved["page"];
 
         // Middleware Model for API Only
@@ -140,8 +137,8 @@ if ($resolved && file_exists($resolved["modelPath"])) {
     $loader->notFoundHandler($model, $modelPath, true);
 }
 
-// Load HTMX View
-// Tentukan apakah ke halaman login
+// Load HTML View
+// Determine whether to go to the login page
 $isLoginPage = $page === "login";
 $isPageExists = $viewPath = realpath(BASEPATH . "views/partial/" . $page . ".php");
 // dd($viewPath);
@@ -158,7 +155,7 @@ if (isHtmx()) {
         include $viewPath;
     } else {
         if ($isLoginPage) {
-            // Render hanya halaman login (tanpa sidebar/nav)
+            // Render only login page (no sidebar/nav)
             include BASEPATH . "views/login.php";
         } else {
             http_response_code(isHtmx() ? 200 : 404);
@@ -167,10 +164,10 @@ if (isHtmx()) {
     }
 } else {
     if ($isLoginPage) {
-        // Render hanya halaman login (tanpa sidebar/nav)
+        // Render only login page (no sidebar/nav)
         include BASEPATH . "views/login.php";
     } else {
-        // Jika akses langsung (bukan AJAX), load wrapper utama (index.php)
+        // If direct access (not AJAX), load the main wrapper (index.php)
         include BASEPATH . "views/index.php";
     }
 }

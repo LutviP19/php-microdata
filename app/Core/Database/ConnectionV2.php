@@ -9,8 +9,9 @@ use App\Core\Support\Config;
 
 /**
  * Connection class
- * @package Backend-PHP
+ * 
  * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata(PMD)
  */
 class ConnectionV2
 {
@@ -36,15 +37,21 @@ class ConnectionV2
     public static function fromConfig(string $connectionName = 'default_db'): PDO
     {
         // 1. Resolve connection name if called with default parameter 'default_db'
-        if ($connectionName === 'default_db' || empty($connectionName)) {
+        if (!$connectionName || is_null($connectionName) || empty($connectionName)) {
             $connectionName = Config::get('default_db', 'pgsql');
         }
 
         // 2. Retrieve the entire configuration array for the target connection
         $config = Config::get("database.{$connectionName}");
 
+        // 3. Resolve to default with helper
+        if(!$connectionName || !$config) {
+            $defaultConn = config('default_db');
+            $config = config("database.{$defaultConn}");
+        }
+
         if (!is_array($config)) {
-            throw new RuntimeException("Konfigurasi database untuk koneksi '{$connectionName}' tidak ditemukan.");
+            throw new RuntimeException("The database configuration for connection '{$connectionName}' was not found.");
         }
 
         $driver = $config['driver'] ?? 'pgsql';        

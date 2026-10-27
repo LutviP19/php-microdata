@@ -9,8 +9,9 @@ use App\Core\Database\RawSql;
 /**
  * QueryBuilder v2 class
  * Automatic database driver detection (MySQL/PostgreSQL)
- * @author Lutvi <lutvip19@gmail.com>
- * @package: Backend-PHP
+ * 
+ * @author LutviP19 <lutvip19@gmail.com>
+ * @package: PHP-Microdata(PMD)
  */
 class QueryBuilderV2
 {
@@ -636,18 +637,10 @@ class QueryBuilderV2
     }
 
     /**
-     * Built-in helper to retrieve PDO fallback (Auto-detect Swoole vs FPM)
+     * Built-in helper to retrieve PDO fallback
      */
     protected static function resolveDefaultPdo(): PDO
     {
-        if (function_exists('isSwoole') && \isSwoole()) {
-            $cofigDb = \App\Core\Database\DatabasePoolManager::getDefaultConnection();
-
-            if (class_exists(\App\Core\Database\Connection::class)) {
-                return \App\Core\Database\Connection::fromConfig($cofigDb);
-            }
-        }
-
         if (class_exists(\App\Core\Database\Connection::class)) {
             return \App\Core\Database\Connection::make();
         }

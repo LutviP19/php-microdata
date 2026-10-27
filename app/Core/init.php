@@ -2,17 +2,19 @@
 
 /**
  * Init the Application
+ * 
  * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata(PMD)
  */
 
 if (!defined('BASEPATH')) {
-    // Naik 2 tingkat dari /app/app/Core untuk mencapai /app (Root Proyek)
+    // Go up 2 levels from /app/app/Core to reach /app (Project Root)
     define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
 }
 
-// Opsional: Jika Anda juga mendefinisikan APPPATH (jalur ke folder app internal)
+// Optional: If you also define APPPATH (path to internal app folder)
 if (!defined('APPPATH')) {
-    // Naik 1 tingkat dari /app/app/Core untuk mencapai /app/app
+    // Move up 1 level from /app/app/Core to reach /app/app
     define('APPPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
 
@@ -42,7 +44,7 @@ load_env();
 // Set defaut konfigurasi timezone PHP
 date_default_timezone_set(env("APP_TIMEZONE", "Asia/Jakarta"));
 
-// Gunakan Throwable untuk menangkap Error.
+// Use Throwable to catch Errors.
 set_exception_handler(function (\Throwable $exception) {
     $message = $exception->getMessage();
     $file = $exception->getFile();
@@ -71,7 +73,7 @@ set_exception_handler(function (\Throwable $exception) {
     }
 });
 
-// Mendaftarkan konfigurasi ke aplikasi.
+// Registers the configuration to the application.
 use App\Core\Support\App;
 App::register("config", require BASEPATH . "config/app.php");
 App::register("routing_external_api", require BASEPATH . "config/external-api.php");
@@ -79,7 +81,7 @@ App::register("routing_external_api", require BASEPATH . "config/external-api.ph
 // INI Set Session
 if (session_status() == PHP_SESSION_NONE) {
     try {
-        //Starting the session will be the first we do.
+        // Starting the session will be the first we do.
         ini_set("session.save_handler", env("SESSION_DRIVER", "files"));
 
         if (env("SESSION_DRIVER") === "redis") {
@@ -106,5 +108,5 @@ if (session_status() == PHP_SESSION_NONE) {
         ini_set("session.save_path", storage_path("framework/sessions"));
     }
 
-    session_name("PHPFFISESSID"); // Set a custom session name
+    session_name("PMDSESSID"); // Set a custom session name
 }

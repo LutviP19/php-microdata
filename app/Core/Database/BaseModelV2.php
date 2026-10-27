@@ -12,8 +12,8 @@ use ReflectionClass;
  * BaseModel Class
  *
  * Has Active Record, Soft Delete, and Lifecycle Hooks features.
- * @author Lutvi <lutvip19@gmail.com>
- * @package: Backend-PHP
+ * @author LutviP19 <lutvip19@gmail.com>
+ * @package: PHP-Microdata(PMD)
  */
 abstract class BaseModelV2
 {
