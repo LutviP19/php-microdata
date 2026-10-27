@@ -19,6 +19,10 @@ return [
             'Dashboard' => '/(Dashboard|Stats-v1|Report-v1|Employee|Statistic)/i',
         ],
         
+        // Version 2
+        "v2" => [
+            'Dashboard' => '/(Dashboard|Stats-v2|Report-v2|Employee|Statistic)/i',
+        ],
     ],
     
     // Pemetaan khusus jika nama Data berbeda dengan nama Struct (Optional)

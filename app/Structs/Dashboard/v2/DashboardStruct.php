@@ -1,0 +1,39 @@
+<?php 
+/**
+ *  @author LutviP19 <lutvip19@gmail.com>
+ */
+
+
+namespace App\Structs\Dashboard\v2;
+
+
+use App\Core\Database\SchemaProperty;
+use App\Core\Database\BaseModelV2 as BaseModel;
+use PDO; // new PDO object
+use App\Core\Database\ConnectionV2 as Connection; // Uncomment to use custom DB connection
+
+
+class DashboardStruct extends BaseModel {
+
+   #[SchemaProperty(description: 'User display name', required: true, min: 3)]
+    public string $username;
+
+    #[SchemaProperty(description: 'Primary contact', required: true, email: true)]
+    public string $email;
+
+    #[SchemaProperty(description: 'User age', numeric: true, gte: 18, lte: 99)]
+    public int $age;
+
+    #[SchemaProperty(description: 'Website URL', custom: 'url')]
+    public string $website;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        // // Global Set Custom connection
+        // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
+        
+        // Default connection
+        $conn = $pdo ?? Connection::make(config('default_db'));
+        parent::__construct($conn);
+    }
+}

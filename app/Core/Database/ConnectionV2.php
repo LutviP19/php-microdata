@@ -22,7 +22,7 @@ class ConnectionV2
      */
     public static function make(?string $connectionName = null): PDO
     {
-        $connectionName = $connectionName ?: Config::get('default_db', 'mysql');
+        $connectionName = $connectionName ?: Config::get('default_db', 'pgsql');
         return static::fromConfig($connectionName);
     }
 
@@ -37,7 +37,7 @@ class ConnectionV2
     {
         // 1. Resolve connection name if called with default parameter 'default_db'
         if ($connectionName === 'default_db' || empty($connectionName)) {
-            $connectionName = Config::get('default_db', 'mysql');
+            $connectionName = Config::get('default_db', 'pgsql');
         }
 
         // 2. Retrieve the entire configuration array for the target connection
@@ -47,7 +47,7 @@ class ConnectionV2
             throw new RuntimeException("Konfigurasi database untuk koneksi '{$connectionName}' tidak ditemukan.");
         }
 
-        $driver = $config['driver'] ?? 'mysql';
+        $driver = $config['driver'] ?? 'pgsql';        
 
         // 3. Handling khusus SQLite
         if ($driver === 'sqlite') {
@@ -98,7 +98,7 @@ class ConnectionV2
         string $driver,
         string $dbname,
         string $host = '127.0.0.1',
-        string $port = '3306',
+        string $port = '5432',
         string $username = '',
         string $password = '',
         array $options = [],
@@ -107,7 +107,7 @@ class ConnectionV2
         string $search_path = 'public'
     ): PDO {
         try {
-            $driver = strtolower($driver ?: Config::get("default_db", "mysql"));
+            $driver = strtolower($driver ?: Config::get("default_db", "pgsql"));
 
             // Arrange DSN based on Driver
             switch ($driver) {
@@ -134,15 +134,18 @@ class ConnectionV2
                     break;
             }
 
+            // Get default options
+            $options = !empty($options) ? (array) $options : (array) \config("database.{$driver}.options", []);
+
             // Create a PDO instance
             if ($driver === 'sqlite') {
-                $pdo = new PDO($dsn, null, null, $options);
+                $pdo = new PDO((string) $dsn, null, null, $options);
             } else {
-                $pdo = new PDO($dsn, $username, $password, $options);
+                $pdo = new PDO((string) $dsn, (string) $username, (string) $password, $options);
             }
 
             // Set the default Error Mode to Exception if it is not already set in options
-            if (!isset($options[PDO::ATTR_ERRMODE])) {
+            if (!isset($options[PDO::ATTR_ERRMODE]) && \config('debug')) {
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             }
 
@@ -153,7 +156,7 @@ class ConnectionV2
             if (function_exists('write_log') && config('app.debug')) {
                 $logPath = '/Core/Database/Connection';
                 
-                write_log('error', '[DB Connection Error] ' . $e->getMessage(), $logPath, false);
+                write_log('[DB Connection Error] ' . $e->getMessage(), $logPath, 'error', 'error_DB-Conn.log');
             }
 
             // Re-throw the exception so that it is caught by the main DatabasePoolManager /Runner

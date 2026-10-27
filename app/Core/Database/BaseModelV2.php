@@ -37,6 +37,13 @@ abstract class BaseModelV2
     protected static bool $useSoftDeletes = false;
     protected static string $deletedAtColumn = 'deleted_at';
 
+    // CHUNK-FFI
+    protected $rustEngine;
+    public $structClass;
+
+    public $limitToStream = 50; // limit maks untuk otomatis menggunakan mode stream
+    public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
+
     /**
      * Constructor accepts dynamic PDO.
      * If null, automatically takes a fallback connection (Connection::make() /Pool).
@@ -286,9 +293,9 @@ abstract class BaseModelV2
         return $affected;
     }
 
-    public static function paginate(int $perPage = 15, int $page = 1): array
+    public static function paginate(int $page = 1, int $perPage = 15): array
     {
-        return static::query()->paginate($perPage, $page);
+        return static::query()->paginate($page, $perPage);
     }
 
     public static function getPaginationRange(int $currentPage, int $totalPages, int $delta = 1): array

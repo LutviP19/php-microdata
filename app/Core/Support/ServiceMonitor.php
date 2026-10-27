@@ -12,9 +12,10 @@ class ServiceMonitor
 {
     public static function checkAll()
     {
-        if(env('DB_HOST') === '127.0.0.1') {
+        if (env('DB_HOST') === '127.0.0.1') {
             $services = [
-                ["id" => "db", "name" => "MySQL Database", "host" => "127.0.0.1", "port" => 3306],
+                // ["id" => "db", "name" => "MySQL Database", "host" => "127.0.0.1", "port" => 3306],
+                ["id" => "db", "name" => "PostgreSQL", "host" => "127.0.0.1", "port" => 5432],
                 ["id" => "redis", "name" => "Redis", "host" => "127.0.0.1", "port" => 6379],
                 ["id" => "mq", "name" => "RabbitMQ", "host" => "127.0.0.1", "port" => 5672],
                 ["id" => "mailpit", "name" => "Mailpit", "host" => "127.0.0.1", "port" => 8025],
@@ -23,7 +24,8 @@ class ServiceMonitor
             ];
         } else {
             $services = [
-                ["id" => "db", "name" => "MySQL Database", "host" => env('DB_HOST'), "port" => 3306],
+                // ["id" => "db", "name" => "MySQL Database", "host" => env('DB_HOST'), "port" => 3306],
+                ["id" => "db", "name" => "PostgreSQL", "host" => env('DB_HOST'), "port" => 5432],
                 ["id" => "redis", "name" => "Redis", "host" => env('REDIS_HOST'), "port" => 6379],
                 ["id" => "mq", "name" => "RabbitMQ", "host" => env('MB_HOST'), "port" => 5672],
                 ["id" => "mailpit", "name" => "Mailpit", "host" => "127.0.0.1", "port" => 8025],
@@ -31,9 +33,9 @@ class ServiceMonitor
                 ["id" => "ollama", "name" => "Ollama (AI)", "host" => "127.0.0.1", "port" => 11434],
             ];
         }
-        
 
-        
+
+
 
         foreach ($services as $srv) {
             $start = microtime(true);

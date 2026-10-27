@@ -37,9 +37,9 @@ class QueryBuilderV2
     protected bool $withTrashed = false;
     protected bool $onlyTrashed = false;
 
-    public function __construct(PDO $pdo)
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = $pdo;
+        $this->pdo = $pdo ?? Connection::make(config('default_db'));
         $this->driver = strtolower($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
     }
 
@@ -341,7 +341,12 @@ class QueryBuilderV2
         $sqlConditions = [];
 
         foreach ($this->wheres as $index => $where) {
-            $condition = sprintf('%s %s %s', $where['column'], $where['operator'], $where['value']);
+
+            if (is_array($where) && isset($where['column'], $where['operator'], $where['value'])) {
+                $condition = sprintf('%s %s %s', $where['column'], $where['operator'], $where['value']);
+            } else {
+                $condition = is_string($where) ? $where : '';
+            }
 
             if ($index === 0) {
                 // The first condition is without AND/OR affixes
@@ -407,7 +412,9 @@ class QueryBuilderV2
         $this->limitValue   = $previousLimit;
         $this->offsetValue  = $previousOffset;
 
-        return $result->aggregate ?? null;
+        return is_array($result) 
+            ? ($result['aggregate'] ?? null) 
+            : ($result?->aggregate ?? null);
     }
 
     public function count(string $column = '*'): int
@@ -430,7 +437,7 @@ class QueryBuilderV2
         return (float) $this->aggregate('AVG', $column);
     }
 
-    public function paginate(int $perPage = 15, int $page = 1): array
+    public function paginate(int $page = 1, int $perPage = 15): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
@@ -618,6 +625,8 @@ class QueryBuilderV2
     {
         // 1. Make sure $this->pdo is not null (take fallback if it is not already set)
         $pdo = $this->pdo ?? static::resolveDefaultPdo();
+
+        // write_log($sql, 'app/Core/Database/QueryBuilderV2.php', 'debug', 'debug_DB-SQL.log');
 
         // 2. Execute the query directly on the PDO instance
         $stmt = $pdo->prepare($sql);
