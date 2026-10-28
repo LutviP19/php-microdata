@@ -341,24 +341,39 @@ class QueryBuilderV2
 
         $sqlConditions = [];
 
+        // write_log($this->wheres, 'app/Core/Database/QueryBuilderV2.compileWheres.$this->wheres', 'debug', 'debug_DB-SQL.log');
         foreach ($this->wheres as $index => $where) {
+            // 1. Condition extraction based on element data type in $this->wheres
+            if (is_array($where)) {
+                $column   = $where['column'] ?? '';
+                $operator = $where['operator'] ?? '=';
+                $value    = $where['value'] ?? null;
+                $boolean  = strtoupper($where['boolean'] ?? 'AND');
 
-            if (is_array($where) && isset($where['column'], $where['operator'], $where['value'])) {
-                $condition = sprintf('%s %s %s', $where['column'], $where['operator'], $where['value']);
+                // Handle special operators that do not require binding parameters
+                if (in_array(strtoupper((string) $operator), ['IS NULL', 'IS NOT NULL'])) {
+                    $condition = sprintf('%s %s', $column, $operator);
+                } else {
+                    $condition = sprintf('%s %s %s', $column, $operator, $value);
+                }
             } else {
-                $condition = is_string($where) ? $where : '';
+                // If the element is a raw string (e.g. '"deleted_at" IS NULL')
+                $condition = (string) $where;
+                $boolean   = 'AND';
             }
 
+            // 2. Combined by paying attention to the index order (First condition and Continuation)
             if ($index === 0) {
-                // The first condition is without AND/OR affixes
                 $sqlConditions[] = $condition;
             } else {
-                // The 2nd and subsequent conditions begin with a boolean (AND /OR)
-                $sqlConditions[] = sprintf('%s %s', $where['boolean'], $condition);
+                $sqlConditions[] = sprintf('%s %s', $boolean, $condition);
             }
         }
 
-        return 'WHERE ' . implode(' ', $sqlConditions);
+        $compiled = ' WHERE ' . implode(' ', $sqlConditions);        
+        // write_log($compiled, 'app/Core/Database/QueryBuilderV2.compileWheres.return', 'debug', 'debug_DB-SQL.log');
+        
+        return $compiled;
     }
 
     public function get(): mixed
@@ -627,7 +642,7 @@ class QueryBuilderV2
         // 1. Make sure $this->pdo is not null (take fallback if it is not already set)
         $pdo = $this->pdo ?? static::resolveDefaultPdo();
 
-        // write_log($sql, 'app/Core/Database/QueryBuilderV2.php', 'debug', 'debug_DB-SQL.log');
+        // write_log($sql, 'app/Core/Database/QueryBuilderV2.executePrepared', 'debug', 'debug_DB-SQL.log');
 
         // 2. Execute the query directly on the PDO instance
         $stmt = $pdo->prepare($sql);

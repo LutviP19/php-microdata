@@ -28,7 +28,7 @@ class AuthData extends AuthStruct {
     /**
      * Enable or disable Soft Deletes
      */
-    protected static bool $useSoftDeletes = false;
+    protected static bool $useSoftDeletes = true;
 
     /**
      * Soft delete timestamp column
