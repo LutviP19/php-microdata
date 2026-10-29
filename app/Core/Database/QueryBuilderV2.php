@@ -149,7 +149,7 @@ class QueryBuilderV2
         return $this;
     }
 
-    public function join(string $table, string $first, string $operator, string $second, string $type = 'INNER'): self
+    public function join(string $table, string $first, string $operator, string $second, string $type = 'INNER', bool $isRaw = false): self
     {
         $type = strtoupper($type);
         if (!in_array($type, ['INNER', 'LEFT', 'RIGHT'])) {
@@ -159,10 +159,10 @@ class QueryBuilderV2
         $this->joins[] = sprintf(
             '%s JOIN %s ON %s %s %s',
             $type,
-            $this->quoteIdentifier($table),
+            $isRaw ? $table : $this->quoteIdentifier($table),
             $this->quoteIdentifier($first),
             $operator,
-            $this->quoteIdentifier($second)
+            $isRaw ? $second : $this->quoteIdentifier($second)
         );
 
         return $this;
@@ -690,7 +690,8 @@ class QueryBuilderV2
         // 1. Make sure $this->pdo is not null (take fallback if it is not already set)
         $pdo = $this->pdo ?? static::resolveDefaultPdo();
 
-        write_log($sql, 'app/Core/Database/QueryBuilderV2.executePrepared', 'debug', 'debug_DB-SQL.log');
+        // write_log($sql, 'app/Core/Database/QueryBuilderV2.executePrepared.sql', 'debug', 'debug_DB-SQL.log');
+        // write_log($bindings, 'app/Core/Database/QueryBuilderV2.executePrepared.bindings', 'debug', 'debug_DB-SQL.log');
 
         // 2. Execute the query directly on the PDO instance
         $stmt = $pdo->prepare($sql);

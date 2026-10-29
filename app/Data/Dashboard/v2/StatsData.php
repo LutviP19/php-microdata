@@ -8,6 +8,7 @@ namespace App\Data\Dashboard\v2;
 
 
 use App\Structs\Dashboard\v2\DashboardStruct;
+// use App\Core\Database\QueryBuilderV2 as QueryBuilder; // Uncomment to use QueryBuilder
 use PDO; // new PDO object
 use App\Core\Database\ConnectionV2 as Connection; // Uncomment to use custom DB connection
 
@@ -18,7 +19,7 @@ class StatsData extends DashboardStruct {
      *
      * @var string
      */
-    protected static string $table = "salaries";
+    protected static string $table = "employees";
 
     /**
      * Primary key column name
@@ -59,23 +60,30 @@ class StatsData extends DashboardStruct {
         // $this->limitToStream = 1000;
     }
 
-    // public function getAllData($id = null, $selectCols = '*') {
-    //     $id = $id ? [$id] : [];
-    //     $sql = 'SELECT '.$selectCols.' FROM '.$this->table;
-    //     $sql .= !empty($id) ? " WHERE id = ? LIMIT 1 ": " LIMIT 10 ";
-    //     $result = self::table($this->table)->execQuery($sql, $id, false, !empty($id), empty($id));
-    //     // dd($result, true);
-    //     return $result;
-    // }
+    /**
+     * getAllData
+     *
+     * @param  mixed $id
+     * @param  mixed $selectCols
+     * @return void
+     */
+    public function getAllData($id = null, $selectCols = '*') {
+        if(!is_null($id)) {
+            // Logic to getUserProfile
+            return static::select($selectCols)->where(static::$primaryKey, '=', $id)->limit(10)->get();
+        }
+            
+        return static::select($selectCols)->limit(10)->get();
+    }
 
     /**
-     * Mengambil data secara dinamis dengan proteksi SQL injection pada limit.
+     * Fetch data dynamically with SQL injection protection at limits.
      * @param int|string|null $id
      * @param int $limit
      * @param string $selectCols
      * @return array
      */
-    public function getAllDataSalaries(int|string|null $id = null, int $limit = 10, string $selectCols = '*', $chunk = false) 
+    public function getAllDataSalaries(int|string|null $id = null, int $limit = 10, string $selectCols = '*', bool $chunk = false) 
     {
         // $params = [];
         $params = $id ? [$id] : [];
@@ -117,30 +125,48 @@ class StatsData extends DashboardStruct {
                 ORDER BY s.salary DESC, e.hire_date ASC
                 LIMIT  {$limit}";
 
-        // if (!empty($params)) {
-        //     $sql .= " WHERE id = ? LIMIT 1";
-        // } else {
-        //     $limit = (int) $limit;
-        //     $sql .= " LIMIT {$limit}";
-        // }
-
         // dd($sql);
         // dd(empty($params));
-        // return self::table($this->table)->execQuery(
-        // dd($this->pdo->getAttribute(1001));
-        // return $this->execQuery(
-        //     $sql, 
-        //     $params, 
-        //     false, 
-        //     !empty($params), 
-        //     empty($params),
-        //     false,
-        //     $chunk
-        // );
 
         return static::rawQuery(
             $sql, 
             $params
         );
+        
+        // // Example Use QueryBuilder
+        // return self::select([
+        //             "employees.emp_no",
+        //             QueryBuilder::raw("CONCAT(employees.first_name, ' ', employees.last_name) AS full_name"),
+        //             "employees.gender",
+        //             "departments.dept_name",
+        //             QueryBuilder::raw("titles.title AS current_title"),
+        //             QueryBuilder::raw("salaries.salary AS current_salary"),
+        //             QueryBuilder::raw("salaries.from_date AS salary_effective_date"),
+        //             "sub.avg_salary_in_dept",
+        //             QueryBuilder::raw("ROUND(salaries.salary - sub.avg_salary_in_dept, 2) AS salary_diff_from_dept_avg")
+        //         ]
+        //     )
+        //     ->join('salaries', 'employees.emp_no', '=', QueryBuilder::raw("salaries.emp_no AND salaries.to_date = '9999-01-01'"), 'INNER', true)
+        //     ->join('dept_emp', 'employees.emp_no', '=', QueryBuilder::raw("dept_emp.emp_no AND dept_emp.to_date = '9999-01-01'"), 'INNER', true)
+        //     ->join('departments', 'departments.dept_no', '=', 'dept_emp.dept_no', 'INNER')
+        //     ->join('titles', 'employees.emp_no', '=', QueryBuilder::raw("titles.emp_no AND titles.to_date = '9999-01-01'"), 'INNER', true)
+        //     ->join(
+        //             // -- Subquery: Menghitung rata-rata gaji per departemen
+        //             QueryBuilder::raw("(
+        //                     SELECT 
+        //                         de_sub.dept_no,
+        //                         AVG(s_sub.salary) AS avg_salary_in_dept
+        //                     FROM salaries s_sub
+        //                     INNER JOIN dept_emp de_sub ON s_sub.emp_no = de_sub.emp_no
+        //                     WHERE s_sub.to_date = '9999-01-01'
+        //                     GROUP BY de_sub.dept_no
+        //                 ) sub
+        //             "),
+        //             'departments.dept_no', '=', 'sub.dept_no', 'INNER', true)
+        //     ->where('salaries.salary', '>', 50000)
+        //     ->orderBy('salaries.salary', 'DESC')
+        //     ->orderBy('employees.hire_date', 'ASC')
+        //     ->limit($limit)
+        //     ->get();
     }
 }

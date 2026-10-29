@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id" class="h-full">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | LogSearch Terminal</title>
+    <title>Login | PHP Microdata</title>
     <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
     <script defer src="<?= asset('js/alpinejs-cdn.min.js'); ?>"></script>
     <script src="<?= asset('js/htmx.min.js'); ?>"></script>
@@ -29,7 +29,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                 </div>
-                <h2 class="text-3xl font-bold tracking-tight text-white">LogSearch <span class="text-indigo-500">v2</span></h2>
+                <h2 class="text-3xl font-bold tracking-tight text-white">PHP <span class="text-indigo-500">Microdata</span></h2>
                 <p class="mt-2 text-sm text-gray-500 font-mono">Restricted Access Terminal</p>
             </div>
 
@@ -85,72 +85,9 @@
             </div>
 
             <p class="text-center text-xs text-gray-600 font-mono">
-                &copy; 2026 LOGSEARCH.IO // SYSTEM_STABLE_V2
+                &copy; 2026 PMD.IO // SYSTEM_STABLE_V2
             </p>
         </div>
-
-        <!-- <div class="min-h-screen flex items-center justify-center bg-black px-4">
-            <div class="max-w-md w-full space-y-8 bg-gray-900/50 p-10 rounded-2xl border border-gray-800 backdrop-blur-sm shadow-2xl">
-                
-                <div class="text-center">
-                    <div class="mx-auto h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
-                        <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <h2 class="text-3xl font-extrabold text-white tracking-tight">LogSearch Access</h2>
-                    <p class="mt-2 text-sm text-gray-400">Enter your credentials to access the terminal</p>
-                </div>
-
-                <div id="login-error" class="hidden bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded-lg text-sm">
-                </div>
-
-                <form class="mt-8 space-y-6" 
-                      hx-post="/auth/login" 
-                      hx-target="#login-error" 
-                      hx-swap="innerHTML"
-                      hx-on::after-request="if(event.detail.xhr.status === 200) window.location.href = '/dashboard'">
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="username" class="block text-sm font-medium text-gray-400 mb-1">Username</label>
-                            <input id="username" name="username" type="text" required 
-                                   class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder-gray-500"
-                                   placeholder="admin_core">
-                        </div>
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-gray-400 mb-1">Password</label>
-                            <input id="password" name="password" type="password" required 
-                                   class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder-gray-500"
-                                   placeholder="••••••••">
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input id="remember-me" name="remember-me" type="checkbox" 
-                                   class="h-4 w-4 bg-gray-800 border-gray-700 text-indigo-600 rounded focus:ring-indigo-500 focus:ring-offset-gray-900">
-                            <label for="remember-me" class="ml-2 block text-sm text-gray-400">Remember session</label>
-                        </div>
-                    </div>
-
-                    <button type="submit" 
-                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-lg shadow-indigo-500/20">
-                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                            <svg class="htmx-indicator animate-spin h-5 w-5 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </span>
-                        AUTHENTICATE
-                    </button>
-                </form>
-
-                <p class="text-center text-xs text-gray-600 font-mono">
-                    SECURE ACCESS TERMINAL v2.0.26
-                </p>
-            </div>
-        </div> -->
 
     </div>
 
