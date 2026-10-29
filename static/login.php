@@ -51,8 +51,8 @@
                       class="space-y-5">
                     
                     <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Username</label>
-                        <input type="text" name="username" required
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                        <input type="email" name="email" required
                                class="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                                placeholder="Enter your identity">
                     </div>

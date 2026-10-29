@@ -13,6 +13,15 @@ use App\Core\Database\SchemaProperty;
 
 class DefaultStruct 
 {
+    // Auth
+
+    #[SchemaProperty(description: 'Primary email address', omitempty: true, email: true)]
+    public string $email;
+
+    #[SchemaProperty(description: 'User password', omitempty: true, min:8, max: 255)]
+    public string $password;
+
+
     // Pagination
 
     #[SchemaProperty(description: 'Pagination Page', omitempty: true, numeric: true, gte: 1)]
@@ -27,10 +36,11 @@ class DefaultStruct
     #[SchemaProperty(description: 'Pagination Total', omitempty: true, numeric: true, gte: 0)]
     public int $total;
 
+    
     // General
 
     #[SchemaProperty(description: 'ID Primary Key', omitempty: true, numeric: true)]
-    public int $id;
+    public int $id;    
 
     #[SchemaProperty(description: 'Product or Employee Name', omitempty: true, min: 3)]
     public string $name;

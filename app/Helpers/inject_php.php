@@ -1309,3 +1309,32 @@ function is_ip_whitelisted($currentIp, array $whitelist)
     // $allowed = ['127.0.0.1', '192.168.1.1'];
     // if (!is_ip_whitelisted($_SERVER['REMOTE_ADDR'], $allowed)) die('Access Denied');
 }
+
+function getFilesRecursive(string $dir, bool $filesOnly = false) {
+    $results = [];
+    
+    // Scan directory and check if it exists
+    if (!is_dir($dir)) {
+        return $results;
+    }
+    
+    $items = scandir($dir);
+    
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        
+        $path = $dir . DIRECTORY_SEPARATOR . $item;
+        
+        if (is_dir($path)) {
+            // Recursively merge subfolder files
+            $results = array_merge($results, getFilesRecursive($path, $filesOnly));
+        } else {
+            // Add file path to results
+            $results[] = $filesOnly ? basename($path) : $path;
+        }
+    }
+    
+    return $results;
+}

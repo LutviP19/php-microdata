@@ -14,7 +14,7 @@ if (!defined('BASEPATH')) {
  *
  * @return array
  */
-return [
+return [ 
     'dashboard_get' => [
         'method' => 'GET',
         'url' => 'http://localhost:8000/api/v1/dashboard',
@@ -29,7 +29,19 @@ return [
         'url' => 'http://localhost:8000/api/v1/dashboard',
         'headers' => [
             'User-Agent' => 'PHP-Microdata',
-            'Content-Type' => 'application/json'
+            'Content-Type' => 'application/json',
+            'X-API-KEY' => str_replace('base64:', '', config('api.key'))
+        ]
+    ],
+
+    // Auth
+    'auth_login' => [
+        'method' => 'POST',
+        'url' => 'http://localhost:8000/api/v2/auth-login',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Content-Type' => 'application/json',
+            'X-API-KEY' => str_replace('base64:', '', config('api.key'))
         ]
     ],
 

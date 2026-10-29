@@ -52,7 +52,7 @@ if (isset($_COOKIE["PMDSESSID"])) {
 //====== End Middleware
 
 // ---SEO ROUTING LOGIC ---
-// Retrieves the path from the URL (eg: /dashboard)
+// Retrieves the path from the URL (eg: /dashboard or /dashboard/profile)
 $requestPath = parse_url((string) $_SERVER["REQUEST_URI"], PHP_URL_PATH);
 // dd($requestPath);
 $lastSegment = basename($requestPath);
@@ -107,7 +107,7 @@ if (!$resolved) {
 if ($resolved && file_exists($resolved["modelPath"])) {
     // Load Model Utama
     extract($resolved);
-
+    
     if ($model && file_exists($modelPath)) {
         // Parameter ID for edit/detail
         if (is_numeric($lastSegment)) {
@@ -117,6 +117,7 @@ if ($resolved && file_exists($resolved["modelPath"])) {
 
         // Run the request process
         $page = $resolved["page"];
+        // dd($page);
 
         // Middleware Model for API Only
         if (!is_json_request() || !expects_json()) {

@@ -6,7 +6,9 @@
 // simple routing untuk execute file static php
 // You can also run FFi ​​code if needed with single php script
 
-$staticFile = BASEPATH . "static/" . $page . ".php";
+// dd($requestPath);
+// dd($lastSegment);
+$staticFile = BASEPATH . "static" . $requestPath . ".php";
 if (file_exists($staticFile)) {
     // Otomatis validasi format JSON dan sanitize JSON dengan FFI
     // kemudian JSON dikonversi ke $_REQUEST
@@ -53,7 +55,11 @@ if (file_exists($staticFile)) {
     }
     // dd($_REQUEST, true);
 
-    // Include File PHP static.
-    include $staticFile;
+    // Include static PHP files. avoid Remote Code Execution (RCE).
+    $listStaticFiles = getFilesRecursive(BASEPATH . "static");
+    if(in_array($staticFile, $listStaticFiles)) {
+        include $staticFile;
+    }
+    
     exit();
 }

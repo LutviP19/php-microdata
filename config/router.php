@@ -4,10 +4,13 @@
  * Router url to Base Model file
  * file: config/router.php
  */
-return [
+return [    
     "auth" => "Auth",
     "roles" => "Auth",
     "dashboard" => "Dashboard",
+
+    // Auth
+    "/api/v2/auth-login" => "AuthLogin",
 
     // Version 1 - run on worker FrankenPHP
     "/api/v1/auth" => "v1/Auth",
