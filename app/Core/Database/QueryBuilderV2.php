@@ -38,6 +38,13 @@ class QueryBuilderV2
     protected bool $withTrashed = false;
     protected bool $onlyTrashed = false;
 
+    // CHUNK-FFI
+    protected $rustEngine;
+    public $structClass;
+
+    public $limitToStream = 50; // limit maks untuk otomatis menggunakan mode stream
+    public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
+
     public function __construct(?PDO $pdo = null)
     {
         $this->pdo = $pdo ?? Connection::make(config('default_db'));
@@ -376,10 +383,25 @@ class QueryBuilderV2
         return $compiled;
     }
 
-    public function get(): mixed
+    public function get(bool $stream = false, bool $chunk = false): mixed
     {
-        $stmt = $this->executePrepared($this->toSql(), $this->bindings);
-        return $stmt->fetchAll();
+        $exec = $this->executePrepared($this->toSql(), $this->bindings);
+
+        if ($chunk) {
+            // dd('NEW FEATURE: CHUNK-FFI');
+            return $this->handleFFIChunking($exec);
+        }
+            
+        // ---NEW FEATURE: STREAMING ---
+        if ($stream) {
+            return (function () use ($exec) {
+                while ($row = $exec->fetch()) {
+                    yield $row;
+                }
+            })();
+        }
+
+        return $exec->fetchAll();        
     }
 
     public function first(): mixed
@@ -394,7 +416,7 @@ class QueryBuilderV2
      * AGGREGATES & PAGINATION
      * ========================================================================= */
 
-    protected function aggregate(string $function, string $column = '*'): mixed
+    protected function aggregate(string $function, string $column = '*', bool $isCache = false): mixed
     {
         $columnSql = ($column === '*') ? '*' : $this->quoteIdentifier($column);
 
@@ -420,7 +442,29 @@ class QueryBuilderV2
         // 4. Execute queries
         $sql  = $this->toSql();
         $stmt = $this->executePrepared($sql, $this->bindings);
-        $result = $stmt->fetch();
+
+        if($isCache) {
+            // Cache data
+            $cache = new \App\Core\Support\Cache();
+            $cleanQuery = preg_replace("/\s+/", " ", trim($sql));
+            $queryString = md5((string) $cleanQuery);
+            $params = $this->bindings;
+            ksort($params);
+            $paramSignature = !empty($params) ? md5(json_encode($params) . $queryString) : $queryString;
+            $cacheKeyId = "cache_{$function}:{$paramSignature}";
+
+            $callback = function () use ($stmt) {
+                return $stmt->fetch();
+            };
+
+            $result = $cache->remember(
+                    $cacheKeyId,
+                    $callback,
+                    $this->timeCachedCount
+                );
+        } else {
+            $result = $stmt->fetch();
+        }
 
         // 5. Restore the original state of QueryBuilder
         $this->selects = $previousSelects;
@@ -433,37 +477,41 @@ class QueryBuilderV2
             : ($result?->aggregate ?? null);
     }
 
-    public function count(string $column = '*'): int
+    public function count(string $column = '*', bool $isCache = false): int
     {
-        return (int) $this->aggregate('COUNT', $column);
+        return (int) $this->aggregate('COUNT', $column, $isCache);
     }
 
-    public function max(string $column): mixed
+    public function max(string $column, bool $isCache = false): mixed
     {
-        return $this->aggregate('MAX', $column);
+        return $this->aggregate('MAX', $column, $isCache);
     }
 
-    public function min(string $column): mixed
+    public function min(string $column, bool $isCache = false): mixed
     {
-        return $this->aggregate('MIN', $column);
+        return $this->aggregate('MIN', $column, $isCache);
     }
 
-    public function avg(string $column): float
+    public function avg(string $column, bool $isCache = false): float
     {
-        return (float) $this->aggregate('AVG', $column);
+        return (float) $this->aggregate('AVG', $column, $isCache);
     }
 
-    public function paginate(int $perPage = 15, int $page = 1): array
+    public function paginate(int $perPage = 15, int $page = 1, bool $isCacheCount = true): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
 
-        $total = $this->count();
+        // Cache this total count
+        $total = $this->count('*', $isCacheCount);
 
         $offset = ($page - 1) * $perPage;
         $this->limit($perPage)->offset($offset);
 
-        $items = $this->get();
+        $shouldStream = $perPage >= $this->limitToStream;
+
+        $rawData = $this->get(!$shouldStream, $shouldStream);
+        $dataResult = $rawData instanceof \Generator ? iterator_to_array($rawData) : $rawData;
         $lastPage = (int) ceil($total / $perPage);
 
         $paginationMeta = [
@@ -477,7 +525,7 @@ class QueryBuilderV2
         ];
 
         return [
-            'data'         => $items,
+            'data'         => $dataResult,
             "meta"         => $paginationMeta,
         ];
     }
@@ -642,7 +690,7 @@ class QueryBuilderV2
         // 1. Make sure $this->pdo is not null (take fallback if it is not already set)
         $pdo = $this->pdo ?? static::resolveDefaultPdo();
 
-        // write_log($sql, 'app/Core/Database/QueryBuilderV2.executePrepared', 'debug', 'debug_DB-SQL.log');
+        write_log($sql, 'app/Core/Database/QueryBuilderV2.executePrepared', 'debug', 'debug_DB-SQL.log');
 
         // 2. Execute the query directly on the PDO instance
         $stmt = $pdo->prepare($sql);
@@ -657,9 +705,61 @@ class QueryBuilderV2
     protected static function resolveDefaultPdo(): PDO
     {
         if (class_exists(\App\Core\Database\Connection::class)) {
-            return \App\Core\Database\Connection::make();
+            return \App\Core\Database\Connection::make(config('default_db'));
         }
 
         throw new \RuntimeException("Koneksi PDO tidak tersedia dan tidak dapat di-resolve otomatis.");
+    }
+
+    private function handleFFIChunking(\PDOStatement $exec): mixed
+    {
+        // PAKSA ke FETCH_ASSOC agar tidak double (angka & nama)
+        $exec->setFetchMode(\PDO::FETCH_ASSOC);
+
+        // Dynamically retrieve casting rules based on the struct class being used
+        // Assumption: $this->structClass holds a class name like 'App\Structs\ProductStruct'
+        $castRules = getCastRules($this->structClass ?? \App\Structs\DefaultStruct::class);
+        // dd($this->structClass);
+        // dd($castRules);
+
+        $this->rustEngine = new \App\Core\FFI\DataEngine();
+        $this->rustEngine->clear();
+
+        $chunkSize = 50000;
+        $currentChunk = [];
+        try {
+            while ($row = $exec->fetch()) {
+                // --- DYNAMIC CASTING ---
+                foreach ($castRules as $column => $type) {
+                    if (isset($row[$column])) {
+                        $row[$column] = match ($type) {
+                            "int" => (int) $row[$column],
+                            "float" => (float) $row[$column],
+                            "bool" => (bool) $row[$column],
+                            default => (string) $row[$column],
+                        };
+                    }
+                }
+
+                $currentChunk[] = $row;
+
+                if (count($currentChunk) >= $chunkSize) {
+                    $this->rustEngine->appendChunk($currentChunk);
+                    $currentChunk = [];
+                }
+            }
+
+            if (!empty($currentChunk)) {
+                $this->rustEngine->appendChunk($currentChunk);
+                unset($currentChunk);
+            }
+        } catch (\Throwable $e) {
+            die("Dynamic FFI Chunking Error: " . $e->getMessage());
+            return false;
+        } finally {
+            $exec->closeCursor();
+            // dd($this->rustEngine->debugFirstItem());
+            return $this->rustEngine->streamAll();
+        }
     }
 }

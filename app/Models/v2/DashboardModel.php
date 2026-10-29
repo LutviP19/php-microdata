@@ -34,7 +34,12 @@ class DashboardModel
         $statsData = new StatsData(null);
 
         $dataDashboard = null;
+        $dataMain = null;
         $dataStats = null;
+
+
+        // $dataDashboard = $dashboardData->getAllData();
+        // dd($dataDashboard, true);
 
         // // Middleware - Rate limiter
         // $identifier = 'Dashboard-Index-'.\clientIP();
@@ -60,18 +65,17 @@ class DashboardModel
         // $driver = 'mysql';
         // $dbname = 'backend_php';
         // $host = '127.0.0.1';
-        // $port = '3306';
+        // $port = '3307';
         // $username = 'root';
-        // $password = '';
+        // $password = 'password123';
         // $options = [];
-        // $this->setPDO(null);
         // $pdo = Connection::custom($driver, $dbname, $host, $port, $username, $password, $options);
-        // $this->setPDO($pdo);
-        // $this->pdo = $pdo;
-        // static::getTableName() = "assets";
+        // $dashboardData = new DashboardData($pdo);
+        // $dashboardData->setPDO($pdo);
+        // $table = "assets";
         // $selectCols = $cols ?? '*';
-        // $sql = 'SELECT '.$selectCols.' FROM '.static::getTableName().' WHERE id = ? LIMIT 1';
-        // $result = $this->execQuery($sql, [$id ?? 1], false, true, false);
+        // $sql = 'SELECT '.$selectCols.' FROM '.$table.' WHERE id = ? LIMIT 1';
+        // $result = $dashboardData->rawQuery($sql, [$id ?? 1]);
         // dd($result, true);
 
         // dd($request, true);
@@ -83,7 +87,7 @@ class DashboardModel
         // $limit = $request['limit'] ?? 10;
         // // $mainData->table = 'assets';
         // // Query dasar
-        // $query = "SELECT * FROM ".static::getTableName()." ORDER BY hire_date DESC";
+        // $query = "SELECT * FROM ".$mainData::getTableName()." ORDER BY hire_date DESC";
         // // Panggil fungsi paginate
         // // $mainData->limitToStream = 1000;
         // $result = $mainData->paginate($limit, $page);
@@ -94,7 +98,7 @@ class DashboardModel
         // $limit = $request['limit'] ?? 10;
         // // $statsData->table = 'assets';
         // // Query dasar
-        // $query = "SELECT * FROM ".$statsData->table." ORDER BY to_date DESC";
+        // $query = "SELECT * FROM ".$statsData::getTableName()." ORDER BY to_date DESC";
         // // Panggil fungsi paginate
         // $result = $statsData->paginate($limit, $page);
         // dd($result, true);
@@ -114,8 +118,6 @@ class DashboardModel
         $page = (int) ($request['page'] ?? 1);
         $limit = (int) ($request['limit'] ?? 10); // total data perpage
 
-        
-
 
         // Testing Data
         // dd($dashboardData->getAllData()); // DashboardData::class
@@ -127,23 +129,23 @@ class DashboardModel
         // // dd($query);
 
         // Set limit agar bisa auto Stream
-        $mainData->limitToStream = 100;      
+        $mainData->limitToStream = 25;      
 
         // $mainData::rawQuery($query); // Using Raw SQL
         $mainData->orderBy('hire_date', 'DESC');
 
         // Cek limit agar otomatis masuk ke Mode Stream
         if ($limit > $mainData->limitToStream) {
-            $dataDashboard = $mainData->paginate($limit, $page);
+            $dataMain = $mainData->paginate($limit, $page);
             $dataStats = $statsData->getAllDataSalaries();
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($mainData->toSql()));
             $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "dashboard_data:{$mainData::getTableName()}:" . $queryString . ":p{$page}:l{$limit}";
 
-            $dataDashboard = $cache->remember($cacheKeyId, fn () => $mainData->paginate($limit, $page), 300);
+            $dataMain = $cache->remember($cacheKeyId, fn () => $mainData->paginate($limit, $page), 300);
 
-            // // Ambil data stats dari cache selama 5 menit
+            // Ambil data stats dari cache selama 5 menit
             $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
                 return $statsData->getAllDataSalaries();
             }, 300);
@@ -156,21 +158,21 @@ class DashboardModel
             'table' => $mainData::getTableName(),
             'title' => $request['title'] ?? 'Testing model v1',
             'stats_data' => $dataStats,
-            'pagination_data' => $dataDashboard, // Ini mode cache
+            'pagination_data' => $dataMain, // Ini mode cache
         ];
 
         $data = [
             'data' => $modelA,
             'status' => $status ?? 200,
-            'message' => $message ?? 'testing index v1',
+            'message' => $message ?? 'testing index v2',
         ];
-        // $data = array_merge($data, $dataDashboard);
+        // $data = array_merge($data, $dataMain);
 
 
         // Output Stream
-        if ($limit > $mainData->limitToStream) {
-            $realData = $dataDashboard['data'];
-            $paginationMeta = $dataDashboard['meta'];
+        if (!is_null($dataMain) && $limit > $mainData->limitToStream) {
+            $realData = $dataMain['data'];
+            $paginationMeta = $dataMain['meta'];
 
             unset($modelA['pagination_data']);
             return json_response_stream(

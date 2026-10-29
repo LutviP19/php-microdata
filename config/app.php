@@ -84,6 +84,7 @@ return [
         ],
 
         'mysql' => [
+            'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'dbname' => env('DB_DATABASE', 'php_microdata_server'),
@@ -113,7 +114,7 @@ return [
         ],
 
         'mariadb' => [
-            'driver' => 'mariadb',
+            'driver' => 'mysql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
@@ -132,8 +133,8 @@ return [
                 // PENTING: Batasi timeout koneksi PDO agar tidak membuat HTTP request hang
                 PDO::ATTR_TIMEOUT => 2,
 
-                // Deteksi otomatis konstanta SSL CA (Mendukung PHP < 8.5 & 8.5+)
-                (defined('\Pdo\Mysql::ATTR_SSL_CA') ? \Pdo\Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                // // Deteksi otomatis konstanta SSL CA (Mendukung PHP < 8.5 & 8.5+)
+                // (defined('\Pdo\Mysql::ATTR_SSL_CA') ? \Pdo\Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

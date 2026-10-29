@@ -41,8 +41,8 @@ abstract class BaseModelV2
     protected $rustEngine;
     public $structClass;
 
-    public $limitToStream = 50; // limit maks untuk otomatis menggunakan mode stream
-    public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
+    public $limitToStream = 50; // max limit to automatically use stream mode
+    public $timeCachedCount = 300; // Maximum time to cache pagination count 300 (5 minutes)
 
     /**
      * Constructor accepts dynamic PDO.
@@ -51,8 +51,9 @@ abstract class BaseModelV2
     public function __construct(?PDO $pdo = null)
     {
         if ($pdo !== null) {
-            // Priority 1: Inject manual dari Constructor
-            $this->pdo = $pdo;
+            // Priority 1: Inject manually from Constructor
+            // $this->pdo = $pdo;
+            $this->setPDO($pdo);
         } else {
             // Priority 2: Resolution via Fallback / Context
             $this->pdo = static::getConnection();
@@ -293,9 +294,9 @@ abstract class BaseModelV2
         return $affected;
     }
 
-    public static function paginate(int $perPage = 15, int $page = 1): array
+    public static function paginate(int $perPage = 15, int $page = 1, bool $isCacheCount = true): array
     {
-        return static::query()->paginate($perPage, $page);
+        return static::query()->paginate($perPage, $page, $isCacheCount);
     }
 
     public static function getPaginationRange(int $currentPage, int $totalPages, int $delta = 1): array

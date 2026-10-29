@@ -38,7 +38,7 @@ class ConnectionV2
     {
         // 1. Resolve connection name if called with default parameter 'default_db'
         if (!$connectionName || is_null($connectionName) || empty($connectionName)) {
-            $connectionName = Config::get('default_db', 'pgsql');
+            $connectionName = config('default_db');
         }
 
         // 2. Retrieve the entire configuration array for the target connection
@@ -115,6 +115,7 @@ class ConnectionV2
     ): PDO {
         try {
             $driver = strtolower($driver ?: Config::get("default_db", "pgsql"));
+            // dd($driver);
 
             // Arrange DSN based on Driver
             switch ($driver) {
@@ -145,6 +146,7 @@ class ConnectionV2
             $options = !empty($options) ? (array) $options : (array) \config("database.{$driver}.options", []);
 
             // Create a PDO instance
+            // dd($dsn);
             if ($driver === 'sqlite') {
                 $pdo = new PDO((string) $dsn, null, null, $options);
             } else {

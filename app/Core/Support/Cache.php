@@ -104,13 +104,6 @@ class Cache
     {
         //  Only cache if data is not empty
         if (!empty($data)) {
-            // //  Only cache if total data not 0
-            // if (is_array($data)) {
-            //     $total = $data['total'] ?? $data['data']['total'] ?? null;
-            //     if ($total === 0) {
-            //         return;
-            //     }
-            // }
 
             //  Only cache if total data not 0
             if (is_array($data) && count($data) <= 0) {
@@ -133,6 +126,7 @@ class Cache
             if (!is_dir($this->storagePath)) {
                 mkdir($this->storagePath, 0775, true);
             }
+            
             $content = serialize([
                 "expiry" => time() + $expiry,
                 "data" => $serialized,
