@@ -8,9 +8,9 @@
 
 Build your micro system with PHP8 and FFi support, ready to up and running with FrankenPHP
 
-#### How to run: please read DEV.txt
+#### How to run: please read [docs/php-microdata.md](./docs/php-microdata.md)
 
-#### Testing Results: please read ./test/TEST.txt or ./test/TEST_SUMMARY.json
+#### Testing Results: please read [TEST.txt](./test/TEST.txt) or [TEST_SUMMARY.json](./test/TEST_SUMMARY.json)
 
 ##### Requirements: PHP 8.5.12+, Golang go1.26.1, rustc 1.94.1, OS: Linux/Mac
 
