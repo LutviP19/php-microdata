@@ -108,11 +108,11 @@ class SodiumAuthV4
         }
 
         $leeway = 60;
-        if (time() > $payload["exp"] + $leeway) {
+        if (time() > ((int) $payload["exp"] + $leeway)) {
             return null;
         }
 
-        if (isset($payload["nbf"]) && time() < $payload["nbf"] - $leeway) {
+        if (isset($payload["nbf"]) && time() < ((int) $payload["nbf"] - $leeway)) {
             return null;
         }
 

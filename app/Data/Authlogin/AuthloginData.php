@@ -10,6 +10,7 @@ namespace App\Data\Authlogin;
 use App\Structs\Authlogin\AuthloginStruct;
 use PDO; // new PDO object
 use App\Core\Database\ConnectionV2; // Uncomment to use custom DB connection
+use App\Core\Support\Hash;
 
 class AuthloginData extends AuthloginStruct
 {
@@ -59,6 +60,34 @@ class AuthloginData extends AuthloginStruct
         }
 
         return static::select($selectCols)->limit(10)->get();
+    }
+
+    /**
+     * checkCredentials
+     */
+    public function checkCredentials(?string $email, ?string $password): mixed
+    {
+        if(empty($email) || empty($password))
+            return false;
+        
+        $user = static::where('email', '=', $email)->whereAnd('status', '=', true)->first();
+        // dd($user);
+
+        if (!empty($user)) {
+            // Check ULID - Create if not exists
+            if(empty($user->ulid)) {
+                $newUlid = generateUlid();
+                static::updateById($user->id, ['ulid' => $newUlid]);
+                $user->ulid = $newUlid;
+            }
+
+            $hash = new Hash();
+            if ($hash->matchPassword($password, $user->password)) {
+                return $user;
+            }
+        }
+
+        return false;
     }
 
 }

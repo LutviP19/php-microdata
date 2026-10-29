@@ -16,8 +16,8 @@ $start = microtime(true);
 // Test JSON
 $singleTask = App::externalApi('auth_login', [
     'body' => json_encode([
-                'email' => 'test@microdata.local',
-                'password' => 'abcde1234',
+                'email' => $_REQUEST['email'],
+                'password' => $_REQUEST['password'],
                 // List Events should be run
                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
             ])
