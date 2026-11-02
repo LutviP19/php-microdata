@@ -9,7 +9,7 @@ use App\Core\Database\RawSql;
 /**
  * QueryBuilder v2 class
  * Automatic database driver detection (MySQL/PostgreSQL)
- * 
+ *
  * @author LutviP19 <lutvip19@gmail.com>
  * @package: PHP-Microdata(PMD)
  */
@@ -203,10 +203,10 @@ class QueryBuilderV2
     {
         // Use ILIKE for PostgreSQL, LIKE for MySQL/MariaDB
         $operator = ($this->driver === 'pgsql') ? 'ILIKE' : 'LIKE';
-        
+
         // (Assuming you use named placeholders like :w_0 in the previous example)
         $placeholder = ':w_' . count($this->bindings);
-        
+
         $this->wheres[] = [
             'type'     => 'basic',
             'column'   => $this->quoteIdentifier($column),
@@ -377,9 +377,9 @@ class QueryBuilderV2
             }
         }
 
-        $compiled = ' WHERE ' . implode(' ', $sqlConditions);        
+        $compiled = ' WHERE ' . implode(' ', $sqlConditions);
         // write_log($compiled, 'app/Core/Database/QueryBuilderV2.compileWheres.return', 'debug', 'debug_DB-SQL.log');
-        
+
         return $compiled;
     }
 
@@ -391,7 +391,7 @@ class QueryBuilderV2
             // dd('NEW FEATURE: CHUNK-FFI');
             return $this->handleFFIChunking($exec);
         }
-            
+
         // ---NEW FEATURE: STREAMING ---
         if ($stream) {
             return (function () use ($exec) {
@@ -401,7 +401,7 @@ class QueryBuilderV2
             })();
         }
 
-        return $exec->fetchAll();        
+        return $exec->fetchAll();
     }
 
     public function first(): mixed
@@ -443,7 +443,7 @@ class QueryBuilderV2
         $sql  = $this->toSql();
         $stmt = $this->executePrepared($sql, $this->bindings);
 
-        if($isCache) {
+        if ($isCache) {
             // Cache data
             $cache = new \App\Core\Support\Cache();
             $cleanQuery = preg_replace("/\s+/", " ", trim($sql));
@@ -458,10 +458,10 @@ class QueryBuilderV2
             };
 
             $result = $cache->remember(
-                    $cacheKeyId,
-                    $callback,
-                    $this->timeCachedCount
-                );
+                $cacheKeyId,
+                $callback,
+                $this->timeCachedCount
+            );
         } else {
             $result = $stmt->fetch();
         }
@@ -472,8 +472,8 @@ class QueryBuilderV2
         $this->limitValue   = $previousLimit;
         $this->offsetValue  = $previousOffset;
 
-        return is_array($result) 
-            ? ($result['aggregate'] ?? null) 
+        return is_array($result)
+            ? ($result['aggregate'] ?? null)
             : ($result?->aggregate ?? null);
     }
 
@@ -754,13 +754,17 @@ class QueryBuilderV2
                 $this->rustEngine->appendChunk($currentChunk);
                 unset($currentChunk);
             }
+
+            // Return the results stream or success status from the Rust engine
+            return $this->rustEngine->streamAll();
+
         } catch (\Throwable $e) {
             die("Dynamic FFI Chunking Error: " . $e->getMessage());
             return false;
         } finally {
-            $exec->closeCursor();
-            // dd($this->rustEngine->debugFirstItem());
-            return $this->rustEngine->streamAll();
+            if (isset($exec) && method_exists($exec, 'closeCursor')) {
+                $exec->closeCursor();
+            }
         }
     }
 }

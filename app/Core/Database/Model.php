@@ -8,7 +8,6 @@
 
 namespace App\Core\Database;
 
-use Exception;
 use PDO;
 use PDOException;
 
@@ -76,7 +75,7 @@ class Model
         $this->table = null;
     }
 
-    
+
 
     /**
      * Create a new instance or return the
@@ -187,7 +186,7 @@ class Model
     /**
      * Query the current SQL statement.
      *
-     * @return PDOStatement|false
+     * @return \PDOStatement|false
      * @throws PDOException
      */
     protected function query()
@@ -317,13 +316,17 @@ class Model
                 $this->rustEngine->appendChunk($currentChunk);
                 unset($currentChunk);
             }
+
+            // Return the results stream or success status from the Rust engine
+            return $this->rustEngine->streamAll();
+
         } catch (\Throwable $e) {
             die("Dynamic FFI Chunking Error: " . $e->getMessage());
             return false;
         } finally {
-            $exec->closeCursor();
-            // dd($this->rustEngine->debugFirstItem());
-            return $this->rustEngine->streamAll();
+            if (isset($exec) && method_exists($exec, 'closeCursor')) {
+                $exec->closeCursor();
+            }
         }
     }
 
@@ -365,35 +368,35 @@ class Model
         $cacheKeyId = "paginate_count:{$this->table}:p{$page}:l{$limit}:{$paramSignature}";
 
         $callback = function () use ($query, $queryCount, $params, $page, $limit, $offset) {
-                // Calculate Total Data (for info pagination)
-                $finalQuery = !is_null($queryCount) 
-                    ? $queryCount 
-                    : "SELECT COUNT(*) AS total_count FROM ($query) AS total";
-                $total = $this->execQuery($finalQuery, $params, false, true);
+            // Calculate Total Data (for info pagination)
+            $finalQuery = !is_null($queryCount)
+                ? $queryCount
+                : "SELECT COUNT(*) AS total_count FROM ($query) AS total";
+            $total = $this->execQuery($finalQuery, $params, false, true);
 
-                // Parsing data (Supports Objects and Arrays)
-                $totalRows = 0;
-                if ($total) {
-                    if (is_object($total) && isset($total->total_count)) {
-                        $totalRows = (int) $total->total_count;
-                    } elseif (is_array($total) && isset($total['total_count'])) {
-                        $totalRows = (int) $total['total_count'];
-                    }
+            // Parsing data (Supports Objects and Arrays)
+            $totalRows = 0;
+            if ($total) {
+                if (is_object($total) && isset($total->total_count)) {
+                    $totalRows = (int) $total->total_count;
+                } elseif (is_array($total) && isset($total['total_count'])) {
+                    $totalRows = (int) $total['total_count'];
                 }
+            }
 
-                // Metadata calculations
-                $safeLimit = max(1, (int) $limit);
-                $lastPage = (int) ceil($totalRows / $safeLimit);
+            // Metadata calculations
+            $safeLimit = max(1, (int) $limit);
+            $lastPage = (int) ceil($totalRows / $safeLimit);
 
-                return [
-                    "total" => $totalRows,
-                    "current_page" => $page,
-                    "last_page" => $lastPage,
-                    "limit" => $limit,
-                    "from" => $offset + 1,
-                    "to" => min($offset + $limit, $totalRows),
-                ];
-            };
+            return [
+                "total" => $totalRows,
+                "current_page" => $page,
+                "last_page" => $lastPage,
+                "limit" => $limit,
+                "from" => $offset + 1,
+                "to" => min($offset + $limit, $totalRows),
+            ];
+        };
 
         $paginationMeta = $cache->remember(
             $cacheKeyId,
@@ -402,7 +405,7 @@ class Model
         );
         // dd($paginationMeta, true);
 
-        if($paginationMeta['total'] === 0) {
+        if ($paginationMeta['total'] === 0) {
             $paginationMeta = $callback();
         }
 
