@@ -60,7 +60,7 @@ set_exception_handler(function (\Throwable $exception) {
     if(config('app.drbug')) {
         write_log($logEntry, "App.Core", "error", "app-error.log");
     }
-    
+
     // Handler JSON Output
     if (is_json_request()) {
         $status = 500;
@@ -85,7 +85,7 @@ App::register("routing_external_api", require BASEPATH . "config/external-api.ph
 
 // Check Cookie
 if (!isset($_COOKIE[APP_SESSID])) { 
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         try {
             $driver = env('SESSION_DRIVER', 'files');
             ini_set('session.save_handler', $driver);

@@ -86,8 +86,8 @@ class Cache
                         $values = $this->redisClient->mget($keys);
                         foreach ($keys as $index => $matchedKey) {
                             $val = $values[$index] ?? null;
-                            if ($val !== false && $val !== null) {
-                                $results[$matchedKey] = unserialize($val);
+                            if ($val !== false && $val !== null && $val !== "") {
+                                $results[$matchedKey] = safe_unserialize($val);
                             }
                         }
                     }

@@ -872,7 +872,26 @@ function delCache($id)
     (new \App\Core\Support\Cache())->flush($id);
 }
 
-function getAuthSession(int $expTime = null) {
+/**
+ * Safely unserialize data, fallback to raw string if failure.
+ */
+function safe_unserialize(mixed $data): mixed 
+{
+    if (!is_string($data) || trim($data) === '') {
+        return $data;
+    }
+    
+    // Periksa apakah string merupakan format serialisasi PHP yang sah
+    $decoded = @unserialize($data);
+    if ($decoded !== false || $data === 'b:0;') {
+        return $decoded;
+    }
+    
+    // Kembalikan data asli jika bukan format serialisasi
+    return $data;
+}
+
+function getAuthSession(?int $expTime = null) {
     $expTime = $expTime ?? config("session.exptime", 7200);
     return cacheContent('get', '*'. $_COOKIE[APP_SESSID] .'*', $expTime);
 }
