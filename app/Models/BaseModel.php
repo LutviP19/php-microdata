@@ -43,17 +43,7 @@ class BaseModel extends Model
 
     protected function setRatelimiter(?string $identifier, int $perSeconds = 120, int $limit = 10): void
     {
-        $identifier = str_replace(" ", "_", $identifier);
-        $identifier = $identifier . "-" . \clientIP();
-        if (false === checkRateLimit($identifier, $limit, $perSeconds)) {
-            $after = $perSeconds / 60;
-            $afteText = $after > 1 ? "{$after} minutes" : "{$after} minute";
-            $errors = [
-                "busy" => ["Please try again after {$afteText}."],
-            ];
-
-            json_response([], 429, "Too many requests", $errors);
-        }
+        setRatelimiter($identifier, $perSeconds0, $limit);
     }
 
     protected function generateTokenJWT(?array $payload = []): array

@@ -378,6 +378,9 @@ $id = $request["id"] ?? null;
 // else using chunk - FFI
 $maxLimitToRender = 500;
 
+// dd(session_name());
+dd(getAuthSession());
+
 // Dynamic
 if ($limit >= $maxLimitToRender) {
     $logDebug = "Memory PHP saat ini: " . memory_get_usage(true) / 1024 / 1024 . " MB";

@@ -7,6 +7,8 @@
  * @package PHP-Microdata(PMD)
  */
 
+define('APP_SESSID', 'PMDSESSID');
+
 if (!defined('BASEPATH')) {
     // Go up 2 levels from /app/app/Core to reach /app (Project Root)
     define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
@@ -55,8 +57,10 @@ set_exception_handler(function (\Throwable $exception) {
     $logEntry .= "Location: $file on line $line\n";
     // $logEntry .= "Stack Trace:\n$trace\n";
     $logEntry .= str_repeat("-", 50); // Garis pemisah antar log
-    write_log($logEntry, "App.Core", "error", "app-error.log");
-
+    if(config('app.drbug')) {
+        write_log($logEntry, "App.Core", "error", "app-error.log");
+    }
+    
     // Handler JSON Output
     if (is_json_request()) {
         $status = 500;
@@ -78,35 +82,76 @@ use App\Core\Support\App;
 App::register("config", require BASEPATH . "config/app.php");
 App::register("routing_external_api", require BASEPATH . "config/external-api.php");
 
-// INI Set Session
-if (session_status() == PHP_SESSION_NONE) {
-    try {
-        // Starting the session will be the first we do.
-        ini_set("session.save_handler", env("SESSION_DRIVER", "files"));
 
-        if (env("SESSION_DRIVER") === "redis") {
-            ini_set(
-                "session.save_path",
-                "tcp://" .
-                    config("redis.default.host") .
-                    ":" .
-                    config("redis.default.port") .
-                    "?auth" .
-                    config("redis.default.password"),
-            );
-            ini_set("session.gc_maxlifetime", (int) (config("session.lifetime") * 60)); // Set default to 2 hours
-        } else {
-            ini_set("session.save_handler", "files");
-            ini_set("session.save_path", storage_path("framework/sessions"));
+// Check Cookie
+if (!isset($_COOKIE[APP_SESSID])) { 
+    if (session_status() === PHP_SESSION_NONE) {
+        try {
+            $driver = env('SESSION_DRIVER', 'files');
+            ini_set('session.save_handler', $driver);
+
+            if ($driver === "redis") {
+                $redisHost = config("redis.default.host", "127.0.0.1");
+                $redisPort = config("redis.default.port", 6379);
+                $redisPass = config("redis.default.password");
+                $lifetime  = (int) config("session.lifetime", 120) * 60;
+
+
+                $redisPath = "tcp://{$redisHost}:{$redisPort}";
+                if (!is_null($redisPass) && $redisPass !== '') {
+                    $redisPath .= "?auth=" . urlencode((string)$redisPass);
+                }
+
+                ini_set("session.save_path", $redisPath);
+                ini_set("session.gc_maxlifetime", $lifetime);
+            } else {
+                
+                ini_set('session.save_handler', 'files');
+                ini_set('session.save_path', storage_path('framework/sessions'));
+            }
+        } catch (\Exception $e) {
+            $errLog = "An unexpected error occurred during session init: " . $e->getMessage();
+            if (function_exists('write_log')) {
+                write_log('error', $errLog, 'session.save_path.Setup');
+            }
+
+            // Safe fallback to driver files if Redis has problems
+            ini_set('session.save_handler', 'files');
+            ini_set('session.save_path', storage_path('framework/sessions'));
         }
-    } catch (\Exception $e) {
-        $errLog = "An unexpected error occurred: " . $e->getMessage();
-        write_log("error", $errLog, "session.save_path.Redis");
 
-        // Fallback to default driver
-        ini_set("session.save_handler", "files");
-        ini_set("session.save_path", storage_path("framework/sessions"));
+        // Set custom session name
+        session_name(APP_SESSID);
+
+        // Run the optimized built-in session opening function of the helper
+        if (function_exists('bp_session_start')) {
+            bp_session_start();
+        } else {
+            ini_set('session.use_strict_mode', 1);
+            @session_start();
+        }
     }
 
-    session_name("PMDSESSID"); // Set a custom session name
+    // The handler after a successful session is active
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        if (!\App\Core\Support\Session::has("IPaddress")) {
+            \App\Core\Support\Session::set("IPaddress", clientIP());
+        }
+
+        if (!\App\Core\Support\Session::has("userAgent")) {
+            $userAgent = $_SERVER["HTTP_USER_AGENT"] ?? "Unknown";
+            \App\Core\Support\Session::set("userAgent", $userAgent);
+        }
+    }
+
+} else {
+
+    if (!isset($_SESSION)) {
+        $_SESSION = [];
+    }
+
+    // Set session from cache
+    $expTime = config("session.exptime", 7200);
+    $_SESSION = array_merge($_SESSION, cacheContent('get', '*'. $_COOKIE[APP_SESSID] .'*', $expTime) ?: []);
+    // dd($_SESSION);
 }

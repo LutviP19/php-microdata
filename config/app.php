@@ -206,6 +206,7 @@ return [
     'session' => [
         'csrf_token' => 'csrf_token',
         'lifetime' => (int) env('SESSION_LIFETIME', 120), // in minutes
+        'exptime' => (int) env('SESSION_LIFETIME', 120) * 60, // in secoonds
         'regenerate' => (int) env('SESSION_REGENERATE', 300), // in secoonds
         'encrypt' => env('SESSION_ENCRYPT', false),
     ],

@@ -25,6 +25,19 @@ $singleTask = App::externalApi('auth_login', [
 
 $single = $streamer->singleStream($singleTask);
 // dd($single, true);
+
+// Set Cookie
+if(isset($single['body']['data']['sessionId'])) {
+    $sessionName = APP_SESSID;
+    $sessionId = $single['body']['data']['sessionId'];
+    $sessionExp = config('session.exptime');
+    
+    $headers = [
+        'Set-Cookie' =>  "{$sessionName}={$sessionId}; Max-Age={$sessionExp}; Path=/; SameSite=Lax; HttpOnly"
+    ];
+    setHeaders($headers);
+}
+
 dd(json_decode($single['body'], true), true);
 // dd($single['statusCode'], true);
 

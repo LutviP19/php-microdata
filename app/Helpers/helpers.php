@@ -369,11 +369,11 @@ if (!function_exists("handle_json_request")) {
 }
 
 /**
- * Mendeteksi payload JSON dan merubahnya menjadi array di $_REQUEST
- * Berguna untuk integrasi API atau library frontend yang mengirim JSON.
+ * Detects JSON payload and converts it to an array in $_REQUEST
+ * Useful for API integration or frontend libraries that send JSON.
  */
 if (!function_exists("handle_response_error")) {
-    function handle_response_error($data, $dataModel)
+    function handle_response_error($data, $dataModel, array $headers = [])
     {
         if (isset($dataModel["errors"])) {
             // Parse Errors
@@ -390,6 +390,12 @@ if (!function_exists("handle_response_error")) {
             $data["status"] = $status;
             $data["message"] = $message;
             $data["errors"] = $errors;
+        }
+
+        // Send HTTP Response Header if the header has not been sent previously
+        if (!headers_sent() && !empty($headers)) {
+            // dd($headers);
+            setHeaders($headers);
         }
 
         return $data;

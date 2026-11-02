@@ -19,8 +19,11 @@ class Session
     public static function all()
     {
         $sessions = [];
+        $csrfTokenKey = (string) Config::get("session.csrf_token", 'csrf_token');
         $escaped = [
-            Config::get("session.csrf_token"),
+            "sessionKey",
+            "sessionKeyApi",
+            $csrfTokenKey,
             "OBSOLETE",
             "EXPIRES",
             "nonce",
@@ -28,12 +31,16 @@ class Session
             "destroyed",
             "userAgent",
             "IPaddress",
+            "user_id",
             "password",
             "pin",
             "errors",
             "secret",
             "jwtId",
             "tokenJwt",
+            "authId",
+            "tokenAuth",
+            "tokenAuthRefresh",
             "gnr",
             "_previous_uri",
             "_old_input",

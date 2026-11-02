@@ -401,21 +401,39 @@ function getCastRules(string $structClass): array
 /**
  * setHeaders function, to add header response
  *
- * @param  array $headers
- *
+ * @param array $headers
  * @return bool
  */
-function setHeaders($headers = [])
+function setHeaders(array $headers = []): bool
 {
-    if (count($headers)) {
-        foreach ($headers as $header) {
-            if (is_array($header)) {
-                foreach ($header as $key => $value) {
-                    header("{$key}: {$value}");
+    if (empty($headers)) {
+        return false;
+    }
+    
+    if (headers_sent()) {
+        return false;
+    }
+
+    foreach ($headers as $key => $value) {
+        if (is_string($key) && !is_array($value)) {
+            header("{$key}: {$value}");
+            continue;
+        }
+        
+        if (is_array($value)) {
+            foreach ($value as $subKey => $subValue) {
+                if (is_string($subKey)) {
+                    header("{$subKey}: {$subValue}");
+                } elseif (is_string($subValue)) {
+                    header($subValue);
                 }
             }
+        } elseif (is_string($value)) {
+            header($value);
         }
     }
+
+    return true;
 }
 
 /**
@@ -576,6 +594,23 @@ function generateRandomString($len = 64, $base64 = false, $special = true): stri
     return \App\Core\Support\Hash::randomString($len, $special);
 }
 
+function sessionKeyFormat($userId, $sessionId = '*'): string
+{
+    return "session:" . ($userId ?? 'guest-'.\clientIP()) .":{$sessionId}";
+}
+
+
+/**
+ * Converting the number of days into seconds.
+ * 
+ * @param int|float $days Number of days
+ * @return int Total seconds
+ */
+function days_to_seconds(int|float $days): int
+{
+    return (int) ($days * 86400); // 1 day = 86,400 seconds
+}
+
 function recursive_unset(&$array, $unwanted_key = "")
 {
     // Check if the unwanted key exists at the current level and unset it
@@ -692,19 +727,19 @@ function handle_cors()
 }
 
 /**
- * Fungsi Validasi API Key
- * * @param string $headerName Nama header yang digunakan (default: X-API-KEY)
+ * API Key Validation function
+ * * @param string $headerName Header name to use (default: X-API-KEY)
  * @return bool
  */
 function validateApiKey($headerName = "X-API-KEY")
 {
-    // Proses hanya jika API Request
+    // Process only if API Request
     if (!is_json_request()) {
         return true;
     }
 
-    // 1. Dapatkan header dari server
-    // PHP mengubah "X-API-KEY" menjadi "HTTP_X_API_KEY" di $_SERVER
+    // Get headers from server
+    // PHP changes "X-API-KEY" to "HTTP_X_API_KEY" in $_SERVER
     $serverKey = "HTTP_" . str_replace("-", "_", strtoupper((string) $headerName));
     $apiKeyInput = $_SERVER[$serverKey] ?? null;
     // dd($apiKeyInput);
@@ -712,21 +747,18 @@ function validateApiKey($headerName = "X-API-KEY")
     if (!$apiKeyInput) {
         return false;
     }
+    
+    $secureKey = config("api.key");
 
-    // 2. Ambil key asli dari config/env
-    $secureKey = config("api.key"); // Misal: 'base64:...' atau string random
-
-    // 3. Perbandingan yang aman dari "Timing Attack"
-    // Gunakan hash_equals untuk membandingkan string sensitif
     return hash_equals($secureKey, "base64:" . $apiKeyInput);
 }
 
 /**
- * Check Rate Limit dengan Redis & Fallback File
+ * Check Rate Limit with Redis & Fallback File
  *
- * @param  string $identifier : client identity IP, Location, etc...
- * @param  int $limit : limit hit
- * @param  int $timeframeSeconds : time in second
+ * @param string $identifier : client identity IP, Location, etc...
+ * @param int $limit : hit limit
+ * @param int $timeframeSeconds : time in seconds
  *
  * @return void
  */
@@ -743,7 +775,7 @@ function checkRateLimit(?string $identifier, ?int $limit, ?int $timeframeSeconds
             "host" => config("redis.cache.host"),
             "port" => config("redis.cache.port"),
             "database" => config("redis.cache.database"),
-            "timeout" => 0.5, // Timeout pendek agar tidak menghambat user jika redis down
+            "timeout" => 0.5, // Short timeouts so as not to hinder the user if Redis goes down
         ]);
 
         $redis->connect();
@@ -805,6 +837,44 @@ function rateLimitFallbackFile(?string $identifier, ?int $limit, ?int $timeframe
     file_put_contents($filePath, json_encode($newTimestamps));
 
     return true; // Request allowed
+}
+
+function setRatelimiter(?string $identifier, int $perSeconds = 120, int $limit = 10): void
+{
+    $identifier = str_replace(" ", "_", $identifier);
+    $identifier = $identifier . "-" . \get_device_fingerprint();
+    if (false === checkRateLimit($identifier, $limit, $perSeconds)) {
+        $after = $perSeconds / 60;
+        $afteText = $after > 1 ? "{$after} minutes" : "{$after} minute";
+        $errors = [
+            "busy" => ["Please try again after {$afteText}."],
+        ];
+
+        json_response([], 429, "Too many requests", $errors);
+    }
+}
+
+function cacheContent($method, $id, $content = null, $expiry = 3600)
+{
+    if ($method === 'set') {
+        (new \App\Core\Support\Cache($expiry))->set($id, $content, $expiry);
+    }
+
+    if ($method === 'get') {
+        return (new \App\Core\Support\Cache($expiry))->get($id);
+    }
+
+    return $content;
+}
+
+function delCache($id)
+{
+    (new \App\Core\Support\Cache())->flush($id);
+}
+
+function getAuthSession(int $expTime = null) {
+    $expTime = $expTime ?? config("session.exptime", 7200);
+    return cacheContent('get', '*'. $_COOKIE[APP_SESSID] .'*', $expTime);
 }
 
 // --- Base64URL Encoding Functions ---
@@ -992,86 +1062,100 @@ if (!function_exists("get_device_fingerprint")) {
 
 function bp_session_start()
 {
-    ini_set("session.use_strict_mode", 1);
-    @session_start();
-    if (isset($_SESSION["destroyed"])) {
-        // $ttl = (int)env('SESSION_REGENERATE', 300);
-        $ttl = config("session.regenerate");
-
-        // $valid = (bool)($_SESSION['destroyed'] < time() - $ttl);
-        // // dd($ttl);
-        // dd($valid);
-
-        // Do not allow to use too old session ID
-        if (!empty($_SESSION["destroyed"]) && $_SESSION["destroyed"] < time() - $ttl) {
-            // Regenerate SessioId
-            $oldSessionId = session_id();
-            $headers = bp_session_regenerate_id($oldSessionId);
-            setHeaders($headers);
-        }
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        ini_set('session.use_strict_mode', 1);
+        @session_start();
     }
 
-    // $sessionStrictMode = ini_get('session.use_strict_mode');
-    // write_log($sessionStrictMode, 'Helpers.inject_php.bp_session_start.$sessionStrictMode', 'debug');
+    if (isset($_SESSION['destroyed'])) {
+        $ttl = (int)env('SESSION_REGENERATE', 300);
+        
+        if (!empty($_SESSION['destroyed']) && $_SESSION['destroyed'] < time() - $ttl) {
+            $oldSessionId = session_id();
+
+            $headers = bp_session_regenerate_id($oldSessionId);
+            
+            if (function_exists('setHeaders')) {
+                setHeaders($headers);
+            }
+        }
+    }
 }
 
-function bp_session_regenerate_id($oldSessionId)
+function bp_session_regenerate_id($oldSessionId = null)
 {
-    $new_session_id = session_create_id();
+    $oldSessionId = $oldSessionId ?: session_id();
 
-    // add info for users with bad connection not receiving the new session id
-    $_SESSION["new_session_id"] = $new_session_id;
-    // Set destroy timestamp
-    $_SESSION["destroyed"] = time();
-    // Write and close current session;
-    session_commit();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        @session_start();
+    }
 
-    // backup session variables
+    // 1. Retrieve current session data before commit/close
     $keepSession = $_SESSION;
 
-    // Start session with new session ID
-    ini_set("session.use_strict_mode", 0);
-    session_id($new_session_id);
+    // 2. Create a new ID using secure PHP internal functions
+    $new_session_id = session_create_id();
 
-    if (session_status() == PHP_SESSION_ACTIVE) {
-        session_destroy();
-    }
+    // 3. Mark the old session as destroyed and provide new ID info to tolerate unstable connections
+    $_SESSION['new_session_id'] = $new_session_id;
+    $_SESSION['destroyed'] = time();
 
-    $sessionName = session_name();
-    $cookie = session_get_cookie_params();
-    // $sessionExp = (env('SESSION_LIFETIME', 120) * 60);
-    $sessionExp = config("session.lifetime") * 60;
-    $setcookie = [
-        "Set-Cookie" => "{$sessionName}={$new_session_id}; Max-Age={$sessionExp}; Path={$cookie["path"]};",
-    ];
-
-    // use_strict_mode is mandatory for security reasons.
-    ini_set("session.use_strict_mode", 1);
-
-    @session_start();
-    $_SESSION = $keepSession;
-    // Write and close current session;
+    // Save this destroyed marker to the old session ID first
     session_commit();
 
-    $saveHandler = ini_get("session.save_handler");
+    // 4. Start a new session with the new ID that has been created
+    ini_set('session.use_strict_mode', 0);
+    session_id($new_session_id);
+    ini_set('session.use_strict_mode', 1);
 
-    if ($saveHandler === "files") {
-        // Delete Old session file
-        $sessionSavePath = session_save_path();
-        $fileSessionOld = $sessionSavePath . "/sess_" . $oldSessionId;
+    @session_start();
+
+    // Copy all data from the old session back to the new session ID
+    $_SESSION = $keepSession;
+
+    // Delete the destroyed marker in the new session to avoid endless loops.
+    unset($_SESSION['destroyed'], $_SESSION['new_session_id']);
+
+    // Write data to a new session and temporarily lock/close it
+    session_commit();
+
+    // 5. Clean data from old session IDs in storage (Files /Redis)
+    $saveHandler = ini_get('session.save_handler');
+
+    if ($saveHandler === 'files') {
+        $sessionSavePath = session_save_path() ?: sys_get_temp_dir();
+        $fileSessionOld = rtrim($sessionSavePath, '/\\') . '/sess_' . $oldSessionId;
 
         if (\file_exists($fileSessionOld)) {
-            $status = unlink($fileSessionOld);
-            // write_log($status, 'Helpers.inject_php.bp_session_regenerate_id.unlink-$fileSessionOld', 'debug');
+            @unlink($fileSessionOld);
         }
-    } else {
-        // Delete data redis PHPREDIS_SESSION
-        if ($saveHandler === "redis") {
-            delDataFromRedis($oldSessionId, "PHPREDIS_SESSION", config("redis.default.database"), true);
-        }
+    } elseif ($saveHandler === 'redis' && function_exists('delDataFromRedis')) {
+        // Delete old session data from Redis
+        delDataFromRedis($oldSessionId, 'PHPREDIS_SESSION', '0', true);
     }
 
-    return $setcookie;
+    // 6. Set Up a New Secure Cookie Header (According to PHP/application default parameters)
+    $sessionName = session_name();
+    $cookie = session_get_cookie_params();
+    $sessionExp = (int) config("session.lifetime", 120) * 60;
+    
+    // Start assembling the cookie string
+    $cookieString = "{$sessionName}={$new_session_id}; Max-Age={$sessionExp}; Path={$cookie['path']};";
+
+    // 1. DO NOT use Domain if shooting to localhost/127.0.0.1 so that the cookie is not rejected by the client
+    if (!empty($cookie['domain']) && !in_array($cookie['domain'], ['localhost', '127.0.0.1'])) {
+        $cookieString .= " Domain={$cookie['domain']};";
+    }
+
+    // 2. CRUCIAL: Only use Secure if the URL uses HTTPS!
+    // If on localhost (http://localhost:8008), ensure 'Secure;' NOT IN.
+    if (!empty($cookie['secure']) && env('APP_ENV') !== 'local') {
+        $cookieString .= " Secure;";
+    }
+
+    $cookieString .= " HttpOnly; SameSite=Lax;";
+
+    return ['Set-Cookie' => $cookieString];
 }
 
 /**
@@ -1107,6 +1191,74 @@ function slug($title, $separator = "-", $language = "en", $dictionary = ["@" => 
     return trim((string) $title, $separator);
 }
 
+/**
+ * Setup Redis Connection Helper
+ *
+ * @return \Predis\Client|null Returns a Predis object on success, or null/exception on failure
+ * @throws \Exception
+ */
+function setupRedisConnection()
+{
+    $host     = (string) config('redis.cache.host');
+    $port     = (int)    config('redis.cache.port');
+    $username = config('redis.cache.username');
+    $password = config('redis.cache.password');
+    $database = (int)    config('redis.cache.database');
+
+    $parameters = [
+        'host'     => $host,
+        'port'     => $port,
+        'database' => $database,
+    ];
+
+    if (!is_null($username) && $username !== '') {
+        $parameters['username'] = (string)$username;
+    }
+    if (!is_null($password) && $password !== '') {
+        $parameters['password'] = (string)$password;
+    }
+
+    try {
+        $redis = new \Predis\Client($parameters);
+
+        return $redis;
+    } catch (\Throwable $e) {
+        throw new \Exception("Could not connect to Redis server: " . $e->getMessage(), 0, $e);
+    }
+}
+
+function getKeyTllFromRedis(string $key): int
+{
+    $redis = setupRedisConnection();
+
+    if (!$redis->exists($key)) {
+        return 0;
+    }
+    
+    // The TTL command returns the remaining active seconds
+    return (int) $redis->ttl($key);
+}
+
+function getDataFromRedis($id, $prefix = null)
+{
+    if (empty($id)) {
+        return;
+    }
+
+    // Connect to Redis
+    $redis = setupRedisConnection();
+
+    $prefix ??= 'pmd_data';
+
+    $data = $redis->get($prefix.':'.$id);
+
+    if (! is_null($data) && isset($data[0])) {
+        return unserialize(base64_decode($data[0]));
+    }
+
+    return [];
+}
+
 function delDataFromRedis($id, $prefix = null, $db = null, $force = false)
 {
     if (empty($id)) {
@@ -1114,13 +1266,9 @@ function delDataFromRedis($id, $prefix = null, $db = null, $force = false)
     }
 
     // Connect to Redis
-    $redis = new \Predis\Client([
-        "host" => config("redis.cache.host"),
-        "port" => config("redis.cache.port"),
-        "database" => $db ?? config("redis.cache.database"),
-    ]);
+    $redis = setupRedisConnection();
 
-    $prefix ??= "bp_data";
+    $prefix ??= "pmd_data";
 
     $data = $redis->get($prefix . ":" . $id);
 
