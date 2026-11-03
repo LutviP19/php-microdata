@@ -16,7 +16,7 @@ class Gate
     protected static $abilities = [];
 
     /**
-     * Inisialisasi izin user ke dalam static property
+     * Initialize user permissions into static properties
      */
     public static function loadAbilities($userId, $groupId): void
     {
@@ -39,7 +39,7 @@ class Gate
     }
 
     /**
-     * Cek apakah user punya izin spesifik
+     * Check whether the user has specific permissions
      */
     public static function allows($permission): array
     {
@@ -47,7 +47,7 @@ class Gate
     }
 
     /**
-     * Kebalikan dari allows
+     * The opposite of allows
      */
     public static function denies($permission): bool
     {
@@ -55,7 +55,7 @@ class Gate
     }
 
     /**
-     * Proteksi di level Model (langsung stop jika tidak punya akses)
+     * Protection at Model level (stop immediately if you don't have access)
      */
     public static function authorize($permission): bool
     {
@@ -67,8 +67,8 @@ class Gate
     }
 
     /**
-     * Middleware untuk memvalidasi akses user menggunakan JWT
-     * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
+     * Middleware to validate user access using JWT
+     * @param string|null $requiredPermission Required permissions (optional)
      */
     public static function authorizeJwt(?string $requiredPermission = null, ?string $secret = null): ?array
     {
@@ -84,7 +84,7 @@ class Gate
             $token = $matches[1];
         }
 
-        // Jika token kosong, cek dari Cookie (fallback umum)
+        // If token is empty, check from Cookie (common fallback)
         if (!$token && isset($_COOKIE["auth_token"])) {
             $token = $_COOKIE["auth_token"];
         }
@@ -97,12 +97,12 @@ class Gate
         $jwt = new JWT($secret);
         $userData = $jwt->decode($token);
 
-        // Verifikasi Token
+        // Token Verification
         if (!$userData) {
             self::unauthorized_response("Session has expired please re-login.");
         }
 
-        // Verifikasi Permission (jika diminta)
+        // Permission Verification (if requested)
         if ($requiredPermission) {
             $permissions = $userData["user_permissions"] ?? [];
             if (!in_array($requiredPermission, $permissions)) {
@@ -114,8 +114,8 @@ class Gate
     }
 
     /**
-     * Middleware untuk memvalidasi akses user menggunakan Sodium
-     * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
+     * Middleware to validate user access using Sodium
+     * @param string|null $requiredPermission Required permissions (optional)
      */
     public static function authorizeSodium(?string $requiredPermission = null, ?string $hexKey = null): ?array
     {
@@ -131,7 +131,7 @@ class Gate
             $token = $matches[1];
         }
 
-        // Jika token kosong, cek dari Cookie (fallback umum)
+        // If token is empty, check from Cookie (common fallback)
         if (!$token && isset($_COOKIE["auth_token"])) {
             $token = $_COOKIE["auth_token"];
         }
@@ -144,7 +144,7 @@ class Gate
         $auth = new SodiumAuth($hexKey);
         $userData = $auth->decode($token);
 
-        // Verifikasi Token
+        // Token Verification
         if (!$userData || !isset($userData["exp"])) {
             self::unauthorized_response("Session has expired please re-login.");
         }
@@ -163,7 +163,7 @@ class Gate
         //         return self::refreshSodiumAuth($userData, $hexKey);
         // }
 
-        // Verifikasi Permission (jika diminta)
+        // Permission Verification (if requested)
         if ($requiredPermission) {
             $permissions = $userData["user_permissions"] ?? [];
             if (!in_array($requiredPermission, $permissions)) {
@@ -187,15 +187,15 @@ class Gate
             self::unauthorized_response("Invalid Refresh Token");
         }
 
-        // // 2. Cek di Redis (Whitelist)
-        // // Ini penting agar Refresh Token bisa di-revoke jika user logout/ban
+        // // 2. Check in Redis (Whitelist)
+        // // This is important so that the Refresh Token can be revived if the user logs out/bans
         // $stored = $this->redis->get("sso_refresh_map:" . $payload['uid']);
         // if ($stored !== $refreshToken) {
         //     self::unauthorized_response("Refresh Token Revoked");
         // }
 
         // Default payload
-        $expToken = time() + 60 * (config("session.lifetime") / 2);
+        $expToken = time() + config('session.exptime');
         $payloadDefault = [
             "uid" => $payload["uid"],
             "role" => $payload["role"],
@@ -206,16 +206,16 @@ class Gate
         ];
         $fullPayload = array_merge($payloadDefault, $payload);
 
-        // 3. Generate Access Token Baru (Pendek: 1 jam)
+        // 3. Generate New Access Token (Short: 1 hour)
         $newAccessToken = array_merge($fullPayload, [
             "type" => "access",
             "exp" => $expToken,
         ]);
 
-        // 4. Generate Refresh Token Baru (Rotasi - Opsional tapi disarankan)
+        // 4. Generate New Refresh Token (Rotation -Optional but recommended)
         $newRefreshToken = array_merge($fullPayload, [
             "type" => "refresh",
-            "exp" => time() + 3600 * 24 * 7, // 7 Hari
+            "exp" => days_to_seconds(7), // 7 Hari
         ]);
 
         // // 5. Update Redis Whitelist
@@ -231,28 +231,12 @@ class Gate
     }
 
     /**
-     * Middleware untuk memvalidasi akses user menggunakan SodiumV4
-     * @param string|null $requiredPermission Permission yang dibutuhkan (opsional)
+     * Middleware to validate user access using SodiumV4
+     * @param string|null $requiredPermission Required permissions (optional)
      */
     public static function authorizeSodiumV4(?string $requiredPermission = null, ?string $pubKey = null): ?array
     {
-        $headers = getallheaders();
-        $authHeader = $headers["Authorization"] ?? ($headers["authorization"] ?? "");
-
-        if (is_string($authHeader) && $authHeader === '') {
-            self::unauthorized_response("Invalid token.");
-        }
-
-        $token = "";
-        if (preg_match("/Bearer\s(\S+)/", $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        // Jika token kosong, cek dari Cookie (fallback umum)
-        if (!$token && isset($_COOKIE["auth_token"])) {
-            $token = $_COOKIE["auth_token"];
-        }
-
+        $token = getBearerToken();
         if (!$token) {
             self::unauthorized_response("Invalid token.");
         }
@@ -261,13 +245,19 @@ class Gate
         $privateKey = config("app.sodium_private_key");
         $auth = new SodiumAuthV4($privateKey, $pubKey);
         $userData = $auth->decode($token);
+        // dd($userData, true);
 
-        // Verifikasi Token
-        if (!$userData || !isset($userData["exp"])) {
+        // Check session cache redis
+        $prefixKey = sessionKeyFormat($userData['uid'], $userData['jti']);
+        $isKeyExists = getKeyTllFromRedis($prefixKey);
+        $isInvalidToken = ($isKeyExists <= 0 || !$userData || !isset($userData["exp"]));
+
+        // Token Verification
+        if ($isInvalidToken) {
             self::unauthorized_response("Session has expired please re-login.");
         }
 
-        // Cek exp
+        // Check exp
         if ($userData && isset($userData["exp"])) {
             $leeway = 60; // Toleransi perbedaan waktu antar server (60 detik)
             if (time() > $userData["exp"] + $leeway) {
@@ -275,13 +265,16 @@ class Gate
             }
         }
 
-        // // Cek Type refresh
-        // if ($userData && isset($userData['type'])) {
-        //     if($userData['type'] === 'refresh')
-        //         return self::refreshSodiumAuth($userData, $hexKey);
+        // // Fingerprint - Strict Mode DeviceID
+        // if (isset($userData["uid"]) && isset($userData["fingerprint"])) {
+        //     $fingerprint = get_device_fingerprint(false, $userData["uid"]);
+        //     if (!matchHashData($fingerprint, $userData["fingerprint"])) {
+        //         self::unauthorized_response("Session has expired please re-login.");
+        //     }
         // }
+        // // dd($userData, true);
 
-        // Verifikasi Permission (jika diminta)
+        // Permission Verification (if requested)
         if ($requiredPermission) {
             $permissions = $userData["user_permissions"] ?? [];
             if (!in_array($requiredPermission, $permissions)) {
@@ -292,7 +285,7 @@ class Gate
         return $userData;
     }
 
-    public static function refreshSodiumAuthV4(string $refreshToken, ?string $pubKey = null): ?array
+    public static function refreshSodiumAuthV4(string $refreshToken, array $payloadToken = [], ?string $pubKey = null): ?array
     {
         $pubKey ??= config("app.sodium_public_key");
         $privateKey = config("app.sodium_private_key");
@@ -300,88 +293,70 @@ class Gate
 
         // 1. Decode & Verify Signature Refresh Token
         $payload = $sodiumAuth->decode($refreshToken);
-        $isValid = isset($payload["type"]) && isset($payload["iis"]) && isset($payload["fingerprint"]);
-
-        if (!$payload || !$isValid || $payload["type"] !== "refresh") {
+        if (!$payload || is_null($payload)) {
             self::unauthorized_response("Invalid Refresh Token");
         }
 
-        // // 2. Cek di Redis (Whitelist)
-        // // Ini penting agar Refresh Token bisa di-revoke jika user logout/ban
-        // $stored = $this->redis->get("sso_refresh_map:" . $payload['uid']);
-        // if ($stored !== $refreshToken) {
-        //     self::unauthorized_response("Refresh Token Revoked");
+        $isValid = isset($payload["type"]) && isset($payload["iss"]) && isset($payload["fingerprint"]);        
+
+        // Check session cache redis
+        $prefixKey = str_replace('session', 'refresh_token', sessionKeyFormat($payload['uid'], $payload['jti']));
+        $isKeyExists = getKeyTllFromRedis($prefixKey);
+
+        if ($isKeyExists <= 0 || !$isValid || $payload["type"] !== "refresh") {
+            self::unauthorized_response("Invalid Refresh Token");
+        }
+
+        // // Fingerprint - Strict Mode DeviceID
+        // if (isset($payload["uid"]) && isset($payload["fingerprint"])) {
+        //     $fingerprint = get_device_fingerprint(false, $payload["uid"]);
+        //     if (!matchHashData($fingerprint, $payload["fingerprint"])) {
+        //         self::unauthorized_response("Session has expired please re-login.");
+        //     }
         // }
+        // // dd($payload, true);
 
         // Default payload
-        $expToken = time() + 60 * (config("session.lifetime") / 2);
+        $payload = array_merge($payload, $payloadToken);
+        $now = time();
+        $expToken = $now + config('session.exptime');
+        $expTokenRefresh = 7;
+        $uid = $payload["uid"];
+        
         $payloadDefault = [
-            "uid" => $payload["uid"],
-            "role" => $payload["role"],
-            "fingerprint" => get_device_fingerprint(),
-            "iat" => time(),
-            "iss" => "php-microdata",
-            "aud" => "users",
+            "uid" => $uid,
+            'jti' => $payload["jti"],
+            // "role" => $payload["role"],
+            "fingerprint" => get_device_fingerprint(true, $uid),
+            "iat" => $now,
+            "iss" => "php-microdata.{$uid}",
+            // "aud" => "users",
         ];
         $fullPayload = array_merge($payloadDefault, $payload);
 
-        // 3. Generate Access Token Baru (Pendek: 1 jam)
-        $newAccessToken = array_merge($fullPayload, [
-            "type" => "access",
-            "exp" => $expToken,
-        ]);
-
-        // 4. Generate Refresh Token Baru (Rotasi - Opsional tapi disarankan)
-        $newRefreshToken = array_merge($fullPayload, [
-            "type" => "refresh",
-            "exp" => time() + 3600 * 24 * 7, // 7 Hari
-        ]);
-
-        // // 5. Update Redis Whitelist
-        // $this->redis->setex("sso_refresh_map:" . $payload['uid'], 86400 * 7, $newRefreshToken);
-
+        $sodiumAuth->setExpiration($expToken, $expTokenRefresh);
         $dataNewToken = [
-            "access_token" => $sodiumAuth->encode(cleanSodiumPayload($newAccessToken, "access")),
-            "refresh_token" => $sodiumAuth->encode(cleanSodiumPayload($newRefreshToken, "refresh")),
+            "access_token" => $sodiumAuth->encode($sodiumAuth->setDefaultPayload($fullPayload, "access")),
+            "refresh_token" => $sodiumAuth->encode($sodiumAuth->setDefaultPayload($fullPayload, "refresh")),
         ];
-
+        
         // Generate New Token Sodium
         return $dataNewToken;
     }
 
     /**
-     * Response Helper jika tidak login (401)
+     * Response Helper if not logged in (401)
      */
     public static function unauthorized_response(?string $msg)
     {
-        if (is_json_request()) {
-            $message = "Unauthorized";
-            $errors = [
-                "auth" => "Unauthorized: " . $msg,
-            ];
-            json_response([], 401, $message, $errors);
-        } else {
-            http_response_code(isHtmx() ? 200 : 401);
-            include BASEPATH . "views/error/401.php";
-            die();
-        }
+        unauthorized_response($msg);
     }
 
     /**
-     * Response Helper jika tidak punya izin (403)
+     * Response Helper if you don't have permission (403)
      */
     public static function forbidden_response(?string $permission)
     {
-        if (is_json_request()) {
-            $message = "You don't have access[$permission]";
-            $errors = [
-                "auth" => "Forbidden to access: " . $permission,
-            ];
-            json_response([], 403, $message, $errors);
-        } else {
-            http_response_code(isHtmx() ? 200 : 403);
-            include BASEPATH . "views/error/403.php";
-            die();
-        }
+        forbidden_response($permission);
     }
 }

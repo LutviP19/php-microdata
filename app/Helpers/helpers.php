@@ -406,7 +406,7 @@ if (!function_exists("handle_response_error")) {
  * Mengirimkan respons JSON yang standar dan menghentikan eksekusi script.
  */
 if (!function_exists("json_response")) {
-    function json_response($data, $status = 200, $message = "", $errors = [])
+    function json_response($data, $status = 200, $message = "", mixed $errors = null)
     {
         header("Content-Type: application/json");
         http_response_code($status);
@@ -555,6 +555,77 @@ if (!function_exists("expects_json")) {
         // kita bisa lebih ketat (opsional tergantung arsitektur bisnis).
 
         return $isJsonInput || $isJsonAccept || $isAjax;
+    }
+}
+
+if (!function_exists('parse_curl_cookies')) {
+    /**
+     * Accurately parses cookies from cURL responses.
+     * 
+     * @string $rawResponse Raw response complete with headers from curl_exec()
+     * @int $headerSize Header size obtained from curl_getinfo($ch, CURLINFO_HEADER_SIZE)
+     * @return array An associative array containing a list of cookies and their attributes
+     */
+    function parse_curl_cookies(string $rawResponse, int $headerSize): array
+    {
+        $cookies = [];
+        
+        // Just take the header section based on the header size
+        $headerString = substr($rawResponse, 0, $headerSize);
+        
+        // Break the header by newline
+        $headerLines = explode("\r\n", $headerString);
+
+        foreach ($headerLines as $line) {
+            // Look for the line containing 'Set-Cookie:'
+            if (stripos($line, 'Set-Cookie:') === 0) {
+                $cookieLine = trim(substr($line, 11)); // Discard the string "Set-Cookie:"
+                $cookieParts = explode(';', $cookieLine);
+                
+                // The first part is always Name=Value
+                $mainPair = trim($cookieParts[0]);
+                if (str_contains($mainPair, '=')) {
+                    [$name, $value] = explode('=', $mainPair, 2);
+                    $name = trim($name);
+                    
+                    $cookieData = [
+                        'value'    => trim($value),
+                        'expires'  => null,
+                        'path'     => '/',
+                        'domain'   => null,
+                        'secure'   => false,
+                        'httponly' => false,
+                        'samesite' => null,
+                    ];
+
+                    // Parsing additional attributes (Path, Domain, Max-Age, HttpOnly, etc)
+                    for ($i = 1; $i < count($cookieParts); $i++) {
+                        $attr = trim($cookieParts[$i]);
+                        if ($attr === '') continue;
+
+                        if (stripos($attr, 'Path=') === 0) {
+                            $cookieData['path'] = substr($attr, 5);
+                        } elseif (stripos($attr, 'Domain=') === 0) {
+                            $cookieData['domain'] = substr($attr, 7);
+                        } elseif (stripos($attr, 'Max-Age=') === 0) {
+                            $cookieData['expires'] = time() + (int) substr($attr, 8);
+                        } elseif (stripos($attr, 'Expires=') === 0) {
+                            $cookieData['expires'] = strtotime(substr($attr, 8));
+                        } elseif (stripos($attr, 'Secure') === 0) {
+                            $cookieData['secure'] = true;
+                        } elseif (stripos($attr, 'HttpOnly') === 0) {
+                            $cookieData['httponly'] = true;
+                        } elseif (stripos($attr, 'SameSite=') === 0) {
+                            $cookieData['samesite'] = substr($attr, 9);
+                        }
+                    }
+
+                    $cookies[$name] = $cookieData;
+                }
+            }
+        }
+
+        return $cookies;
     }
 }
 

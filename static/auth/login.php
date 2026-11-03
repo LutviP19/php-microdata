@@ -8,16 +8,24 @@ declare(strict_types=1);
 
 use App\Core\Http\NativeCurlStreamer;
 use App\Core\Support\App;
+use App\Core\Support\Cookie;
 
-// Testing CURL - from Client Web
+// CURL - from Client Web
 $streamer = new NativeCurlStreamer();
 $start = microtime(true);
+$requestMethod = $_SERVER["REQUEST_METHOD"];
+$allowMethod = ['POST'];
+// dd($requestMethod);
 
-// Test JSON
+if(!in_array($requestMethod, $allowMethod)) {
+    return;
+}
+
+// auth_login RestAPI
 $singleTask = App::externalApi('auth_login', [
     'body' => json_encode([
-                'email' => $_REQUEST['email'],
-                'password' => $_REQUEST['password'],
+                'email' => $_POST['email'],
+                'password' => $_POST['password'],
                 // List Events should be run
                 'calledEvents' => ['order.created', 'order.payment', 'order.notif']
             ])
@@ -25,29 +33,56 @@ $singleTask = App::externalApi('auth_login', [
 
 $single = $streamer->singleStream($singleTask);
 // dd($single, true);
+// dd($single['error'], true);
 // dd($single['body'], true);
 
-// Set Cookie
-if(!isset($single['error'])) {
-    $data = json_decode((string) $single['body'], true);
+$statusCode = $single['statusCode'];
+$errors = $single['error'];
+$data = json_decode((string) $single['body'] ?? "{}", true);
 
-    // Set Header for Cookie
-    if(isset($data['data']['sessionId'])) {
-        $sessionName = APP_SESSID;
-        $sessionId = $data['data']['sessionId'];
-        $sessionExp = config('session.exptime');
-        
-        $headers = [
-            'Set-Cookie' =>  "{$sessionName}={$sessionId}; Max-Age={$sessionExp}; Path=/; SameSite=Lax; HttpOnly"
-        ];
-        setHeaders($headers);
-    }
+// Catch cURL Errors (if there is a connection failure, DNS, timeout, etc.)
+if ($errors) {
+    // $error = is_string($single['error']) ? [$single['error']] : $single['error'];
+    $error = ["The server responds with an HTTP Status Code: {$statusCode}"];
+    // dd($error);
 
-    $statusCode = $data['statusCode'];
-    http_response_code($statusCode);
-    dd($data, true);
+    // http_response_code($statusCode);
+    // dd(json_decode($error, true), true);
+    // // dd($single['statusCode'], true);
+    
+    json_response(null, $statusCode, "login_error", $error);
 }
 
-http_response_code(401);
-dd(json_decode($single['body'], true), true);
-// dd($single['statusCode'], true);
+// Parsing REST-API responses
+if(!empty($data)) {
+    $statusCode = $data['statusCode'] ?? $statusCode;
+    $message = $data['message'] ?? "auth_login";
+    $errors = $data['errors'] ?? $errors;
+
+    // Parsing Cookies using helpers
+    if (empty($errors) && isset($single['header']) && isset($single['headerSize'])) {
+        $parsedCookies = parse_curl_cookies($single['header'], $single['headerSize']);
+
+        // Cookie::set() from responses
+        foreach ($parsedCookies as $name => $attr) {
+            // Configure cookie options
+            $options = [
+                'expires'  => $attr['expires'] ?? 0,
+                'path'     => $attr['path'] ?? '/',
+                'domain'   => $attr['domain'] ?? null,
+                'secure'   => $attr['secure'] ?? false,
+                'httponly' => $attr['httponly'] ?? true,
+                'samesite' => $attr['samesite'] ?? 'Lax',
+            ];
+
+            // Call the updated Cookie class
+            Cookie::set($name, $attr['value'], $options);
+        }
+    }
+
+    json_response($data['data'] ?? null, $statusCode, $message, $errors);
+}
+
+// http_response_code($statusCode);
+// dd($single, true);
+json_response($data, $statusCode, "Login Failed!", $single);

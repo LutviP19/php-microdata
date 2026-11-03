@@ -7,8 +7,6 @@
  * @package PHP-Microdata(PMD)
  */
 
-define('APP_SESSID', 'PMDSESSID');
-
 if (!defined('BASEPATH')) {
     // Go up 2 levels from /app/app/Core to reach /app (Project Root)
     define('BASEPATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
@@ -23,9 +21,6 @@ if (!defined('APPPATH')) {
 if (!defined("BASEPATH_FFI")) {
     define("BASEPATH_FFI", BASEPATH . DIRECTORY_SEPARATOR . "ffi" . DIRECTORY_SEPARATOR);
 }
-
-// echo BASEPATH_FFI;
-// exit(0);
 
 // only level Deprecated & User Deprecated
 // error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
@@ -84,7 +79,7 @@ App::register("routing_external_api", require BASEPATH . "config/external-api.ph
 
 
 // Check Cookie
-if (!isset($_COOKIE[APP_SESSID])) { 
+if (!isset($_COOKIE[config("session.sess_name")])) { 
     if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         try {
             $driver = env('SESSION_DRIVER', 'files');
@@ -121,7 +116,7 @@ if (!isset($_COOKIE[APP_SESSID])) {
         }
 
         // Set custom session name
-        session_name(APP_SESSID);
+        session_name(config("session.sess_name"));
 
         // Run the optimized built-in session opening function of the helper
         if (function_exists('bp_session_start')) {
@@ -152,6 +147,6 @@ if (!isset($_COOKIE[APP_SESSID])) {
 
     // Set session from cache
     $expTime = config("session.exptime", 7200);
-    $_SESSION = array_merge($_SESSION, cacheContent('get', '*'. $_COOKIE[APP_SESSID] .'*', $expTime) ?: []);
+    $_SESSION = array_merge($_SESSION, cacheContent('get', '*'. $_COOKIE[config("session.sess_name")] .'*', $expTime) ?: []);
     // dd($_SESSION);
 }

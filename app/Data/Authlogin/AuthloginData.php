@@ -24,7 +24,8 @@ class AuthloginData extends AuthloginStruct
     /**
      * Primary key column name
      */
-    protected static string $primaryKey = 'id';
+    // protected static string $primaryKey = 'id';
+    protected static string $primaryKey = 'ulid';
 
     /**
      * Enable or disable Soft Deletes
@@ -114,10 +115,13 @@ class AuthloginData extends AuthloginStruct
      */
     protected function setLoginSession($user, $isRefresh = false)
     {
-        // Save to the DB if there is no ulid
-        // $db->query("UPDATE {$this->table} SET ulid) = ? WHERE id = ?", [$newUlid, $user_id]);
-
         $sessionData = [];
+        $userId = $user->ulid ?? null;
+
+        if(!$userId || is_null($userId)) {
+            unauthorized_response("Invalid Credentials!");
+        }
+
         foreach ($user as $key => $value) {
             [$newKey, $newValue] = match ($key) {
                 'id', 'user_id' => ['user_id', encryptData($value)],
@@ -128,11 +132,7 @@ class AuthloginData extends AuthloginStruct
             $sessionData[$newKey] = $newValue;
         }
 
-        $gnr = generateRandomString(32, true);
-        $userId = $user->ulid ?? $sessionData['uid'] ?? \get_device_fingerprint();
-        $sessionData['gnr'] = $gnr;
-
-        // delete cache by uid        
+        // delete cache by userId        
         // delCache("client_token:{$userId}");
         delCache("user_abilities:{$userId}");
 
@@ -144,11 +144,8 @@ class AuthloginData extends AuthloginStruct
 
         // Delete session cache in Redis
         $clientToken = generateRandomString();
-        $sessionKeyApi = sessionKeyFormat($userId, 'pmdapi-*');
-        delCache($sessionKeyApi);
 
         // if (false === $validateClient->matchToken($clientTokenGen)) {
-
         //     return false;
         // }
 
@@ -158,51 +155,62 @@ class AuthloginData extends AuthloginStruct
         }
 
         // Secret initialization
-        Session::set('secret', encryptData($clientToken, $gnr));
-        $sessionData['secret'] = Session::get('secret');
+        $gnr = generateRandomString(32, true);
+        $sessionData['gnr'] = $gnr;
+        $sessionData['secret'] = encryptData($clientToken, $gnr);
         $sessionData['authId'] = generateUlid();
 
         // initAuthToken
         $tokenAuth = "";
         if ($this->activeClientMiddleware) {
-
-            // $authToken = $this->initAuthToken($sessionData);
-            // if ($isRefresh) {
-            //     $getRefreshToken = getBearerToken();
-            //     $tokenAuth = $authToken->refreshToken($getRefreshToken, [
-            //         'uid' => $userId,
-            //         // "user_permissions" => cacheContent('get', "user_abilities:{$userId}")
-            //     ]) ?? null;
-            // } else {
-            //     $tokenAuth = $authToken->generateToken([
-            //         'uid' => $userId,
-            //         // "user_permissions" => cacheContent('get', "user_abilities:{$userId}")
-            //     ]) ?? null;
-            // }
-
-            // Generate token
-            $authV4 = new SodiumAuthV4();
-            $expToken = time() + config('session.exptime');
-            $tokenAuth = $authV4->encode(['uid' => $userId, 'role' => 'admin', 'exp' => $expToken]);
-            // dd($tokenAuth);
-
-            $sessionData['tokenAuth'] = $tokenAuth ?? null;
-            // $sessionData['tokenAuthRefresh'] = $tokenAuth['refresh_token'] ?? '';
-
-            // Persistence Session in Swoole
+            // Persistence Session in
             $this->sessionId = session_create_id('pmdapi-');
             $prefixKey = sessionKeyFormat($userId, $this->sessionId);
             $sessionData['sessionKeyApi'] = $prefixKey;
             $sessionData['sessionId'] = $this->sessionId;
 
-            delCache($prefixKey);
+            // Generate token
+            $now = time();
+            $authV4 = new SodiumAuthV4();
+            $expToken = $now + config('session.exptime');
+            $expTokenRefresh = 7;
+            
+            $tokenData = [
+                'uid' => $userId, 
+                'jti' => $this->sessionId,
+                // 'role' => $payload['role'] ?? 'access_backend',
+                // "fingerprint" => get_device_fingerprint(true, $userId),                
+                "iss" => "php-microdata.{$userId}",
+                // "aud" => config("app.url"),
+                // "iat" => $now,
+                // // "user_permissions" => $user_permissions,
+            ];
+
+            // dd($_POST, true);
+            // dd($isRefresh);
+            if($isRefresh) {
+                // delCache(sessionKeyFormat($userId));
+                $refreshToken = $_POST['refresh_token'];
+                $tokenAuth = Gate::refreshSodiumAuthV4($refreshToken, $tokenData);
+            } else {
+                $authV4->setExpiration($expToken, $expTokenRefresh);
+                $tokenAuth = $authV4->generateToken($tokenData);
+            }
+            // dd($tokenAuth, true);
+
+            $sessionData['tokenAuth'] = $tokenAuth ?? null;
+
+            // Cache session
+            delCache(sessionKeyFormat($userId));
             cacheContent('set', $prefixKey, $sessionData, config('session.exptime'));
 
-            // // Cache refresh Token
-            // $refreshTokenTimeout = days_to_seconds(7);
-            // $prefixKeyRefreshToken = "refresh_token:{$userId}";
-            // delCache("refresh_token:{$userId}");
-            // cacheContent('set', $prefixKeyRefreshToken, Session::get('tokenAuthRefresh'), $refreshTokenTimeout);
+            // Cache refresh Token
+            if(!is_null($sessionData['tokenAuth']) && isset($sessionData['tokenAuth']['refresh_token'])) {
+                $refreshTokenTimeout = days_to_seconds($expTokenRefresh);
+                $prefixKeyRefreshToken = "refresh_token:{$userId}:".$this->sessionId;
+                delCache("refresh_token:{$userId}*");
+                cacheContent('set', $prefixKeyRefreshToken, $sessionData['tokenAuth']['refresh_token'], $refreshTokenTimeout);
+            }
 
             foreach ($sessionData as $sKey => $sVal) {
                 if (Session::has($sKey)) {

@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | PHP Microdata</title>
-    <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
-    <script defer src="<?= asset('js/alpinejs-cdn.min.js'); ?>"></script>
+    <meta name="htmx-config" content='{"responseHandling": [{"code":".*", "swap": true}]}' /> <!--all responses are swapped-->
+    <title>Login | PHP Microdata</title>   
+    
     <script src="<?= asset('js/htmx.min.js'); ?>"></script>
+    <script defer src="<?= asset('js/alpinejs-cdn.min.js'); ?>"></script>
+    <script src="<?= asset('js/tailwindcss.js'); ?>"></script>
     
     <style>
         [x-cloak] { display: none !important; }
@@ -21,7 +23,7 @@
         <div class="absolute top-0 -left-4 w-72 h-72 bg-indigo-900/20 rounded-full blur-[120px]"></div>
         <div class="absolute bottom-0 -right-4 w-72 h-72 bg-purple-900/20 rounded-full blur-[120px]"></div>
 
-        <div class="max-w-md w-full space-y-8 relative" x-data="{ showError: false, errorMessage: '' }">
+        <div class="max-w-md w-full space-y-8 relative">
             
             <div class="text-center">
                 <div class="mx-auto h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
@@ -34,21 +36,63 @@
             </div>
 
             <div class="bg-gray-900/50 backdrop-blur-xl border border-gray-800 p-8 rounded-2xl shadow-2xl">
-                
-                <div id="response-message" 
-                     x-show="showError" 
-                     x-cloak
-                     class="mb-6 p-3 rounded-lg bg-red-900/20 border border-red-800/50 text-red-400 text-sm flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                    <span x-text="errorMessage"></span>
-                </div>
+                <form x-data="{ 
+                    showError: false, 
+                    errorTitle: '',
+                    errorMessage: '',
+                    handleError(evt) {
+                        const xhr = evt.detail.xhr;
+                        if (xhr.status !== 200 && xhr.status !== 201) {
+                            this.showError = true;
+                            try {
+                                let res = JSON.parse(xhr.responseText);
+                                
+                                // Menangkap struktur error bertingkat (seperti errors.busy atau validation errors umum)
+                                this.errorTitle =  res.message;
+                                if (res.errors) {
+                                    if (res.errors.busy && Array.isArray(res.errors.busy)) {
+                                        this.errorMessage = res.errors.busy.join(', ');
+                                    } else {
+                                        // Ambil array/pesan error pertama yang tersedia dari objek errors
+                                        let firstKey = Object.keys(res.errors)[0];
+                                        let errVal = res.errors[firstKey];
+                                        this.errorMessage = Array.isArray(errVal) ? errVal.join(', ') : errVal;
+                                    }
+                                } else {
+                                    this.errorMessage = res.message || 'Terjadi kesalahan pada server.';
+                                }
+                            } catch (e) {
+                                this.errorMessage = xhr.responseText || 'Terjadi kesalahan pada sistem.';
+                            }
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
+                    }
+                }"
+                hx-post="/auth/login" 
+                hx-target="#result" 
+                hx-disabled-elt="find button[type='submit']" 
+                @htmx::before-request="showError = false" 
+                @htmx:after-request="handleError(event)"
+                class="space-y-5">
 
-                <form hx-post="/auth/login" 
-                      hx-target="#response-message"
-                      hx-swap="innerHTML"
-                      hx-on::before-request="showError = false"
-                      hx-on::after-request="if(event.detail.xhr.status !== 200) { showError = true; errorMessage = event.detail.xhr.responseText; } else { window.location.href = '/dashboard' }"
-                      class="space-y-5">
+                    <!-- Container untuk menampilkan pesan error respons dari server -->
+                    <div id="result" 
+                        x-show="showError" 
+                        x-cloak
+                        class="mb-6 p-4 rounded-xl bg-red-950/40 border border-red-800/60 text-red-400 text-sm flex items-start space-x-3 shadow-lg shadow-red-950/20 backdrop-blur-sm transition-all duration-300">
+                        
+                        <!-- Ikon Peringatan -->
+                        <svg class="w-5 h-5 mt-0.5 shrink-0 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+
+                        <!-- Teks Pesan Error -->
+                        <div class="flex-1 space-y-1">
+                            <p class="font-semibold tracking-wide text-red-300" x-text="errorTitle"></p>
+                            <p class="text-red-400/90 leading-relaxed" x-text="errorMessage"></p>
+                        </div>
+                    </div>
                     
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Email</label>

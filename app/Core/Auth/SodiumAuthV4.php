@@ -9,6 +9,7 @@
 
 namespace App\Core\Auth;
 
+use App\Core\Support\Session;
 use Exception;
 
 class SodiumAuthV4
@@ -16,6 +17,13 @@ class SodiumAuthV4
     private string $privateKey;
     private string $publicKey;
     private readonly string $basePrefix;
+
+    /**
+     * set Expiration
+     */
+    protected int $expToken;
+    protected int $refreshTokenTimeout = 7;
+    protected int $leeway = 60; // Time difference tolerance between servers (60 seconds)
 
     public function __construct(?string $hexPrivateKey = null, ?string $hexPublicKey = null)
     {
@@ -31,12 +39,25 @@ class SodiumAuthV4
 
         $prefix = config("app.sodium_prefix");
         $this->basePrefix = str_replace(["v1", "v2", "v3"], "v4", $prefix);
+
+        // Auth Token
+        $this->expToken = (int) config("session.exptime");
     }
 
     /**
-     * Membuat Token (Sign)
-     * @param array<int,mixed> $payload Data payload yang akan di-sign
-     * @return string Token yang telah di-sign
+     * Shortcut setter for token duration and token refresh at once
+     */
+    public function setExpiration(int $expTokenInSeconds, int $refreshTokenTimeoutInDays = 7): static
+    {
+        $this->expToken = $expTokenInSeconds;
+        $this->refreshTokenTimeout = $refreshTokenTimeoutInDays;
+        return $this;
+    }
+
+    /**
+     * Create a Token (Sign)
+     * @param array<int,mixed> $payload Payload data to be signed
+     * @return string The signed token
      */
     public function encode(array $payload): string
     {
@@ -46,7 +67,7 @@ class SodiumAuthV4
 
         $message = json_encode($payload);
 
-        // Bedakan prefix refresh
+        // Distinguish between refresh prefixes
         $currentPrefix = $this->basePrefix;
         if (isset($payload["type"]) && $payload["type"] === "refresh") {
             $currentPrefix = str_replace("access", "refresh", $currentPrefix);
@@ -60,9 +81,9 @@ class SodiumAuthV4
     }
 
     /**
-     * Memvalidasi Token (Verify)
-     * @param string $token Token yang akan diverifikasi
-     * @return ?array Data payload yang telah diverifikasi, atau null jika token tidak valid
+     * Validating Tokens (Verify)
+     * @param string $token The token to verify
+     * @return ?array Verified payload data, or null if the token is invalid
      */
     public function decode(string $token): ?array
     {
@@ -70,7 +91,7 @@ class SodiumAuthV4
             throw new Exception("Public Key is required for verification.");
         }
 
-        // Deteksi Prefix secara otomatis
+        // Prefix detection automatically
         $currentPrefix = $this->basePrefix;
         $refreshPrefix = str_replace("access", "refresh", $currentPrefix);
 
@@ -79,11 +100,13 @@ class SodiumAuthV4
         } elseif (!str_starts_with($token, $currentPrefix . ".")) {
             return null;
         }
+        
 
         $footer = $currentPrefix . ".";
 
         $rawPayload = substr($token, strlen($footer));
         $decoded = $this->base64UrlDecode($rawPayload);
+        
 
         $signatureSize = SODIUM_CRYPTO_SIGN_BYTES; // 64 bytes
         $messageSize = strlen($decoded) - $signatureSize;
@@ -105,7 +128,7 @@ class SodiumAuthV4
 
         if (!isset($payload["exp"])) {
             return null;
-        }
+        }        
 
         $leeway = 60;
         if (time() > ((int) $payload["exp"] + $leeway)) {
@@ -117,6 +140,75 @@ class SodiumAuthV4
         }
 
         return $payload;
+    }
+
+    public function generateToken(array $payload = []): array
+    {
+        // Generate Token Sodium
+        return [
+            "access_token" => $this->encode($this->setDefaultPayload($payload, "access")),
+            "refresh_token" => $this->encode($this->setDefaultPayload($payload, "refresh")),
+        ];
+    }
+
+    public function setDefaultPayload(?array $payload = [], string $type = 'access'): array
+    {
+        $now = time();
+        $authId = Session::get("authId") ?: generateUlid();
+        $uid = $payload['uid'] ?? Session::get("uid");
+        // $user_permissions = cacheContent('get', "user_abilities:{$uid}");
+        // dd($authId);
+
+        // // loadAbilities
+        // if(Session::has('user_id') && Session::has('current_team_id')) {
+        //     $user_id = (int) Session::get("uid");
+        //     $current_team_id = (int) Session::get("current_team_id");
+        // }
+
+        // Default payload
+        $payloadDefault = [
+            "uid" => $uid,
+            "jti" => $authId,
+            'role' => 'access_backend',
+            "fingerprint" => get_device_fingerprint(true, $uid),
+            "iat" => $now,
+            "iss" => "php-microdata",
+            "aud" => config("app.url"),
+            // "user_permissions" => $user_permissions,
+        ];
+        $fullPayload = array_merge($payloadDefault, $payload);
+        // dd($fullPayload, true);
+
+        $tokenPayload = [];
+        if ($type === 'access') {
+            $tokenPayload = array_merge($fullPayload, [
+                "type" => "access",
+                "exp" => $now + $this->expToken, // default: 2 Hours
+            ]);
+        } else {
+            $tokenPayload = array_merge($fullPayload, [
+                "type" => "refresh",
+                "exp" => $now + (86400 * $this->refreshTokenTimeout), // 7 Days
+            ]);
+        }
+
+        return $this->cleanPayload($tokenPayload, $type);
+    }
+
+    /**
+     * Filter payloads based on token type to maintain efficiency and security.
+     * Refresh token only requires basic identity to regenerate access token.
+     */
+    private function cleanPayload(array $payload, string $type): array
+    {
+        if ($type === "access") {
+            return $payload; // Access token remains complete
+        }
+
+        // The list of allowed keys is in Refresh Token
+        $allowedForRefresh = ["uid", "jti", "type", "exp", "iat", "iss", "fingerprint"];
+
+        return array_intersect_key($payload, array_flip($allowedForRefresh));
     }
 
     private function base64UrlEncode(string $data): string

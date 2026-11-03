@@ -41,8 +41,12 @@ if (!function_exists('path_join')) {
  * Memastikan lingkungan berjalan di Versi PHP yang sesuai
  */
 if (!function_exists("ensure_minimum_php_version")) {
-    function ensure_minimum_php_version(string $version = "8.4.0")
+    function ensure_minimum_php_version(?string $version = "8.4.0")
     {
+        if (is_null($version)) {
+            return;
+        }
+        
         if (version_compare(PHP_VERSION, $version, "<")) {
             $message = "ERROR: PHP $version or higher is required. Current: " . PHP_VERSION;
     
@@ -194,7 +198,7 @@ if (!function_exists("formatReqId")) {
         if ($_REQUEST && isset($_REQUEST["id"])) {
             // Set request ID
             if (isset($_REQUEST["id"]) || $reqId) {
-                $reqId = $reqId ?: $_POST["id"] ?? $_GET["id"];
+                $reqId = $reqId ?? $_POST["id"] ?? $_GET["id"] ?? $_REQUEST["id"];
                 // dd($reqId);
             }
 
@@ -415,6 +419,15 @@ function setHeaders(array $headers = []): bool
     }
 
     foreach ($headers as $key => $value) {
+
+        // If the header is Set-Cookie and the value is an array (multiple cookies)
+        if (strtolower($key) === 'set-cookie' && is_array($value)) {
+            foreach ($value as $cookieString) {
+                header("Set-Cookie: {$cookieString}", false); // false agar tidak menimpa
+            }
+            continue;
+        }
+
         if (is_string($key) && !is_array($value)) {
             header("{$key}: {$value}");
             continue;
@@ -592,6 +605,33 @@ function generateRandomString($len = 64, $base64 = false, $special = true): stri
     }
 
     return \App\Core\Support\Hash::randomString($len, $special);
+}
+
+/**
+ * matchHashData function
+ *
+ * @param [string] $str
+ * @param [string] $hash
+ * @param string $key
+ * @param string $mode
+ * @return bool
+ */
+function matchHashData($str, $hash, $key = '', $mode = 'string')
+{
+    return \App\Core\Support\Hash::matchHash($str, $hash, $key, $mode);
+}
+
+/**
+ * hashData function
+ *
+ * @param [string] $value
+ * @param string $key
+ * @param string $mode
+ * @return string
+ */
+function hashData($value, $key = '', $mode = 'string')
+{
+    return \App\Core\Support\Hash::create($value, $key, $mode);
 }
 
 function sessionKeyFormat($userId, $sessionId = '*'): string
@@ -893,7 +933,7 @@ function safe_unserialize(mixed $data): mixed
 
 function getAuthSession(?int $expTime = null) {
     $expTime = $expTime ?? config("session.exptime", 7200);
-    return cacheContent('get', '*'. $_COOKIE[APP_SESSID] .'*', $expTime);
+    return cacheContent('get', '*'. $_COOKIE[config("session.sess_name")] .'*', $expTime);
 }
 
 // --- Base64URL Encoding Functions ---
@@ -1065,18 +1105,19 @@ function cleanSodiumPayload(array $payload, string $type): array
 }
 
 /**
- * Mendapatkan sidik jari perangkat yang stabil.
- * @param bool $is_hash Jika true, mengembalikan MD5 hash (32 char).
+ * Get stable device fingerprinting.
+ * @param bool $is hash If true, returns MD5 hash (32 characters).
  * @return string
  */
-if (!function_exists("get_device_fingerprint")) {
-    function get_device_fingerprint(bool $is_hash = true): string
-    {
-        // Gabungkan Platform + UA + IP (Opsional: tambahkan IP agar lebih ketat)
-        $fingerprint = get_short_ua() . "_" . clientIP();
-
-        return $is_hash ? md5($fingerprint) : $fingerprint;
+function get_device_fingerprint(bool $is_hash = true, string|int|null $extra = ''): string
+{
+    // Combine Platform + UA + IP (Optional: add IP to make it tighter)
+    $fingerprint = get_short_ua() . "_" . clientIP();
+    if ($extra !== null && (string) $extra !== '') {
+        $fingerprint = $fingerprint . "_" . $extra;
     }
+
+    return $is_hash ? hashData($fingerprint) : $fingerprint;
 }
 
 function bp_session_start()
@@ -1504,4 +1545,62 @@ function getFilesRecursive(string $dir, bool $filesOnly = false) {
     }
     
     return $results;
+}
+
+/**
+ * Retrieve Token Bearer from HTTP Header
+ */
+function getBearerToken(): ?string
+{
+    $authorizationHeader = null;
+
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authorizationHeader = $_SERVER['HTTP_AUTHORIZATION'];
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $authorizationHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    } elseif (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        $headers = array_change_key_case($headers, CASE_LOWER);
+        $authorizationHeader = $headers['authorization'] ?? null;
+    }
+
+    if (empty($authorizationHeader)) {
+        return null;
+    }
+
+    if (preg_match('/Bearer\s+(\S+)/i', $authorizationHeader, $matches)) {
+        return $matches[1];
+    }
+
+    return null;
+}
+
+function unauthorized_response(?string $msg)
+{
+    if (is_json_request()) {
+        $message = "Unauthorized";
+        $errors = [
+            "auth" => "Unauthorized: " . $msg,
+        ];
+        json_response([], 401, $message, $errors);
+    } else {
+        http_response_code(isHtmx() ? 200 : 401);
+        include BASEPATH . "views/error/401.php";
+        die();
+    }
+}
+
+function forbidden_response(?string $permission)
+{
+    if (is_json_request()) {
+        $message = "You don't have access[$permission]";
+        $errors = [
+            "auth" => "Forbidden to access: " . $permission,
+        ];
+        json_response([], 403, $message, $errors);
+    } else {
+        http_response_code(isHtmx() ? 200 : 403);
+        include BASEPATH . "views/error/403.php";
+        die();
+    }
 }

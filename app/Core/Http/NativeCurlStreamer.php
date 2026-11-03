@@ -10,19 +10,17 @@ namespace App\Core\Http;
 class NativeCurlStreamer
 {
     /**
-     * SINGLE STREAMING - Sekarang mengembalikan Array hasil
+     * SINGLE STREAMING -returns an Array of results
      */
     public function singleStream(array $params): array
     {
         $ch = curl_init();
         $this->applyDefaultOpts($ch, $params);
 
-        $responseBody = ""; // Buffer untuk menampung hasil
+        $responseBody = "";
         $headerContent = "";
 
-        // echo "[START] Single Streaming: " . $params['url'] . PHP_EOL;
-
-        // Menangkap Header (Opsional, berguna untuk cek statusCode)
+        // Capture Header (Optional, useful for checking statusCode)
         curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $header) use (
             &$headerContent,
         ) {
@@ -30,14 +28,12 @@ class NativeCurlStreamer
             return strlen($header);
         });
 
-        // Menangkap Body via Streaming
+        // Capturing Body via Streaming
         curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (
             &$responseBody,
         ) {
-            $responseBody .= $chunk; // Simpan ke buffer
-
-            // Tetap berikan feedback visual agar tahu streaming jalan
-            // echo ".";
+            $responseBody .= $chunk;
+            
             $this->flushOutput();
 
             return strlen($chunk);
@@ -47,22 +43,25 @@ class NativeCurlStreamer
         $error = curl_error($ch);
         $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+        // Get the header size for data splitting
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+
         // Function curl_close() is deprecated since 8.5
         if (version_compare(PHP_VERSION, "8.5.0", "<")) {
             curl_close($ch);
         }
 
-        // echo PHP_EOL . "[DONE] Status: $statusCode" . PHP_EOL;
-
-        return [
+        return [            
             "body" => $responseBody,
             "error" => $error ?: null,
             "statusCode" => $statusCode,
+            "header" => $headerContent,
+            "headerSize" => $headerSize,
         ];
     }
 
     /**
-     * MULTI STREAMING - Mengembalikan Array of Results
+     * MULTI STREAMING -Returns an Array of Results
      */
     public function multiStream(array $tasks): array
     {
@@ -119,26 +118,22 @@ class NativeCurlStreamer
 
     private function applyDefaultOpts($ch, array $params): void
     {
-        // dd($params);
         $url = $params["url"];
         $method = strtoupper($params["method"] ?? "GET");
         $headers = $params["headers"] ?? [];
         $body = $params["body"] ?? "";
-        // dd($body);
-        // dd($headers, true);
 
         $formattedHeaders = [];
         foreach ($headers as $key => $value) {
             if (is_string($key)) {
-                // Mengubah "X-API-KEY": "value" menjadi "X-API-KEY: value"
+                // Changed "X-API-KEY": "value" to "X-API-KEY: value"
                 $formattedHeaders[] = "{$key}: {$value}";
             } else {
-                // Jika sudah format "Name: Value", masukkan langsung
+                // If the format is "Name: Value", enter it directly
                 $formattedHeaders[] = $value;
             }
         }
-
-        // $formattedHeaders[] = 'Content-Type: application/json';
+        
         if (is_array($body)) {
             $body = json_encode($body);
         }

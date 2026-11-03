@@ -46,7 +46,8 @@ return [
         'sodium_key' => env('SODIUM_KEY', 'd9cffa8b79abd6ff9260e1aa23ffa65af2846cbbf21e8f0910cd7a1b09178df8'),
         'sodium_private_key' => env('SODIUM_PRIVATE_KEY', '6a1a0b5ce76f343f488a71eeee8719b82900d2df8976942dc42e7bcdd8ffb52f529e7b68eb1175261dc3c100c587be4eb09f262d3f620b3d775d972765e6544c'),
         'sodium_public_key' => env('SODIUM_PUBLIC_KEY', '529e7b68eb1175261dc3c100c587be4eb09f262d3f620b3d775d972765e6544c'),
-        'sodium_prefix' => env('SODIUM_PREFIX', 'v1.access.microdata'),        
+        'sodium_prefix' => env('SODIUM_PREFIX', 'v1.access.microdata'),
+        'refresh_timeout' => (int) env('AUTH_REFRESH_TTL', 7),
     ],
 
     /**
@@ -205,6 +206,7 @@ return [
      */
     'session' => [
         'csrf_token' => 'csrf_token',
+        'sess_name' => env('SESSION_NAME', 'PMDSESSID'),
         'lifetime' => (int) env('SESSION_LIFETIME', 120), // in minutes
         'exptime' => (int) env('SESSION_LIFETIME', 120) * 60, // in secoonds
         'regenerate' => (int) env('SESSION_REGENERATE', 300), // in secoonds

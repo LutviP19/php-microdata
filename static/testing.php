@@ -18,7 +18,7 @@ use App\Data\Dashboard\v1\{DashboardData, StatsData, EmployeeData};
 use App\Structs\Dashboard\v1\{DashboardStruct, SallaryStruct};
 use App\Core\Support\App;
 use App\Core\Http\NativeCurlStreamer;
-use App\Core\Auth\SodiumAuth;
+use App\Core\Auth\{Gate, SodiumAuth, SodiumAuthV4};
 
 // // Generate random string - JWT Secret
 // $rndString = generateRandomString(64, false);
@@ -46,7 +46,8 @@ use App\Core\Auth\SodiumAuth;
 // $testing = new Testing();
 // exit;
 
-$isInsomnia = str_contains((string) $_SERVER["HTTP_USER_AGENT"], "insomnia");
+$ua = $_SERVER["HTTP_USER_AGENT"] ?? "Unknown";
+$isInsomnia = str_contains((string) $ua, "insomnia");
 // dd($isInsomnia);
 
 // Testing - Protobuf:
@@ -365,6 +366,14 @@ $extraPayload = "ini data biner rahasia";
 // dd(config('app'));
 // http://localhost:8000/testing?limit=150
 
+
+// Validasi TokenAuth
+Gate::authorizeSodiumV4();
+
+// dd(session_name());
+dd(getAuthSession(), true);
+
+
 $cache = new \App\Core\Support\Cache();
 
 $request = $_GET;
@@ -378,8 +387,7 @@ $id = $request["id"] ?? null;
 // else using chunk - FFI
 $maxLimitToRender = 500;
 
-// dd(session_name());
-dd(getAuthSession());
+
 
 // Dynamic
 if ($limit >= $maxLimitToRender) {

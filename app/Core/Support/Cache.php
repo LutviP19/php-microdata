@@ -48,7 +48,7 @@ class Cache
      * @param int|null $expiry
      * @return mixed
      */
-    public function remember($key, callable $callback, $expiry = null)
+    public function remember(string $key, callable $callback, ?int $expiry = null)
     {
         $expiry = $expiry ?? $this->defaultExpiry;
         
@@ -71,7 +71,7 @@ class Cache
     /**
      * Retrieve Data
      */
-    public function get($key)
+    public function get(string $key)
     {
         // If the key contains the wildcard '*'
         if (is_string($key) && str_contains($key, '*')) {
@@ -145,7 +145,7 @@ class Cache
     /**
      * Save Data
      */
-    public function set($key, $data, $expiry = 3600)
+    public function set(string $key, mixed $data, int $expiry = 3600)
     {
         //  Only cache if data is not empty
         if (!empty($data)) {
@@ -160,7 +160,7 @@ class Cache
             // Save to Redis
             if ($this->redisClient) {
                 try {
-                    $this->redisClient->setex($key, $expiry, $serialized);
+                    $this->redisClient->setex($key, (int) $expiry, $serialized);
                     return;
                 } catch (Exception) {
                     $this->redisClient = null;
@@ -183,7 +183,7 @@ class Cache
     /**
      * Hapus Cache (Flush)
      */
-    public function flush($key)
+    public function flush(string $key)
     {
         // 1. Handling Redis Cache
         if ($this->redisClient) {

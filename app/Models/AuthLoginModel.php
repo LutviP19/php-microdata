@@ -10,7 +10,7 @@ use App\Data\Authlogin\{AuthloginData};
 use PDO; // new PDO object
 use App\Core\Database\ConnectionV2;
 use App\Core\Support\Session;
-use App\Core\Auth\{Gate, SodiumAuthV4};
+use App\Core\Auth\Gate;
 
 class AuthLoginModel extends AuthloginData
 {
@@ -23,11 +23,15 @@ class AuthLoginModel extends AuthloginData
         // Middleware - Model for API Only
         if (!is_json_request() || !expects_json()) {
             dd('KO');
-
-            // if() {
-            //     Gate::
-            // }
         }
+
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $ignoreMethod = ['POST'];
+        if(!in_array($requestMethod, $ignoreMethod)) {
+            // Validate TokenAuth
+            Gate::authorizeSodiumV4();
+        }
+        // End Middleware
     }
 
     public function index(?array $request = [])
@@ -49,7 +53,7 @@ class AuthLoginModel extends AuthloginData
         $dataStats = $cache->remember('auth_index', fn () => $statsData->getAllData(), 300);
 
         // Query dasar
-        $query = "SELECT * FROM ".$modelData::getTableName()." ORDER BY updated_at DESC";
+        $query = "SELECT * FROM ".$mainData::getTableName()." ORDER BY updated_at DESC";
 
 
         // Set limit agar bisa auto Stream
@@ -57,12 +61,12 @@ class AuthLoginModel extends AuthloginData
         $dataAuth = null;
         // Cek limit agar otomatis masuk ke Mode Stream
         if ($limit > $mainData->limitToStream) {
-            $dataAuth = $mainData->paginate($query, [], $page, $limit);
+            $dataAuth = $mainData->paginate($page, $limit);
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($query));
             $queryString = md5((string) $cleanQuery);
             $cacheKeyId = "auth_data:{$mainData::getTableName()}:" . $queryString . ":p{$page}:l{$limit}";
-            $dataAuth = $cache->remember($cacheKeyId, fn () => $mainData->paginate($query, [], $page, $limit), 300);
+            $dataAuth = $cache->remember($cacheKeyId, fn () => $mainData->paginate($page, $limit), 300);
         }
 
         $modelA = [
@@ -96,7 +100,6 @@ class AuthLoginModel extends AuthloginData
             );
         }
 
-
         // Return normal
         return handle_response_error($data, $modelA);
     }
@@ -113,9 +116,7 @@ class AuthLoginModel extends AuthloginData
 
         $email = $request['email'];
         $password = $request['password'];
-        // extract($request);
         $callback = $modelData->checkCredentials($email ?? null, $password ?? null);
-        // dd($callback);
 
         if (false === $callback) {
             $modelA = [
@@ -125,25 +126,27 @@ class AuthLoginModel extends AuthloginData
                 ]
             ];
         } else {
-            // // Generate token
-            // $authV4 = new SodiumAuthV4();
-            // $expToken = time() + (60 * config('session.lifetime'));
-            // $token = $authV4->encode(['uid' => $callback->ulid, 'role' => 'admin', 'exp' => $expToken]);
-
-            $token = $this->setLoginSession($callback);
-            // dd($token);
+            $token = $this->setLoginSession($callback, isset($_REQUEST['refresh_token']));
 
             if(!is_null($token) && Session::has('uid') && Session::get('uid') === $callback->ulid) {
                 // Set cookie
-                $sessionName = \session_name();
-                $sessionId = Session::get('sessionId');
+                $sessionName = config("session.sess_name");
+                $sessionId = trim(Session::get('sessionId'));
                 $sessionExp = config('session.exptime');
                 $userId = Session::get('uid');
 
-                // Initialize array $headers $this->activeClientMiddleware
+                // Refresh Token ID
+                $expTokenRefresh = (int) config("app.refresh_timeout");
+                $refreshTokenTimeout = days_to_seconds($expTokenRefresh);
+                $refreshTokenKey = str_replace('session', 'refresh_token', sessionKeyFormat($userId, $sessionId));
+                $refreshTokenId = encryptData($refreshTokenKey);
+                
                 if ($sessionId !== "") {
                     $headers = [
-                        'Set-Cookie' => "{$sessionName}={$sessionId}; Max-Age={$sessionExp}; Path=/; SameSite=Lax; HttpOnly"
+                        'Set-Cookie' => [
+                            "{$sessionName}={$sessionId}; Max-Age={$sessionExp}; Path=/; SameSite=Lax; HttpOnly",
+                            "user_id={$refreshTokenId}; Max-Age={$refreshTokenTimeout}; Path=/; SameSite=Lax"
+                        ]
                     ];
                 }
             }
@@ -186,6 +189,9 @@ class AuthLoginModel extends AuthloginData
 
     public function update(?array $request = [])
     {
+        // Middleware
+        setRatelimiter('update_AuthLoginModel', 300, 5);
+
         // Set model Data
         $modelData = new AuthloginData();
 
@@ -206,6 +212,9 @@ class AuthLoginModel extends AuthloginData
 
     public function destroy(?array $request = [])
     {
+        // Middleware
+        setRatelimiter('destroy_AuthLoginModel', 900, 3);
+
         // Set model Data
         $modelData = new AuthloginData();
 

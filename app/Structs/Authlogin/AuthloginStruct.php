@@ -14,14 +14,17 @@ use App\Core\Database\ConnectionV2; // Uncomment to use custom DB connection
 
 class AuthloginStruct extends BaseModelV2 {
 
-    // #[SchemaProperty(description: 'User increment id', required: true, numeric: true)]
-    // public string $id;
+    #[SchemaProperty(description: 'User increment id', omitempty: true, numeric: true)]
+    public string $id;
 
-    // #[SchemaProperty(description: 'User ULID id', omitempty: true, max: 26)]
-    // public string $ulid;
+    #[SchemaProperty(description: 'User Session uid', omitempty: true, max: 26)]
+    public string $uid;
 
-    // #[SchemaProperty(description: 'User display name', required: true, min: 3, max: 255)]
-    // public string $name;
+    #[SchemaProperty(description: 'User ULID', omitempty: true, max: 26)]
+    public string $ulid;
+
+    #[SchemaProperty(description: 'User display name', omitempty: true, min: 3, max: 255)]
+    public string $name;
 
     #[SchemaProperty(description: 'Primary email address', required: true, email: true)]
     public string $email;
@@ -29,6 +32,9 @@ class AuthloginStruct extends BaseModelV2 {
     #[SchemaProperty(description: 'User password', required: true, min:8, max: 255)]
     public string $password;
 
+    #[SchemaProperty(description: 'User Refresh Token', omitempty: true, min: 26)]
+    public string $refresh_token;
+    
 
     public function __construct(?PDO $pdo = null)
     {

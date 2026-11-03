@@ -44,6 +44,15 @@ return [
             'X-API-KEY' => str_replace('base64:', '', config('api.key'))
         ]
     ],
+    'auth_refresh' => [
+        'method' => 'POST',
+        'url' => 'http://localhost:8000/api/v2/auth-login',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Content-Type' => 'application/json',
+            'X-API-KEY' => str_replace('base64:', '', config('api.key'))
+        ]
+    ],
 
     // Client - Webhook
     'microdata_client_web' => [

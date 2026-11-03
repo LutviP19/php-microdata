@@ -357,7 +357,7 @@ class App
             case "GET":
                 // Process GET data
                 if (isset($_REQUEST["id"])) {
-                    $request["id"] = $_POST["id"] ?? $_GET["id"];
+                    $request["id"] = $_POST["id"] ?? $_GET["id"] ?? $_REQUEST["id"];
                     // dd($request);
                     $dataModel = $modelClass->edit($request);
                 } else {
@@ -375,7 +375,7 @@ class App
                 break;
             case "DELETE":
                 // Handle DELETE request
-                $request["id"] = $_POST["id"] ?? $_GET["id"];
+                $request["id"] = $_POST["id"] ?? $_GET["id"] ?? $_REQUEST["id"];
                 $dataModel = $modelClass->destroy($request);
                 break;
             default:
