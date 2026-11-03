@@ -65,6 +65,9 @@
                                 this.errorMessage = xhr.responseText || 'Terjadi kesalahan pada sistem.';
                             }
                         } else {
+                            this.showError = false;
+                            this.errorTitle = '';
+                            this.errorMessage = '';
                             window.location.href = '/dashboard';
                         }
                     }
