@@ -7,7 +7,7 @@
 // file: public/api.php
 
 if (!defined('BASEPATH')) {
-    // __DIR__ adalah /app/public, naik 1 tingkat menjadi /app
+    // __DIR__ is /app/public, up 1 level to /app
     define('BASEPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 }
 
@@ -22,7 +22,7 @@ $models = require BASEPATH . "config/models.php";
 $loader = new \App\Core\Support\RecursiveModelLoader($models);
 
 // Auto Select middleware
-$privateNetwork = true; // set false jika ingin di publish ke internet
+$privateNetwork = true; // set false if you want to publish it to the internet
 // dd($privateNetwork);
 
 // ---2. THE HANDLER FUNCTION ---
@@ -38,22 +38,22 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
             }
         }
 
-        // Menggunakan Class Identity yang bersifat per-request, pengganti Session
+        // Using a per-request Identity Class, a replacement for Session
         \App\Core\Auth\Identity::clear();
         $userData = [
-            // Identitas selalu diambil segar dari $_SERVER di setiap loop
-            "ip" => clientIP(),
-            "ua" => get_short_ua(),
-            "fingerprint" => get_device_fingerprint(false), // readable
+            // The identity is always fetched fresh from $_SERVER in each loop
+            "IPaddress" => clientIP(),
+            "userAgent" => get_short_ua(),
+            "fingerprint" => get_device_fingerprint(!config('app.debug')),
         ];
         \App\Core\Auth\Identity::set($userData);
 
         //====== Middleware
         if ($privateNetwork) {
-            // Jalankan fungsi CORS
+            // Run the CORS function
             handle_cors();
 
-            // Filter IP - API privateNetwork Only
+            // IP Filter -privateNetwork Only API
             check_ip_access(clientIP());
         }
 
@@ -61,15 +61,15 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         if (!expects_json() || !handle_json_request()) {
             json_response([], 406, "Invalid JSON", ["input" => "Invalid JSON format."]);
         } else {
-            // Jalankan Middleware Bisnis Logic
+            // Run Business Logic Middleware
             if ($privateNetwork) {
-                // Validasi API Key
+                // Validate API Key
                 if (!validateApiKey()) {
                     json_response([], 401, "Unauthorized", ["auth" => "Unauthorized: Invalid API Key"]);
                 }
             }
 
-            //===== Middleware Global akses
+            //===== Middleware Global access
             // Identity::check
             if (is_null(\App\Core\Auth\Identity::check())) {
                 json_response([], 403, "Forbidden", ["auth" => "Invalid credentials!"]);
@@ -77,7 +77,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         }
         //====== End Middleware
 
-        // Pastikan variabel di-reset setiap request
+        // Make sure the variable is reset on every request
         http_response_code(200);
         $isJson = is_json_request();
         $isValidApiKey = validateApiKey();
@@ -87,7 +87,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
             check_ip_access(clientIP());
         }
 
-        // Validasi API Key
+        // Validate API Key
         if (!$isValidApiKey) {
             json_response([], 401, "Unauthorized", ["auth" => "Unauthorized: Invalid API Key"]);
             return;
@@ -104,7 +104,7 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         // Static router for execute single php file
         include BASEPATH . "config/static-router.php";
 
-        // Cek router.php (Main Route to Models)
+        // Check router.php (Main Route to Models)
         if (isset($router[$page])) {
             $normalPath = $router[$page];
             $resolved = $loader->resolve(formatRoutePath($normalPath));
@@ -126,17 +126,17 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         }
 
         if ($resolved && file_exists($resolved["modelPath"])) {
-            // Load Model Utama
+            // Load Main Model
             extract($resolved);
 
             if ($model && file_exists($modelPath)) {
-                // Parameter ID untuk edit/detail
+                // Parameter ID for edit/detail
                 if (is_numeric($lastSegment)) {
                     $_GET["id"] = (int) $lastSegment;
                 }
                 // dd($_GET);
 
-                // Jalankan proses request
+                // Run the request process
                 $page = $resolved["page"];
 
                 // Middleware Model for API Only
@@ -168,17 +168,17 @@ $handler = static function () use ($loader, $router, $models, $privateNetwork) {
         // Re-throw agar error detail muncul di log global
         throw $e;
     } finally {
-        // KUNCI STABILITAS: Selalu bersihkan identitas di akhir request
-        // Apapun yang terjadi (error/sukses), memori dibersihkan
+        // STABILITY KEY: Always clear the identity at the end of the request
+        // Whatever happens (error/success), the memory is cleared
         \App\Core\Auth\Identity::clear();
     }
 };
 
-// Worker Loop (Kunci Utama)
+// Worker Loop (Primary Key)
 if (function_exists("frankenphp_handle_request")) {
     $maxRequests = (int) ($_SERVER["MAX_REQUESTS"] ?? 500);
     for ($nbRequests = 0; $nbRequests < $maxRequests; ++$nbRequests) {
-        // Skrip HARUS mencapai baris ini agar Worker dianggap berhasil
+        // The script MUST reach this line for the Worker to be considered successful
         $keepRunning = \frankenphp_handle_request($handler);
 
         if (function_exists("gc_collect_cycles")) {

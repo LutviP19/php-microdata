@@ -4,7 +4,6 @@ declare(strict_types=1);
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  */
-// dd(config('app'));
 
 use App\Core\Http\NativeCurlStreamer;
 use App\Core\Support\App;
@@ -18,7 +17,7 @@ $allowMethod = ['POST'];
 // dd($requestMethod);
 
 if(!in_array($requestMethod, $allowMethod)) {
-    return;
+    invalid_method_response();
 }
 
 // auth_login RestAPI
@@ -33,8 +32,6 @@ $singleTask = App::externalApi('auth_login', [
 
 $single = $streamer->singleStream($singleTask);
 // dd($single, true);
-// dd($single['error'], true);
-// dd($single['body'], true);
 
 $statusCode = $single['statusCode'];
 $errors = $single['error'];
@@ -45,10 +42,6 @@ if ($errors) {
     // $error = is_string($single['error']) ? [$single['error']] : $single['error'];
     $error = ["The server responds with an HTTP Status Code: {$statusCode}"];
     // dd($error);
-
-    // http_response_code($statusCode);
-    // dd(json_decode($error, true), true);
-    // // dd($single['statusCode'], true);
     
     json_response(null, $statusCode, "login_error", $error);
 }

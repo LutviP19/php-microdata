@@ -234,9 +234,9 @@ if (!function_exists("env_to_json")) {
  *
  * @return string
  */
-function config($key)
+function config($key, $default = null)
 {
-    return \App\Core\Support\Config::get($key);
+    return \App\Core\Support\Config::get($key, $default);
 }
 
 /**
@@ -930,5 +930,61 @@ if (!function_exists("parse_scraped_content")) {
         }
 
         return $entry;
+    }
+}
+
+if (!function_exists('array_forget_multiple')) {
+    /**
+     * Deletes several keys at once from an array (by reference).
+     * 
+     * @param array $array
+     * @param array $keys
+     * @return void
+     */
+    function array_forget_multiple(array &$array, array $keys): void
+    {
+        foreach ($keys as $key) {
+            unset($array[$key]);
+        }
+    }
+}
+
+if (!function_exists('array_except')) {
+    /**
+     * Returns a new array without specified keys (Immutable).
+     * 
+     * @param array $array
+     * @param array $keys
+     * @return array
+     */
+    function array_except(array $array, array $keys): array
+    {
+        return array_diff_key($array, array_flip($keys));
+    }
+}
+
+if (!function_exists('array_only')) {
+    /**
+     * Retrieves a subset of an array based only on the specified key.
+     * Is the opposite of the array_except function.
+     * 
+     * @param array $array Array of data sources
+     * @param array|string $keys List of keys to retrieve (can be an array or string argument)
+     * @return array A new array containing only permitted keys
+     */
+    function array_only(array $array, array|string $keys): array
+    {
+        if (is_string($keys)) {
+            $keys = func_get_args();
+            array_shift($keys); // Buang argumen pertama ($array)
+            
+            // If it turns out to be sent as an array inside the first string or variadic
+            if (count($keys) === 1 && is_array($keys[0])) {
+                $keys = $keys[0];
+            }
+        }
+
+        // Use array_intersect_key combined with array_flip for high performance
+        return array_intersect_key($array, array_flip($keys));
     }
 }

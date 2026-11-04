@@ -1575,7 +1575,7 @@ function getBearerToken(): ?string
     return null;
 }
 
-function unauthorized_response(?string $msg)
+function unauthorized_response(?string $msg): void
 {
     if (is_json_request()) {
         $message = "Unauthorized";
@@ -1590,7 +1590,7 @@ function unauthorized_response(?string $msg)
     }
 }
 
-function forbidden_response(?string $permission)
+function forbidden_response(?string $permission): void
 {
     if (is_json_request()) {
         $message = "You don't have access[$permission]";
@@ -1601,6 +1601,22 @@ function forbidden_response(?string $permission)
     } else {
         http_response_code(isHtmx() ? 200 : 403);
         include BASEPATH . "views/error/403.php";
+        die();
+    }
+}
+
+function invalid_method_response(bool $isJson = true, ?string $permission = null): void
+{
+    $permissionStr = $permission ?? $_SERVER["REQUEST_METHOD"] ?? 'view';
+    if ($isJson || is_json_request()) {
+        $message = "Method {$permissionStr} not allowed";
+        $errors = [
+            "auth" => "Invalid request method for this endpoint."
+        ];        
+        json_response([], 405, $message, $errors);
+    } else {
+        http_response_code(isHtmx() ? 200 : 405);
+        include BASEPATH . "views/error/406.php";
         die();
     }
 }
