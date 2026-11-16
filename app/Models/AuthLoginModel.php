@@ -27,7 +27,7 @@ class AuthLoginModel extends AuthloginData
 
         $requestMethod = $_SERVER["REQUEST_METHOD"];
         $ignoreMethod = ['POST'];
-        if(!in_array($requestMethod, $ignoreMethod)) {
+        if (!in_array($requestMethod, $ignoreMethod)) {
             // Validate TokenAuth
             Gate::authorizeSodiumV4();
         }
@@ -105,9 +105,10 @@ class AuthLoginModel extends AuthloginData
     }
 
     public function store(?array $request = [])
-    {   
+    {
         // Middleware
-        setRatelimiter('store_AuthLoginModel', 600, 5);
+        $rateId = isset($request['refresh_token']) ? 'refresh_AuthLoginModel' : 'store_AuthLoginModel';
+        setRatelimiter($rateId, 600, 5);
 
         // Set model Data
         $modelData = new AuthloginData();
@@ -128,10 +129,10 @@ class AuthLoginModel extends AuthloginData
         } else {
             $token = $this->setLoginSession($callback, isset($_REQUEST['refresh_token']));
 
-            if(!is_null($token) && Session::has('uid') && Session::get('uid') === $callback->ulid) {
+            if (!is_null($token) && Session::has('uid') && Session::get('uid') === $callback->ulid) {
                 // Set cookie
                 $sessionName = config("session.sess_name");
-                $sessionId = trim(Session::get('sessionId'));
+                $sessionId = trim(Session::get('sessionId') ?? '');
                 $sessionExp = config('session.exptime');
                 $userId = Session::get('uid');
 
@@ -140,7 +141,7 @@ class AuthLoginModel extends AuthloginData
                 $refreshTokenTimeout = days_to_seconds($expTokenRefresh);
                 $refreshTokenKey = str_replace('session', 'refresh_token', sessionKeyFormat($userId, $sessionId));
                 $refreshTokenId = encryptData($refreshTokenKey);
-                
+
                 if ($sessionId !== "") {
                     $headers = [
                         'Set-Cookie' => [

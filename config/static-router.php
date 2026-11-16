@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  */
@@ -49,7 +50,7 @@ if (file_exists($staticFile)) {
             } else {
                 http_response_code(isHtmx() ? 200 : 406);
                 include BASEPATH . "views/error/406.php";
-                exit();
+                die();
             }
         }
     }
@@ -57,9 +58,9 @@ if (file_exists($staticFile)) {
 
     // Include static PHP files. avoid Remote Code Execution (RCE).
     $listStaticFiles = getFilesRecursive(BASEPATH . "static");
-    if(in_array($staticFile, $listStaticFiles)) {
+    if (in_array($staticFile, $listStaticFiles)) {
         include $staticFile;
     }
-    
-    exit();
+
+    die();
 }

@@ -90,13 +90,16 @@ class AuthloginData extends AuthloginStruct
 
         if (!empty($user)) {
             // Check ULID - Create if not exists
-            if (empty($user->ulid)) {
+            if (is_null($user->ulid)) {
                 $newUlid = generateUlid();
+                static::$primaryKey = 'id'; // make sure primaryKey set to default: 'id'
                 static::updateById($user->id, ['ulid' => $newUlid]);
                 $user->ulid = $newUlid;
             }
 
             $hash = new Hash();
+            // $pass = $hash->makePassword($password);
+            // dd($pass);
             if ($hash->matchPassword($password, $user->password)) {
 
                 return $user;
@@ -118,7 +121,7 @@ class AuthloginData extends AuthloginStruct
         $sessionData = [];
         $userId = $user->ulid ?? null;
 
-        if(!$userId || is_null($userId)) {
+        if (!$userId || is_null($userId)) {
             unauthorized_response("Invalid Credentials!");
         }
 
@@ -132,7 +135,7 @@ class AuthloginData extends AuthloginStruct
             $sessionData[$newKey] = $newValue;
         }
 
-        // delete cache by userId        
+        // delete cache by userId
         // delCache("client_token:{$userId}");
         delCache("user_abilities:{$userId}");
 
@@ -174,21 +177,19 @@ class AuthloginData extends AuthloginStruct
             $authV4 = new SodiumAuthV4();
             $expToken = $now + config('session.exptime');
             $expTokenRefresh = 7;
-            
+
             $tokenData = [
-                'uid' => $userId, 
+                'uid' => $userId,
                 'jti' => $this->sessionId,
                 // 'role' => $payload['role'] ?? 'access_backend',
-                // "fingerprint" => get_device_fingerprint(true, $userId),                
+                // "fingerprint" => get_device_fingerprint(true, $userId),
                 "iss" => "php-microdata.{$userId}",
                 // "aud" => config("app.url"),
                 // "iat" => $now,
                 // // "user_permissions" => $user_permissions,
             ];
-
-            // dd($_POST, true);
-            // dd($isRefresh);
-            if($isRefresh) {
+            
+            if ($isRefresh) {
                 // delCache(sessionKeyFormat($userId));
                 $refreshToken = $_POST['refresh_token'];
                 $tokenAuth = Gate::refreshSodiumAuthV4($refreshToken, $tokenData);
@@ -205,7 +206,7 @@ class AuthloginData extends AuthloginStruct
             cacheContent('set', $prefixKey, $sessionData, config('session.exptime'));
 
             // Cache refresh Token
-            if(!is_null($sessionData['tokenAuth']) && isset($sessionData['tokenAuth']['refresh_token'])) {
+            if (!is_null($sessionData['tokenAuth']) && isset($sessionData['tokenAuth']['refresh_token'])) {
                 $refreshTokenTimeout = days_to_seconds($expTokenRefresh);
                 $prefixKeyRefreshToken = "refresh_token:{$userId}:".$this->sessionId;
                 delCache("refresh_token:{$userId}*");

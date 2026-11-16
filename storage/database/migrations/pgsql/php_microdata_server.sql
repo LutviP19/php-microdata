@@ -53,7 +53,7 @@ SET row_security = off;
 -- Name: php_microdata_server; Type: DATABASE PROPERTIES; Schema: -; Owner: postgres
 --
 
-ALTER DATABASE php_microdata_server SET search_path TO 'public', 'php_microdata_server';
+ALTER DATABASE php_microdata_server SET search_path TO 'public';
 
 
 \unrestrict BRdPRssebZacafAfs9hr7iKZBI2JoiXDwoJudTzNWoYf14uh4K47hDtBotoLZXU
@@ -71,16 +71,6 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
-
---
--- TOC entry 6 (class 2615 OID 17430)
--- Name: php_microdata_server; Type: SCHEMA; Schema: -; Owner: postgres
---
-
-CREATE SCHEMA php_microdata_server;
-
-
-ALTER SCHEMA php_microdata_server OWNER TO postgres;
 
 --
 -- TOC entry 4 (class 2615 OID 2200)
@@ -103,10 +93,10 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 --
 -- TOC entry 858 (class 1247 OID 17432)
--- Name: event_queue_status; Type: TYPE; Schema: php_microdata_server; Owner: postgres
+-- Name: event_queue_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
-CREATE TYPE php_microdata_server.event_queue_status AS ENUM (
+CREATE TYPE public.event_queue_status AS ENUM (
     'pending',
     'processing',
     'completed',
@@ -114,14 +104,14 @@ CREATE TYPE php_microdata_server.event_queue_status AS ENUM (
 );
 
 
-ALTER TYPE php_microdata_server.event_queue_status OWNER TO postgres;
+ALTER TYPE public.event_queue_status OWNER TO postgres;
 
 --
 -- TOC entry 233 (class 1255 OID 17557)
--- Name: on_update_current_timestamp_event_queue(); Type: FUNCTION; Schema: php_microdata_server; Owner: postgres
+-- Name: on_update_current_timestamp_event_queue(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION php_microdata_server.on_update_current_timestamp_event_queue() RETURNS trigger
+CREATE FUNCTION public.on_update_current_timestamp_event_queue() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -131,7 +121,7 @@ END;
 $$;
 
 
-ALTER FUNCTION php_microdata_server.on_update_current_timestamp_event_queue() OWNER TO postgres;
+ALTER FUNCTION public.on_update_current_timestamp_event_queue() OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -147,7 +137,7 @@ CREATE TABLE public.event_queue (
     user_id bigint,
     event_name character varying(255) NOT NULL,
     payload text NOT NULL,
-    status php_microdata_server.event_queue_status DEFAULT 'pending'::php_microdata_server.event_queue_status,
+    status public.event_queue_status DEFAULT 'pending'::public.event_queue_status,
     execution_time numeric(8,4) DEFAULT 0.0000,
     attempts bigint DEFAULT '0'::bigint,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -829,7 +819,7 @@ CREATE INDEX idx_17504_fk_ur_role ON public.user_roles USING btree (role_id);
 -- Name: event_queue on_update_current_timestamp; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER on_update_current_timestamp BEFORE UPDATE ON public.event_queue FOR EACH ROW EXECUTE FUNCTION php_microdata_server.on_update_current_timestamp_event_queue();
+CREATE TRIGGER on_update_current_timestamp BEFORE UPDATE ON public.event_queue FOR EACH ROW EXECUTE FUNCTION public.on_update_current_timestamp_event_queue();
 
 
 --

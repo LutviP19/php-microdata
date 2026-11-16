@@ -250,11 +250,17 @@ class Gate
         // Check session cache redis
         $prefixKey = sessionKeyFormat($userData['uid'], $userData['jti']);
         $isKeyExists = getKeyTllFromRedis($prefixKey);
-        $isInvalidToken = ($isKeyExists <= 0 || !$userData || !isset($userData["exp"]));
+        $isInvalidToken = ($isKeyExists <= 0 || !$userData || !isset($userData["exp"]) || !isset($userData["type"]));
+        $isNotAccessToken = ($userData["type"] !== 'access');
 
         // Token Verification
         if ($isInvalidToken) {
             self::unauthorized_response("Session has expired please re-login.");
+        }
+
+        // Valid Access Token
+        if ($isNotAccessToken) {
+            self::unauthorized_response("Invalid access token.");
         }
 
         // Check exp

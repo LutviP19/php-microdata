@@ -20,6 +20,15 @@ use App\Core\Support\App;
 use App\Core\Http\NativeCurlStreamer;
 use App\Core\Auth\{Gate, SodiumAuth, SodiumAuthV4};
 
+$start = microtime(true);
+$requestMethod = $_SERVER["REQUEST_METHOD"];
+$allowMethod = ['GET', 'POST'];
+// dd($requestMethod);
+
+if (!in_array($requestMethod, $allowMethod)) {
+    invalid_method_response();
+}
+
 // // Generate random string - JWT Secret
 // $rndString = generateRandomString(64, false);
 // die($rndString);
@@ -578,7 +587,7 @@ if ($limit >= $mainData->limitToStream) {
     $queryString = md5((string) $cleanQuery);
     $cacheKeyId = "employees_data:{$table}:" . $queryString . ":p{$page}:l{$limit}";
 
-    $dataEmployees = $cache->remember($cacheKeyId, fn() => $mainData->paginate($query, [], $page, $limit, $queryCount), 300);
+    $dataEmployees = $cache->remember($cacheKeyId, fn () => $mainData->paginate($query, [], $page, $limit, $queryCount), 300);
 
     // Cached Data - Output
     json_response_stream(200, "load-cache", $dataEmployees["data"], $dataEmployees["meta"]);
