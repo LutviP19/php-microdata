@@ -177,10 +177,10 @@ ALTER SEQUENCE public.event_queue_id_seq OWNED BY public.event_queue.id;
 --
 
 CREATE TABLE public.groups (
-    id bigint NOT NULL,
+    id integer NOT NULL,
     name character varying(100) NOT NULL,
     code character varying(50) NOT NULL,
-    owner_id numeric,
+    owner_id integer,
     status boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone
 );
@@ -218,7 +218,7 @@ ALTER SEQUENCE public.groups_id_seq OWNED BY public.groups.id;
 --
 
 CREATE TABLE public.permissions (
-    id bigint NOT NULL,
+    id integer NOT NULL,
     name character varying(50) NOT NULL,
     slug character varying(50) NOT NULL,
     created_at timestamp with time zone
@@ -258,7 +258,7 @@ ALTER SEQUENCE public.permissions_id_seq OWNED BY public.permissions.id;
 
 CREATE TABLE public.personal_access_tokens (
     id bigint NOT NULL,
-    tokenable_id numeric NOT NULL,
+    tokenable_id integer NOT NULL,
     name character varying(255) NOT NULL,
     token character varying(64) NOT NULL,
     abilities text,
@@ -300,8 +300,8 @@ ALTER SEQUENCE public.personal_access_tokens_id_seq OWNED BY public.personal_acc
 --
 
 CREATE TABLE public.role_permissions (
-    role_id bigint NOT NULL,
-    permission_id numeric NOT NULL
+    role_id integer NOT NULL,
+    permission_id integer NOT NULL
 );
 
 
@@ -313,7 +313,7 @@ ALTER TABLE public.role_permissions OWNER TO postgres;
 --
 
 CREATE TABLE public.roles (
-    id bigint NOT NULL,
+    id integer NOT NULL,
     name character varying(50) NOT NULL,
     slug character varying(50) NOT NULL,
     description text,
@@ -353,9 +353,9 @@ ALTER SEQUENCE public.roles_id_seq OWNED BY public.roles.id;
 --
 
 CREATE TABLE public.user_roles (
-    user_id numeric NOT NULL,
-    role_id bigint NOT NULL,
-    group_id bigint NOT NULL
+    user_id bigint NOT NULL,
+    role_id integer NOT NULL,
+    group_id integer NOT NULL
 );
 
 
@@ -378,7 +378,7 @@ CREATE TABLE public.users (
     two_factor_confirmed_at timestamp with time zone,
     client_token character varying(100) DEFAULT NULL::character varying,
     remember_token character varying(100) DEFAULT NULL::character varying,
-    current_team_id numeric,
+    current_team_id integer,
     profile_photo_path character varying(2048) DEFAULT NULL::character varying,
     first_name character varying(100) DEFAULT NULL::character varying,
     last_name character varying(100) DEFAULT NULL::character varying,
@@ -425,8 +425,9 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 -- Name: v_user_permissions; Type: VIEW; Schema: public; Owner: postgres
 --
 
-CREATE VIEW public.v_user_permissions AS
- SELECT u.id AS user_id,
+CREATE OR REPLACE VIEW public.v_user_permissions AS
+SELECT 
+    u.id AS user_id,
     u.name AS user_name,
     p.id AS permission_id,
     p.slug AS permission_slug,
@@ -434,13 +435,13 @@ CREATE VIEW public.v_user_permissions AS
     r.slug AS role_slug,
     ur.group_id,
     g.name AS group_name
-   FROM (((((public.users u
-     JOIN public.user_roles ur ON (((u.id)::numeric = ur.user_id)))
-     JOIN public.roles r ON ((ur.role_id = r.id)))
-     JOIN public.role_permissions rp ON ((r.id = rp.role_id)))
-     JOIN public.permissions p ON ((rp.permission_id = (p.id)::numeric)))
-     LEFT JOIN public.groups g ON ((ur.group_id = g.id)))
-  WHERE (u.status = true);
+FROM public.users u
+JOIN public.user_roles ur ON u.id = ur.user_id
+JOIN public.roles r ON ur.role_id = r.id
+JOIN public.role_permissions rp ON r.id = rp.role_id
+JOIN public.permissions p ON rp.permission_id = p.id
+LEFT JOIN public.groups g ON ur.group_id = g.id
+WHERE u.status = true;
 
 
 ALTER VIEW public.v_user_permissions OWNER TO postgres;
