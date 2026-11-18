@@ -149,7 +149,7 @@ class DashboardModel
             $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
                 return $statsData->getAllDataSalaries();
             }, 300);
-            // dd($dataStats);
+            // dd($dataStats, true);
         }
 
         $modelA = [

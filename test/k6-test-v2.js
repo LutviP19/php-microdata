@@ -3,7 +3,7 @@ import { check, sleep } from 'k6';
 
 // Simulation: 50 users immediately hit the server from the first second to the last second.
 export const options = {
-    vus: 20,           // 25 concurrent users
+    vus: 10,           // 25 concurrent users
     duration: '30s',   // for 30 seconds
     // duration: '5m',   // for 5 minutes
 };
@@ -23,7 +23,7 @@ export default function () {
     const payload = JSON.stringify({
         title: 'JSON data <script>document.print</script>', // Let's make sanitize refine this
         tag_html: {div: '<div onclick=\'submitError()\'>Submit</div>'},
-        limit: 25, // Change Limit to real apps paging system (1000+ just for stress testing, usually between 10 - 100)
+        limit: 100, // Change Limit to real apps paging system (1000+ just for stress testing, usually between 10 - 100)
         float: 1.091,
         age: '18',
         username: 'lutvi',
