@@ -13,7 +13,6 @@ use App\Core\Support\App;
 // Automatically validate the JSON format and sanitize JSON with FFI then JSON is converted to $_REQUEST
 if (is_json_request() && !handle_json_request()) {
     json_response([], 406, "Invalid JSON", ["input" => "Invalid JSON format."]);
-    die();
 }
 
 // Clean all $_REQUEST input after conversion

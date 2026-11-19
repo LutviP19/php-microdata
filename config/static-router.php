@@ -1,7 +1,8 @@
 <?php
 
 /**
- *  @author LutviP19 <lutvip19@gmail.com>
+ * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata(PMD)
  */
 // file: config/static-router.php
 // simple routing untuk execute file static php
@@ -9,13 +10,17 @@
 
 // dd($requestPath);
 // dd($lastSegment);
-$staticFile = BASEPATH . "static" . $requestPath . ".php";
+
+$staticDir = BASEPATH . "static";
+$staticFile =  "{$staticDir}{$requestPath}.php";
+$listStaticFiles = getFilesRecursive($staticDir);
+// dd($listStaticFiles, true);
+
 if (file_exists($staticFile)) {
     // Otomatis validasi format JSON dan sanitize JSON dengan FFI
     // kemudian JSON dikonversi ke $_REQUEST
     if (is_json_request() && !handle_json_request()) {
         json_response([], 406, "Invalid JSON", ["input" => "Invalid JSON format."]);
-        die();
     }
 
     // Bersihkan seluruh input $_REQUEST setelah di konversi
@@ -57,7 +62,6 @@ if (file_exists($staticFile)) {
     // dd($_REQUEST, true);
 
     // Include static PHP files. avoid Remote Code Execution (RCE).
-    $listStaticFiles = getFilesRecursive(BASEPATH . "static");
     if (in_array($staticFile, $listStaticFiles)) {
         include $staticFile;
     }

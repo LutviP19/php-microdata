@@ -1,6 +1,7 @@
 <?php
 /**
- *  @author LutviP19 <lutvip19@gmail.com>
+ * @author LutviP19 <lutvip19@gmail.com>
+ * @package PHP-Microdata(PMD)
  */
 
 namespace App\Core\Support;
@@ -14,7 +15,6 @@ class RecursiveModelLoader
     public function __construct(private readonly ?array $config = [])
     {
         $this->basePath = realpath(config("app.path") . "app");
-        // $this->basePath = BASEPATH;
         // Load konfigurasi modul
         $this->moduleConfig = $config["modules"] ?? [];
         $this->dataMapping = $config["data_mapping"] ?? [];
@@ -27,10 +27,6 @@ class RecursiveModelLoader
     {
         $modelName = $version = null;
         $baseModelPath = $this->basePath . "/Models/";
-
-        // // Fix docker path
-        // $baseModelPath = str_starts_with($baseModelPath, '/app') ? substr($baseModelPath, 4) : $baseModelPath;
-        // // dd($baseModelPath);
 
         // Jika input adalah "v1-dashboard"
         if (str_contains((string) $page, "-")) {
@@ -121,11 +117,15 @@ class RecursiveModelLoader
     public function notFoundHandler($model, $modelPath, $jsonOnly = false)
     {
         if (is_json_request()) {
-            $message = "Model '$model' Not Found";
-            $errors = [
-                "model" => "Model not found at: " . str_replace(realpath(config("app.path")), "", $modelPath),
-            ];
-            json_response([], 404, $message, $errors);
+            if(config('app.debug')) {
+                $message = "Model '$model' Not Found";
+                $errors = [
+                    "model" => "Model not found at: " . str_replace(realpath(config("app.path")), "", $modelPath),
+                ];
+                json_response([], 404, $message, $errors);
+            }
+            
+            notfound_response();
         } else {
             if (!$jsonOnly) {
                 $isPageExists = false;
@@ -154,12 +154,9 @@ class RecursiveModelLoader
         // Scan modelPath
         $baseDataPath = str_replace("Models/" . $version, "Data/" . $cleanName, $baseModelPath);
         // $baseStructsPath = str_replace('Models/'.$version, 'Structs/' . $cleanName, $baseModelPath); // Scan Structs jika diperlukan
-        // dd($baseDataPath);
+        // dd($baseStructsPath);
         foreach ($models as $model) {
             $dataPath = $baseDataPath . $model . "Data.php";
-            // dd($dataPath);
-            // $structPath = $baseStructsPath . $model . "Struct.php";
-            // if (file_exists($dataPath) && file_exists($structPath)) {
             if (file_exists($dataPath)) {
                 return $model;
             }

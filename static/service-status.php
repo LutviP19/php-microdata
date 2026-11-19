@@ -13,4 +13,4 @@ if (!isHtmx()) {
 
 header('Content-Type: text/html');
 \App\Core\Support\ServiceMonitor::checkAll();
-exit;
+die;

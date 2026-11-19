@@ -32,4 +32,4 @@ $orderData = [
 $dispatcher->dispatch('order.created', $orderData, $current_user_id);
 
 echo "Event order.created telah dipicu dan masuk ke antrean database/redis." . PHP_EOL;
-exit;
+die;

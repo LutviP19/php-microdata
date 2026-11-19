@@ -25,7 +25,8 @@ if (!defined("BASEPATH_FFI")) {
 // exit(0);
 
 if (!function_exists('path_join')) {
-    function path_join(...$parts) {
+    function path_join(...$parts)
+    {
         // 1. Gabungkan semua argumen menggunakan DIRECTORY_SEPARATOR standar
         // 2. Gunakan regex untuk mengganti double slash (// atau \\) menjadi single slash
         $path = implode(DIRECTORY_SEPARATOR, $parts);
@@ -46,10 +47,10 @@ if (!function_exists("ensure_minimum_php_version")) {
         if (is_null($version)) {
             return;
         }
-        
+
         if (version_compare(PHP_VERSION, $version, "<")) {
             $message = "ERROR: PHP $version or higher is required. Current: " . PHP_VERSION;
-    
+
             if (PHP_SAPI === "cli") {
                 fwrite(STDERR, $message . PHP_EOL);
             } else {
@@ -413,7 +414,7 @@ function setHeaders(array $headers = []): bool
     if (empty($headers)) {
         return false;
     }
-    
+
     if (headers_sent()) {
         return false;
     }
@@ -432,7 +433,7 @@ function setHeaders(array $headers = []): bool
             header("{$key}: {$value}");
             continue;
         }
-        
+
         if (is_array($value)) {
             foreach ($value as $subKey => $subValue) {
                 if (is_string($subKey)) {
@@ -642,7 +643,7 @@ function sessionKeyFormat($userId, $sessionId = '*'): string
 
 /**
  * Converting the number of days into seconds.
- * 
+ *
  * @param int|float $days Number of days
  * @return int Total seconds
  */
@@ -745,10 +746,10 @@ function handle_cors()
             http_response_code(204);
             header("Content-Length: 0");
             header("Content-Type: text/plain");
-            exit();
+            die();
         } else {
             http_response_code(403);
-            exit();
+            die();
         }
     }
 
@@ -762,7 +763,7 @@ function handle_cors()
             http_response_code(isHtmx() ? 200 : 403);
             include BASEPATH . "views/error/403.php";
         }
-        exit();
+        die();
     }
 }
 
@@ -787,7 +788,7 @@ function validateApiKey($headerName = "X-API-KEY")
     if (!$apiKeyInput) {
         return false;
     }
-    
+
     $secureKey = config("api.key");
 
     return hash_equals($secureKey, "base64:" . $apiKeyInput);
@@ -915,23 +916,24 @@ function delCache($id)
 /**
  * Safely unserialize data, fallback to raw string if failure.
  */
-function safe_unserialize(mixed $data): mixed 
+function safe_unserialize(mixed $data): mixed
 {
     if (!is_string($data) || trim($data) === '') {
         return $data;
     }
-    
+
     // Periksa apakah string merupakan format serialisasi PHP yang sah
     $decoded = @unserialize($data);
     if ($decoded !== false || $data === 'b:0;') {
         return $decoded;
     }
-    
+
     // Kembalikan data asli jika bukan format serialisasi
     return $data;
 }
 
-function getAuthSession(?int $expTime = null) {
+function getAuthSession(?int $expTime = null)
+{
     $expTime = $expTime ?? config("session.exptime", 7200);
     return cacheContent('get', '*'. $_COOKIE[config("session.sess_name")] .'*', $expTime);
 }
@@ -1020,7 +1022,7 @@ if (!function_exists("getBestFormat")) {
         }
 
         // 2. Urutkan berdasarkan nilai q (descending)
-        usort($choices, fn($a, $b) => $b["q"] <=> $a["q"]);
+        usort($choices, fn ($a, $b) => $b["q"] <=> $a["q"]);
 
         // 3. Iterasi hasil urutan untuk menentukan yang kita dukung
         foreach ($choices as $choice) {
@@ -1129,12 +1131,12 @@ function bp_session_start()
 
     if (isset($_SESSION['destroyed'])) {
         $ttl = (int)env('SESSION_REGENERATE', 300);
-        
+
         if (!empty($_SESSION['destroyed']) && $_SESSION['destroyed'] < time() - $ttl) {
             $oldSessionId = session_id();
 
             $headers = bp_session_regenerate_id($oldSessionId);
-            
+
             if (function_exists('setHeaders')) {
                 setHeaders($headers);
             }
@@ -1198,7 +1200,7 @@ function bp_session_regenerate_id($oldSessionId = null)
     $sessionName = session_name();
     $cookie = session_get_cookie_params();
     $sessionExp = (int) config("session.lifetime", 120) * 60;
-    
+
     // Start assembling the cookie string
     $cookieString = "{$sessionName}={$new_session_id}; Max-Age={$sessionExp}; Path={$cookie['path']};";
 
@@ -1294,7 +1296,7 @@ function getKeyTllFromRedis(string $key): int
     if (!$redis->exists($key)) {
         return 0;
     }
-    
+
     // The TTL command returns the remaining active seconds
     return (int) $redis->ttl($key);
 }
@@ -1518,23 +1520,24 @@ function is_ip_whitelisted($currentIp, array $whitelist)
     // if (!is_ip_whitelisted($_SERVER['REMOTE_ADDR'], $allowed)) die('Access Denied');
 }
 
-function getFilesRecursive(string $dir, bool $filesOnly = false) {
+function getFilesRecursive(string $dir, bool $filesOnly = false)
+{
     $results = [];
-    
+
     // Scan directory and check if it exists
     if (!is_dir($dir)) {
         return $results;
     }
-    
+
     $items = scandir($dir);
-    
+
     foreach ($items as $item) {
         if ($item === '.' || $item === '..') {
             continue;
         }
-        
+
         $path = $dir . DIRECTORY_SEPARATOR . $item;
-        
+
         if (is_dir($path)) {
             // Recursively merge subfolder files
             $results = array_merge($results, getFilesRecursive($path, $filesOnly));
@@ -1543,7 +1546,7 @@ function getFilesRecursive(string $dir, bool $filesOnly = false) {
             $results[] = $filesOnly ? basename($path) : $path;
         }
     }
-    
+
     return $results;
 }
 
@@ -1575,7 +1578,7 @@ function getBearerToken(): ?string
     return null;
 }
 
-function unauthorized_response(?string $msg): void
+function unauthorized_response(?string $msg = 'access'): void
 {
     if (is_json_request()) {
         $message = "Unauthorized";
@@ -1590,10 +1593,10 @@ function unauthorized_response(?string $msg): void
     }
 }
 
-function forbidden_response(?string $permission): void
+function forbidden_response(?string $permission = 'get'): void
 {
     if (is_json_request()) {
-        $message = "You don't have access[$permission]";
+        $message = "You don't have access[{$permission}]";
         $errors = [
             "auth" => "Forbidden to access: " . $permission,
         ];
@@ -1605,18 +1608,33 @@ function forbidden_response(?string $permission): void
     }
 }
 
-function invalid_method_response(bool $isJson = true, ?string $permission = null): void
+function invalid_method_response(bool $isJson = true, ?string $method = null): void
 {
-    $permissionStr = $permission ?? $_SERVER["REQUEST_METHOD"] ?? 'view';
+    $permissionStr = $method ?? $_SERVER["REQUEST_METHOD"] ?? 'view';
     if ($isJson || is_json_request()) {
         $message = "Method {$permissionStr} not allowed";
         $errors = [
             "auth" => "Invalid request method for this endpoint."
-        ];        
+        ];
         json_response([], 405, $message, $errors);
     } else {
         http_response_code(isHtmx() ? 200 : 405);
         include BASEPATH . "views/error/406.php";
+        die();
+    }
+}
+
+function notfound_response(?string $page = null): void
+{
+    if (is_json_request()) {
+        $message = "Page Not Found.";
+        $errors = [
+            "url" => $page ?? 'unknown',
+        ];
+        json_response([], 404, $message, $errors);
+    } else {
+        http_response_code(isHtmx() ? 200 : 404);
+        include BASEPATH . "views/error/404.php";
         die();
     }
 }

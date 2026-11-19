@@ -29,4 +29,4 @@ if (isset($_SERVER['HTTP_HX_REQUEST'])) {
 echo '<div hx-trigger="load" hx-get="'.url('/login').'" hx-target="body" hx-push-url="true">
         Redirecting...
       </div>';
-exit();
+die();

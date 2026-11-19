@@ -61,7 +61,6 @@ set_exception_handler(function (\Throwable $exception) {
         $status = 500;
         $message = "An internal error occurred. Please try again later.";
         json_response([], $status, $message);
-        exit();
     } else {
         // Present a user-friendly view/response
         // http_response_code(500);

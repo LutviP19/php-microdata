@@ -16,7 +16,7 @@ if (!function_exists('cleanTmpFiles')) {
         // Check if the directory exists and is readable
         if (!is_dir($tmpDir) || !is_readable($tmpDir)) {
             echo "Error: Temporary directory '$tmpDir' does not exist or is not readable.\n";
-            exit;
+            die;
         }
 
         // Open the directory

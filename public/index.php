@@ -220,7 +220,7 @@ $isPageExists = $viewPath = realpath(BASEPATH . "views/partial/" . $page . ".php
 if (!isHtmx() && !$isPageExists) {
     http_response_code(isHtmx() ? 200 : 404);
     include BASEPATH . "views/error/404.php";
-    exit();
+    die();
 }
 
 if (isHtmx()) {

@@ -26,7 +26,6 @@ class AuthModel extends AuthData
             // Identity
             if(is_null(\App\Core\Auth\Identity::get('fingerprint'))) {
                 json_response([], 403, 'Forbidden', ['auth' => 'Invalid credentials!']);
-                die;
             }
         }
         

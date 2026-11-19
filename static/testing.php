@@ -53,7 +53,7 @@ if (!in_array($requestMethod, $allowMethod)) {
 // }
 
 // $testing = new Testing();
-// exit;
+// die;
 
 $ua = $_SERVER["HTTP_USER_AGENT"] ?? "Unknown";
 $isInsomnia = str_contains((string) $ua, "insomnia");
@@ -87,7 +87,7 @@ $extraPayload = "ini data biner rahasia";
 // $dataArray = json_decode($dataProto['content'], true);
 // echo "content: ";
 // dd($dataArray, true);
-// exit;
+// die;
 
 // // Testing CURL - Client Web
 // $streamer = new NativeCurlStreamer();
@@ -199,7 +199,7 @@ $extraPayload = "ini data biner rahasia";
 //     echo "Execution Time: " . $time . " seconds<br>" . PHP_EOL;
 //     echo "Peak RAM Usage: " . round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB<br>" . PHP_EOL;
 // }
-// exit;
+// die;
 
 // // Sodium V4 (Asymmetric - Ed25519)
 // // ----------------
@@ -225,7 +225,7 @@ $extraPayload = "ini data biner rahasia";
 //     // Token Valid dan asli!
 //     dd($userData, true);
 // }
-// exit;
+// die;
 // // ==============
 
 // // Saat register karyawan baru
@@ -329,7 +329,7 @@ $extraPayload = "ini data biner rahasia";
 //     echo json_encode(['error' => 'Refresh token invalid atau expired']);
 // }
 // echo "<br>-------<br>" . PHP_EOL;
-// exit;
+// die;
 
 // // Sample Cara Implementasi JWT Permission
 // use App\Core\Auth\JWT;
@@ -368,7 +368,7 @@ $extraPayload = "ini data biner rahasia";
 //         echo "Akses ditolak: Anda tidak punya izin.";
 //     }
 // }
-// exit;
+// die;
 
 // echo "Testing script.";
 
@@ -444,7 +444,7 @@ if ($limit >= $maxLimitToRender) {
                 }
             }
             echo "Total data: " . number_format($counter, 0);
-            exit();
+            die();
         }
 
         // // === MANUAL HANDLER
@@ -511,7 +511,7 @@ if ($limit >= $maxLimitToRender) {
         // 3. Paksa PHP Engine membuang sampah memori
         gc_collect_cycles();
 
-        exit();
+        die();
     }
 } else {
     $mainData = new StatsData();
