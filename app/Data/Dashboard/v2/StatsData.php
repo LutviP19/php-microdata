@@ -135,7 +135,7 @@ class StatsData extends DashboardStruct
 
         // Example Use QueryBuilder
         return self::select(
-            [
+                [
                     "employees.emp_no",
                     QueryBuilder::raw("CONCAT(employees.first_name, ' ', employees.last_name) AS full_name"),
                     "employees.gender",
@@ -148,7 +148,7 @@ class StatsData extends DashboardStruct
                     "dept_salary_summary.avg_salary",
                     QueryBuilder::raw("ROUND(salaries.salary - dept_salary_summary.avg_salary, 2) AS salary_diff_from_dept_avg")
                 ]
-        )
+            )
             ->join('salaries', 'employees.emp_no', '=', QueryBuilder::raw("salaries.emp_no AND salaries.to_date = '9999-01-01'"), 'INNER', true)
             ->join('dept_emp', 'employees.emp_no', '=', QueryBuilder::raw("dept_emp.emp_no AND dept_emp.to_date = '9999-01-01'"), 'INNER', true)
             ->join('departments', 'departments.dept_no', '=', 'dept_emp.dept_no', 'INNER')
