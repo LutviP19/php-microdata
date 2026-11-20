@@ -135,7 +135,7 @@ class StatsData extends DashboardStruct
 
         // Example Use QueryBuilder
         return self::select(
-                [
+            [
                     "employees.emp_no",
                     QueryBuilder::raw("CONCAT(employees.first_name, ' ', employees.last_name) AS full_name"),
                     "employees.gender",
@@ -148,7 +148,7 @@ class StatsData extends DashboardStruct
                     "dept_salary_summary.avg_salary",
                     QueryBuilder::raw("ROUND(salaries.salary - dept_salary_summary.avg_salary, 2) AS salary_diff_from_dept_avg")
                 ]
-            )
+        )
             ->join('salaries', 'employees.emp_no', '=', QueryBuilder::raw("salaries.emp_no AND salaries.to_date = '9999-01-01'"), 'INNER', true)
             ->join('dept_emp', 'employees.emp_no', '=', QueryBuilder::raw("dept_emp.emp_no AND dept_emp.to_date = '9999-01-01'"), 'INNER', true)
             ->join('departments', 'departments.dept_no', '=', 'dept_emp.dept_no', 'INNER')
@@ -177,5 +177,49 @@ class StatsData extends DashboardStruct
             ->orderBy('employees.hire_date', 'ASC')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Fetch data dynamically with SQL injection protection at limits.
+     * @param int|string|null $id
+     * @param int $limit
+     * @param string $selectCols
+     * @return array
+     */
+    public function getAllDataSalariesPaginate(int $limit = 10, int $page = 1, bool $isCacheCount = false, ?int $cacheExp = null, int|string|null $id = null, string $selectCols = '*', bool $chunk = false)
+    {
+        // $params = [];
+        $params = $id ? [$id] : [];
+        $cacheExp = $cacheExp ?? 300;
+
+        return self::select(
+            [
+                    "employees.emp_no",
+                    QueryBuilder::raw("CONCAT(employees.first_name, ' ', employees.last_name) AS full_name"),
+                    "employees.gender",
+                    "departments.dept_name",
+                    QueryBuilder::raw("titles.title AS current_title"),
+                    QueryBuilder::raw("salaries.salary AS current_salary"),
+                    QueryBuilder::raw("salaries.from_date AS salary_effective_date"),
+                    "dept_salary_summary.avg_salary",
+                    QueryBuilder::raw("ROUND(salaries.salary - dept_salary_summary.avg_salary, 2) AS salary_diff_from_dept_avg")
+                ]
+        )
+            ->join('salaries', 'employees.emp_no', '=', QueryBuilder::raw("salaries.emp_no AND salaries.to_date = '9999-01-01'"), 'INNER', true)
+            ->join('dept_emp', 'employees.emp_no', '=', QueryBuilder::raw("dept_emp.emp_no AND dept_emp.to_date = '9999-01-01'"), 'INNER', true)
+            ->join('departments', 'departments.dept_no', '=', 'dept_emp.dept_no', 'INNER')
+            ->join('titles', 'employees.emp_no', '=', QueryBuilder::raw("titles.emp_no AND titles.to_date = '9999-01-01'"), 'INNER', true)
+            ->join(
+                'dept_salary_summary', // menggunakan Summary Table + trigger
+                'departments.dept_no',
+                '=',
+                'dept_salary_summary.dept_no',
+                'INNER',
+                true
+            )
+            ->where('salaries.salary', '>', 50000)
+            ->orderBy('salaries.salary', 'DESC')
+            ->orderBy('employees.hire_date', 'ASC')
+            ->paginate($limit, $page, true, $cacheExp);
     }
 }

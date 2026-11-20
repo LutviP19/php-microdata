@@ -50,7 +50,7 @@ class Cache
      */
     public function remember(string $key, callable $callback, ?int $expiry = null)
     {
-        $expiry = $expiry ?? $this->defaultExpiry;
+        $expiry = $expiry ?: $this->defaultExpiry;
         
         if (method_exists($this, 'has') && $this->has($key)) {
             return $this->get($key);
@@ -145,8 +145,10 @@ class Cache
     /**
      * Save Data
      */
-    public function set(string $key, mixed $data, int $expiry = 3600)
+    public function set(string $key, mixed $data, ?int $expiry = null)
     {
+        $expiry = $expiry ?: 3600;
+
         //  Only cache if data is not empty
         if (!empty($data)) {
 

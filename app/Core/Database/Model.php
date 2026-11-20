@@ -288,7 +288,7 @@ class Model
         $this->rustEngine = new \App\Core\FFI\DataEngine();
         $this->rustEngine->clear();
 
-        $chunkSize = 50000;
+        $chunkSize = 10000;
         $currentChunk = [];
         try {
             while ($row = $exec->fetch()) {

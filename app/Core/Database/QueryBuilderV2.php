@@ -42,8 +42,8 @@ class QueryBuilderV2
     protected $rustEngine;
     public $structClass;
 
-    public $limitToStream = 50; // limit maks untuk otomatis menggunakan mode stream
-    public $timeCachedCount = 300; // waktu maksimal untuk menyimpan cache pagination count 300 (5 menit)
+    public int $limitToStream = 50; // max limit to automatically use stream mode
+    public int $timeCachedCount = 300; // Maximum time to cache pagination count 300 (5 minutes)
 
     public function __construct(?PDO $pdo = null)
     {
@@ -416,7 +416,7 @@ class QueryBuilderV2
      * AGGREGATES & PAGINATION
      * ========================================================================= */
 
-    protected function aggregate(string $function, string $column = '*', bool $isCache = false): mixed
+    protected function aggregate(string $function, string $column = '*', bool $isCache = false, int $cacheExp = 300): mixed
     {
         $columnSql = ($column === '*') ? '*' : $this->quoteIdentifier($column);
 
@@ -452,16 +452,9 @@ class QueryBuilderV2
             ksort($params);
             $paramSignature = !empty($params) ? md5(json_encode($params) . $queryString) : $queryString;
             $cacheKeyId = "cache_{$function}:{$paramSignature}";
+            
+            $result = $cache->remember($cacheKeyId, fn () => $stmt->fetch(), $cacheExp);
 
-            $callback = function () use ($stmt) {
-                return $stmt->fetch();
-            };
-
-            $result = $cache->remember(
-                $cacheKeyId,
-                $callback,
-                $this->timeCachedCount
-            );
         } else {
             $result = $stmt->fetch();
         }
@@ -477,33 +470,35 @@ class QueryBuilderV2
             : ($result?->aggregate ?? null);
     }
 
-    public function count(string $column = '*', bool $isCache = false): int
+    public function count(string $column = '*', bool $isCache = false, int $cacheExp = 300): int
     {
-        return (int) $this->aggregate('COUNT', $column, $isCache);
+        return (int) $this->aggregate('COUNT', $column, $isCache, $cacheExp);
     }
 
-    public function max(string $column, bool $isCache = false): mixed
+    public function max(string $column, bool $isCache = false, int $cacheExp = 300): mixed
     {
-        return $this->aggregate('MAX', $column, $isCache);
+        return $this->aggregate('MAX', $column, $isCache, $cacheExp);
     }
 
-    public function min(string $column, bool $isCache = false): mixed
+    public function min(string $column, bool $isCache = false, int $cacheExp = 300): mixed
     {
-        return $this->aggregate('MIN', $column, $isCache);
+        return $this->aggregate('MIN', $column, $isCache, $cacheExp);
     }
 
-    public function avg(string $column, bool $isCache = false): float
+    public function avg(string $column, bool $isCache = false, int $cacheExp = 300): float
     {
-        return (float) $this->aggregate('AVG', $column, $isCache);
+        return (float) $this->aggregate('AVG', $column, $isCache, $cacheExp);
     }
 
-    public function paginate(int $perPage = 15, int $page = 1, bool $isCacheCount = true): array
+    public function paginate(int $perPage = 15, int $page = 1, bool $isCacheCount = true, int $cacheExp = 300): array
     {
+        $this->timeCachedCount = $cacheExp;
+        
         $page = max(1, $page);
         $perPage = max(1, $perPage);
 
         // Cache this total count
-        $total = $this->count('*', $isCacheCount);
+        $total = $this->count('*', $isCacheCount, $this->timeCachedCount);
 
         $offset = ($page - 1) * $perPage;
         $this->limit($perPage)->offset($offset);
@@ -726,7 +721,7 @@ class QueryBuilderV2
         $this->rustEngine = new \App\Core\FFI\DataEngine();
         $this->rustEngine->clear();
 
-        $chunkSize = 50000;
+        $chunkSize = 10000;
         $currentChunk = [];
         try {
             while ($row = $exec->fetch()) {

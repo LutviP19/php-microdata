@@ -125,13 +125,42 @@ flush /*!50503 binary */ logs;
 -- source show_elapsed.sql ;
 
 
+-- List All Indexes in the Current Database
+SELECT
+    schemaname,
+    tablename,
+    indexname,
+    indexdef
+FROM pg_indexes
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY schemaname, tablename, indexname;
+
+-- Include Index Size and Scan Usage (pg_stat_user_indexes)
+SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    i.relname AS index_name,
+    pg_size_pretty(pg_relation_size(i.oid)) AS index_size,
+    s.idx_scan AS index_scans,
+    pg_get_indexdef(i.oid) AS index_def
+FROM pg_index x
+JOIN pg_class c ON c.oid = x.indrelid
+JOIN pg_class i ON i.oid = x.indexrelid
+JOIN pg_namespace n ON n.oid = c.relnamespace
+LEFT JOIN pg_stat_user_indexes s ON s.indexrelid = i.oid
+WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY pg_relation_size(i.oid) DESC;
 
 -- 1. Bersihkan indeks yang redundan / tidak perlu
-DROP INDEX IF EXISTS idx_employees_emp_no;
-DROP INDEX IF EXISTS idx_salaries_emp_no; -- Diganti dengan yang lebih spesifik di bawah
-DROP INDEX IF EXISTS idx_salaries_current_top; -- Diganti dengan yang lebih spesifik di bawah
-DROP INDEX IF EXISTS idx_dept_emp_current; -- Diganti dengan yang lebih spesifik di bawah
-DROP INDEX IF EXISTS idx_titles_current; -- Diganti dengan yang lebih spesifik di bawah
+-- Diganti dengan yang lebih spesifik di bawah
+DROP INDEX IF EXISTS idx_employees_name;
+DROP INDEX IF EXISTS idx_dept_manager_dept; 
+DROP INDEX IF EXISTS idx_dept_emp_current_dept;
+DROP INDEX IF EXISTS idx_dept_emp_current;
+DROP INDEX IF EXISTS idx_titles_current;
+DROP INDEX IF EXISTS idx_titles_current_title;
+DROP INDEX IF EXISTS idx_salaries_current_salary;
+DROP INDEX IF EXISTS idx_salaries_current_salary_desc_emp;
 
 -- ==========================================
 -- 2. PEMBUATAN INDEKS YANG BERSIH & OPTIMAL
@@ -139,44 +168,49 @@ DROP INDEX IF EXISTS idx_titles_current; -- Diganti dengan yang lebih spesifik d
 
 -- A. Tabel employees
 -- Indeks untuk mempercepat pencarian berdasarkan nama lengkap
-CREATE INDEX idx_employees_name 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_employees_name 
 ON public.employees (last_name, first_name);
 
 
 -- B. Tabel dept_manager
 -- Indeks untuk mempercepat pencarian manajer berdasarkan departemen
-CREATE INDEX idx_dept_manager_dept 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dept_manager_dept 
 ON public.dept_manager (dept_no, to_date);
 
 
 -- C. Tabel dept_emp (Partial Indexes untuk data aktif)
 -- Indeks 1: Jika pencarian difilter berdasarkan departemen terlebih dahulu
-CREATE INDEX idx_dept_emp_current_dept 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dept_emp_current_dept 
 ON public.dept_emp (dept_no, emp_no) 
 WHERE to_date = '9999-01-01';
 
 -- Indeks 2: Jika pencarian difilter berdasarkan emp_no terlebih dahulu
-CREATE INDEX idx_dept_emp_current 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dept_emp_current 
 ON public.dept_emp (emp_no, dept_no) 
 WHERE to_date = '9999-01-01';
 
 
 -- D. Tabel titles (Partial Index untuk jabatan aktif)
-CREATE INDEX idx_titles_current 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_titles_current 
 ON public.titles (emp_no) 
 WHERE to_date = '9999-01-01';
 
 -- (Opsional tambahan jika sering filter berdasarkan nama title aktif)
-CREATE INDEX idx_titles_current_title 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_titles_current_title 
 ON public.titles (title, emp_no) 
 WHERE to_date = '9999-01-01';
 
 
 -- E. Tabel salaries (Partial & Covering Index untuk gaji aktif)
 -- Menggabungkan fungsi pengurutan gaji tertinggi dan pencarian pegawai aktif
-CREATE INDEX idx_salaries_current_salary 
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_salaries_current_salary 
 ON public.salaries (salary DESC, emp_no) 
 INCLUDE (salary) 
+WHERE to_date = '9999-01-01';
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_salaries_current_salary_desc_emp
+ON public.salaries (salary DESC, emp_no)
+INCLUDE (salary, from_date)
 WHERE to_date = '9999-01-01';
 
 

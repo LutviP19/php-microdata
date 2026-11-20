@@ -12,7 +12,7 @@ use App\Data\Dashboard\v2\{DashboardData, StatsData, EmployeeData};
 use App\Core\Database\ConnectionV2 as Connection; // Uncomment to use custom DB connection
 use PDO;
 
-class DashboardModel 
+class DashboardModel
 {
     /**
      * PDO properties for this instance (Instance-based)
@@ -129,15 +129,22 @@ class DashboardModel
         // // dd($query);
 
         // Set limit agar bisa auto Stream
-        $mainData->limitToStream = 25;      
+        $mainData->limitToStream = 250;
 
         // $mainData::rawQuery($query); // Using Raw SQL
         $mainData->orderBy('hire_date', 'DESC');
 
+        
+        $outputStream = ($limit > $mainData->limitToStream);
+        $isCache = true;
+        $cacheExp = 900;
+
         // Cek limit agar otomatis masuk ke Mode Stream
-        if ($limit > $mainData->limitToStream) {
+        if ($outputStream) {
             $dataMain = $mainData->paginate($limit, $page);
-            $dataStats = $statsData->getAllDataSalaries();
+
+            // // $dataStats = $statsData->getAllDataSalaries();
+            // $dataStats = $statsData->getAllDataSalariesPaginate($limit, $page, true, $cacheExp);
         } else {
             $cleanQuery = preg_replace('/\s+/', ' ', trim($mainData->toSql()));
             $queryString = md5((string) $cleanQuery);
@@ -145,16 +152,29 @@ class DashboardModel
 
             $dataMain = $cache->remember($cacheKeyId, fn () => $mainData->paginate($limit, $page), 300);
 
-            // Ambil data stats dari cache selama 5 menit
-            $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function() use ($statsData) {
-                return $statsData->getAllDataSalaries();
-            }, 300);
-            // dd($dataStats, true);
+            // // Ambil data stats dari cache selama 10 menit
+            // $cacheExp = 600;
+            // $dataStats = $cache->remember("dashboard_stats:getAllDataSalaries:p{$page}:l{$limit}", function () use ($statsData) {
+            //     return $statsData->getAllDataSalaries();
+            // }, $cacheExp);
         }
+
+
+        // Ambil data stats dari cache selama 15 menit
+        if(is_null($dataStats)) {
+            $dataStats = $cache->remember("dashboard_stats:getAllDataSalariesPaginate:p{$page}:l{$limit}", 
+                    function () use ($statsData, $limit, $page, $isCache, $cacheExp) {
+                        // return $statsData->getAllDataSalaries();
+                        return $statsData->getAllDataSalariesPaginate($limit, $page, $isCache, $cacheExp);
+                    }, $cacheExp);
+        }
+        
+
 
         $modelA = [
             // 'result' => $result,
             'request' => $request,
+            'is_cache' => $isCache,
             'table' => $mainData::getTableName(),
             'title' => $request['title'] ?? 'Testing model v1',
             'stats_data' => $dataStats,
@@ -170,7 +190,7 @@ class DashboardModel
 
 
         // Output Stream
-        if (!is_null($dataMain) && $limit > $mainData->limitToStream) {
+        if (!is_null($dataMain) && $outputStream) {
             $realData = $dataMain['data'];
             $paginationMeta = $dataMain['meta'];
 
