@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  *
@@ -11,7 +12,7 @@ namespace App\Core\Events;
 use PDO;
 use Exception;
 use Predis\Client as PredisClient;
-use App\Core\Database\Connection;
+use App\Core\Database\ConnectionV2 as Connection;
 use App\Core\Events\ListenerRegistry;
 
 class EventWorker
@@ -94,9 +95,16 @@ class EventWorker
         try {
             echo "[*] Cleaning up old events..." . PHP_EOL;
 
-            $sql = "DELETE FROM {$this->table}
-                    WHERE status IN ('completed', 'failed')
-                    AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+            if (config('default_db') === 'pgsql') {
+                $sql = "DELETE FROM {$this->table}
+                        WHERE status IN ('completed', 'failed')
+                        AND created_at < NOW() - (? * INTERVAL '1 day')";
+            } else {
+                $sql = "DELETE FROM {$this->table}
+                        WHERE status IN ('completed', 'failed')
+                        AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+            }
+
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$this->retentionDays]);
@@ -231,7 +239,16 @@ class EventWorker
             }
 
             // Gunakan prepare untuk keamanan
-            $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE status = 'pending' LIMIT 1 FOR UPDATE");
+            if (config('default_db') === 'pgsql') {
+                $stmt = $this->db->prepare(
+                    "SELECT * FROM {$this->table} WHERE status = 'pending' ORDER BY id ASC LIMIT 1 FOR UPDATE SKIP LOCKED"
+                );
+            } else {
+                $stmt = $this->db->prepare(
+                    "SELECT * FROM {$this->table} WHERE status = 'pending' LIMIT 1 FOR UPDATE"
+                );
+            }
+
             $stmt->execute();
 
             // Mengambil data sebagai Object (stdClass)

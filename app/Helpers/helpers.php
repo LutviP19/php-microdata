@@ -59,13 +59,13 @@ if (!function_exists('normalize_path')) {
     {
         // 1. Ubah semua backslash (\) dan forward slash (/) menjadi separator bawaan OS saat ini
         $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
-        
+
         // 2. Bersihkan separator ganda yang tidak sengaja terbentuk (misal: /// atau \\)
         $double_separator = DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR;
         while (strpos($normalized, $double_separator) !== false) {
             $normalized = str_replace($double_separator, DIRECTORY_SEPARATOR, $normalized);
         }
-        
+
         return $normalized;
     }
 }
@@ -82,16 +82,16 @@ if (!function_exists('storage_path')) {
         // Gabungkan BASEPATH dengan folder storage dan sub-path-nya
         $full_path = rtrim(BASEPATH, '/\\') . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . $sub_path;
         $normalized_path = normalize_path($full_path);
-        
+
         // Ambil path direktorinya saja (tanpa nama file di ujung) untuk dicek/dibuat
         $directory = is_dir($normalized_path) ? $normalized_path : dirname($normalized_path);
-        
+
         // Jika folder tujuan belum ada di Ubuntu/Docker, buat otomatis dengan permission yang benar
         if (!is_dir($directory)) {
             // 0775 memberikan hak akses tulis (write) bagi PHP/Web Server di Linux
             mkdir($directory, 0775, true);
         }
-        
+
         return $normalized_path;
     }
 }
@@ -144,7 +144,7 @@ function sanitizeUri($uri)
 function url($uri = "")
 {
     $uri = sanitizeUri($uri);
-    return config("app.url") . "/{$uri}";
+    return config("app.url") . ltrim((string) "{$uri}", "/");
 }
 
 /**
@@ -561,7 +561,7 @@ if (!function_exists("expects_json")) {
 if (!function_exists('parse_curl_cookies')) {
     /**
      * Accurately parses cookies from cURL responses.
-     * 
+     *
      * @string $rawResponse Raw response complete with headers from curl_exec()
      * @int $headerSize Header size obtained from curl_getinfo($ch, CURLINFO_HEADER_SIZE)
      * @return array An associative array containing a list of cookies and their attributes
@@ -569,10 +569,10 @@ if (!function_exists('parse_curl_cookies')) {
     function parse_curl_cookies(string $rawResponse, int $headerSize): array
     {
         $cookies = [];
-        
+
         // Just take the header section based on the header size
         $headerString = substr($rawResponse, 0, $headerSize);
-        
+
         // Break the header by newline
         $headerLines = explode("\r\n", $headerString);
 
@@ -581,13 +581,13 @@ if (!function_exists('parse_curl_cookies')) {
             if (stripos($line, 'Set-Cookie:') === 0) {
                 $cookieLine = trim(substr($line, 11)); // Discard the string "Set-Cookie:"
                 $cookieParts = explode(';', $cookieLine);
-                
+
                 // The first part is always Name=Value
                 $mainPair = trim($cookieParts[0]);
                 if (str_contains($mainPair, '=')) {
                     [$name, $value] = explode('=', $mainPair, 2);
                     $name = trim($name);
-                    
+
                     $cookieData = [
                         'value'    => trim($value),
                         'expires'  => null,
@@ -601,7 +601,9 @@ if (!function_exists('parse_curl_cookies')) {
                     // Parsing additional attributes (Path, Domain, Max-Age, HttpOnly, etc)
                     for ($i = 1; $i < count($cookieParts); $i++) {
                         $attr = trim($cookieParts[$i]);
-                        if ($attr === '') continue;
+                        if ($attr === '') {
+                            continue;
+                        }
 
                         if (stripos($attr, 'Path=') === 0) {
                             $cookieData['path'] = substr($attr, 5);
@@ -695,7 +697,7 @@ function pathToNamespace(string $path): string
 {
     // 1. Hilangkan ekstensi .php
     $path = str_replace(".php", "", $path);
-    $path = str_replace(".php", "", $path);    
+    $path = str_replace(".php", "", $path);
 
     // 2. Pecah berdasarkan slash (baik / maupun \)
     $segments = explode("/", str_replace("\\", "/", $path));
@@ -936,7 +938,7 @@ if (!function_exists("parse_scraped_content")) {
 if (!function_exists('array_forget_multiple')) {
     /**
      * Deletes several keys at once from an array (by reference).
-     * 
+     *
      * @param array $array
      * @param array $keys
      * @return void
@@ -952,7 +954,7 @@ if (!function_exists('array_forget_multiple')) {
 if (!function_exists('array_except')) {
     /**
      * Returns a new array without specified keys (Immutable).
-     * 
+     *
      * @param array $array
      * @param array $keys
      * @return array
@@ -967,7 +969,7 @@ if (!function_exists('array_only')) {
     /**
      * Retrieves a subset of an array based only on the specified key.
      * Is the opposite of the array_except function.
-     * 
+     *
      * @param array $array Array of data sources
      * @param array|string $keys List of keys to retrieve (can be an array or string argument)
      * @return array A new array containing only permitted keys
@@ -977,7 +979,7 @@ if (!function_exists('array_only')) {
         if (is_string($keys)) {
             $keys = func_get_args();
             array_shift($keys); // Buang argumen pertama ($array)
-            
+
             // If it turns out to be sent as an array inside the first string or variadic
             if (count($keys) === 1 && is_array($keys[0])) {
                 $keys = $keys[0];

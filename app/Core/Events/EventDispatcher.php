@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  @author LutviP19 <lutvip19@gmail.com>
  *
@@ -10,8 +11,8 @@ namespace App\Core\Events;
 
 use PDO;
 use Exception;
-use PDOException;
-use App\Core\Database\Connection;
+// use PDOException;
+use App\Core\Database\ConnectionV2 as Connection;
 use Predis\Client as PredisClient; // Gunakan Predis
 
 class EventDispatcher
