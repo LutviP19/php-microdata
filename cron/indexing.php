@@ -15,7 +15,6 @@ require_once 'bootstrap.php';
 // Meili Search
 use App\Core\Support\App;
 use App\Core\Http\GoHttpClient;
-use Meilisearch\Client as MelisearchClient;
 
 // Enabled Experimental filter operators
 // Enabling the experimental feature will make two new operators available, 
@@ -47,11 +46,8 @@ try {
     throw($e);
 }
 
-// Melisearch Client
-$client = new MelisearchClient(env('MEILISEARCH_URL', 'http://localhost:7700'), env('MEILISEARCH_KEY', 'ms'));
 
 // Add Documents to Your PHP Search Engine
-$index = $client->index('movies2');
 $documents = [
     ['id' => 1, 'title' => 'Inception', 'genres' => ['Action', 'Sci-Fi']],
     ['id' => 2, 'title' => 'Interstellar', 'genres' => ['Adventure', 'Drama']],
@@ -79,41 +75,97 @@ $documents = [
     ['id' => 24, 'title' => 'The Prestige', 'genres' => ['Drama', 'Mystery', 'Sci-Fi']],
     ['id' => 25, 'title' => 'Spiderman: Across the Spider-Verse', 'genres' => ['Animation', 'Action', 'Adventure']]
 ];
-$index->addDocuments($documents);
 
+$client = new GoHttpClient();
+$apiParams = App::externalApi('ms_add_documents', [
+        'body' => json_encode($documents),
+        'timeout' => 5.0,
+    ]);
+$response = $client->request($apiParams);
+// dd($response, true);
+
+$statusCode = (int) ($response['status'] ?? 0);
+$payload = json_decode((string) ($response['body'] ?? ''), true);
+
+// Endpoint addDocuments di Meilisearch umumnya mengembalikan HTTP 202 Accepted beserta taskUid
+if ($statusCode < 200 || $statusCode >= 300) {
+    throw new RuntimeException(
+        "Meilisearch error [{$statusCode}]: " . json_encode($payload, JSON_THROW_ON_ERROR)
+    );
+}
+$taskUid = $payload['taskUid'] ?? null;
+echo "Task dikirim ke Meilisearch. taskUid: " . ($taskUid ?? 'unknown') . PHP_EOL;
+
+
+
+
+// Settings Filterable & Sortable Attributes
+$settings = [
+    'filterableAttributes' => ["title", "id", "genres", "release_year", "is_featured", "language"],
+    'sortableAttributes' => ["rating", "release_year", "popularity"]
+];
+$apiParams = App::externalApi('ms_search_settings', [
+        // 'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/indexes/movies/settings',
+        'body' => json_encode($settings),
+        'timeout' => 5.0,
+    ]);
+$response = $client->request($apiParams);
+// dd($response, true);
+
+
+// Build the Search Function and Return Results
 // Keyword Search
-$keyword = 'The Matrix'; // the || The Matrix
+$keyword = 'Dune'; // Dune || the || The Matrix
 $genre = ''; // action || drama
-
-// // Build the Search Function and Return Results
-// $results = $index->search($keyword)->getHits();
-// dd($results, true);
-
-// Add Filters and Facets for Smarter Search
-$index->updateFilterableAttributes([
-    'title',
-    'genres',
-    'id'
-]);
-
-$status = $client->getTask(1);
-// dd($status, true);
-
-// filtered searches using SQL-style logic
-// dd($keyword);
 
 // Default filter
 $maxId = 25;
-$filter = ['title CONTAINS "'.$keyword.'" AND id <= 25'];
+$limit = 10;
+// $filter = ['title CONTAINS "'.$keyword.'" AND id <= 25'];
+$filter = ['title CONTAINS "'.$keyword.'" AND release_year >= 2015'];
 
 // Filter by genre
 if($genre !== '')
     $filter = ['title CONTAINS "'.$keyword.'" AND genres IN ['.$genre.'] AND id <= 25'];
 
+// Opsional: polling status task hingga succeeded / failed
+if ($taskUid !== null) {
+    for ($i = 0; $i < 20; $i++) {
+        $taskRes = $client->request(App::externalApi('ms_get_task', [
+            'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/tasks/' . $taskUid,
+            // 'taskUid' => $taskUid,
+            'timeout' => 2.0,
+        ]));
+        $taskData = json_decode((string) ($taskRes['body'] ?? ''), true);
+        $status = $taskData['status'] ?? 'unknown';
 
-$results = $index->search($keyword, [
-    'facets' => ['title', 'genres', 'id'],
-    'filter' => $filter,
-])->getHits();
+        if ($status === 'succeeded' || $status === 'failed') {
+            echo "Status akhir task {$taskUid}: {$status}" . PHP_EOL;
+            if ($status === 'failed') {
+                print_r($taskData['error'] ?? []);
+            }
+            break;
+        }
+        usleep(100_000); // 100ms
+    }
 
-dd($results, true);
+
+    $filters = [
+        'q' => $keyword,
+        'filter' => $filter,
+        'sort' => ["rating:desc"],
+        'limit' => $limit
+    ];
+
+    $apiParams = App::externalApi('ms_search_documents', [
+        'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/indexes/movies/search',
+        'body' => json_encode($filters),
+    ]);
+    $results = $client->request($apiParams);
+    // dd($results, true);
+    $statusCode = (int) ($results['status'] ?? 0);
+    $items = json_decode((string) ($results['body'] ?? ''), true);
+    dd($items, true);
+} else {
+    echo "Meilisearch error [{$statusCode}]: " . json_encode($payload, JSON_THROW_ON_ERROR) . PHP_EOL;
+}

@@ -80,6 +80,46 @@ return [
     ],
 
     // Services
+    'ms_add_documents' => [
+        'method' => 'POST',
+        'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/indexes/movies/documents',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
+            'Accept'        => 'application/json',
+            'Content-Type' => 'application/json'
+        ]
+    ],
+    'ms_get_task' => [
+        'method' => 'GET',
+        'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/tasks',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
+            'Accept'        => 'application/json',
+            'Content-Type' => 'application/json'
+        ]
+    ],
+    'ms_search_settings' => [
+        'method' => 'PATCH',
+        'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/indexes/movies/settings',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
+            'Accept'        => 'application/json',
+            'Content-Type' => 'application/json'
+        ]
+    ],
+    'ms_search_documents' => [
+        'method' => 'POST',
+        'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/indexes/movies/search',
+        'headers' => [
+            'User-Agent' => 'PHP-Microdata',
+            'Authorization' => 'Bearer ' . env('MEILISEARCH_KEY', 'ms'),
+            'Accept'        => 'application/json',
+            'Content-Type' => 'application/json'
+        ]
+    ],
     'ms_enabled_experimental' => [
         'method' => 'PATCH',
         'url' => env('MEILISEARCH_URL', 'http://localhost:7700') . '/experimental-features',
