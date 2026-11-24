@@ -21,7 +21,7 @@ ini_set('memory_limit', '256M');
 
 $mq = new RabbitFFI();
 $queueName = 'crawler_queue';
-$queueName = 'payment_queue'; // custom test event
+// $queueName = 'payment_queue'; // custom test event
 
 echo "[*] Menunggu pesan di [$queueName]. Untuk keluar tekan CTRL+C\n";
 

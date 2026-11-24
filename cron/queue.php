@@ -16,6 +16,9 @@ require_once 'bootstrap.php';
 
 use App\Core\Support\RabbitFFI;
 
+$queueName = 'crawler_queue';
+// $queueName = 'payment_queue'; // custom test event
+
 $mq = new RabbitFFI();
 
 $data = [
@@ -29,8 +32,8 @@ try {
     // Set timeout PHP agar tidak hang jika FFI bermasalah
     set_time_limit(10); 
     
-    $mq->send('crawler_queue', $data);
-    echo "Pesan berhasil masuk antrean!" . PHP_EOL;
+    $mq->send($queueName, $data);
+    echo "Pesan '{$queueName}' berhasil masuk antrean!" . PHP_EOL;
 } catch (Exception $e) {
     echo "Gagal: " . $e->getMessage();
 }

@@ -7,14 +7,6 @@
 
 // define('APP_START', microtime(true));
 
-// if (!defined('BASEPATH')) {
-//     define('BASEPATH', __DIR__ . "/..");
-// }
-
-// if (!defined('BASEPATH_FFI')) {
-//     define('BASEPATH_FFI', __DIR__ . '/../ffi');
-// }
-
 if (!defined('BASEPATH')) {
     // naik 1 tingkat menjadi /root
     define('BASEPATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
@@ -26,8 +18,8 @@ if (!defined("BASEPATH_FFI")) {
 
 
 // only level Deprecated & User Deprecated
-error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
-// error_reporting(E_ALL);
+// error_reporting(E_DEPRECATED | E_USER_DEPRECATED);
+error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 

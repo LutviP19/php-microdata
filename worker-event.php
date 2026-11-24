@@ -67,7 +67,7 @@ try {
     echo "[*] Event System Started. Mode: " . ($once ? "Once" : "Daemon") . PHP_EOL;
 
     if(!$once) {
-        echo "[*] Untuk keluar tekan CTRL+C" . PHP_EOL;
+        echo "[*] To exit press CTRL+C" . PHP_EOL;
     }
 
     // // Set nama tabel kustom jika perlu
